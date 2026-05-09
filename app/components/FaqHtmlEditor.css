@@ -1,0 +1,26 @@
+.faq-html-editor {
+  margin-block-start: 0.25rem;
+}
+
+.faq-html-editor .ql-toolbar.ql-snow {
+  border-radius: 0.5rem 0.5rem 0 0;
+  border-color: rgba(0, 0, 0, 0.12);
+  background: #fafafa;
+}
+
+.faq-html-editor .ql-container.ql-snow {
+  border-radius: 0 0 0.5rem 0.5rem;
+  border-color: rgba(0, 0, 0, 0.12);
+  font-family: inherit;
+}
+
+.faq-html-editor .ql-editor {
+  min-height: 10rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.faq-html-editor .ql-editor.ql-blank::before {
+  font-style: normal;
+  color: #6d7175;
+}
