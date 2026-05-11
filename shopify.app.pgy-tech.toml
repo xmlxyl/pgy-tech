@@ -2,12 +2,11 @@
 
 client_id = "e2ee0d857559c9961a90bac6272bf3a8"
 name = "PGY-tech"
-application_url = "https://example.com"
+application_url = "https://shopify-admin-api-vercel.vercel.app"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-07"
@@ -17,4 +16,4 @@ api_version = "2026-07"
 scopes = "read_metaobjects,read_products,write_metaobject_definitions,write_metaobjects,write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://shopify-admin-api-vercel.vercel.app/api/auth" ]
