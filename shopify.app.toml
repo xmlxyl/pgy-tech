@@ -2,7 +2,7 @@
 
 client_id = "adc90cbc766f019b7cc28d0ddc81c89d"
 name = "PGY-tech"
-application_url = "https://example.com"
+application_url = "https://pgy-tech.vercel.app"
 embedded = true
 
 [build]
@@ -25,7 +25,7 @@ api_version = "2026-07"
 scopes = "read_metaobjects,read_products,write_metaobject_definitions,write_metaobjects,write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://pgy-tech.vercel.app/api/auth" ]
 
 [product.metafields.app.demo_info]
 type = "single_line_text_field"

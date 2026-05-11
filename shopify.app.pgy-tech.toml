@@ -17,6 +17,7 @@ scopes = "read_metaobjects,read_products,write_metaobject_definitions,write_meta
 
 [auth]
 redirect_urls = [ 
+    "https://pgy-tech.vercel.app/api/auth",
     "https://pgy-tech.vercel.app/auth/auth",
     "https://pgy-tech.vercel.app/auth/shopify/callback",
     "https://pgy-tech.vercel.app/api/auth/callback"
