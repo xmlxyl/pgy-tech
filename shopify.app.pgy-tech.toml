@@ -20,5 +20,6 @@ redirect_urls = [
     "https://pgy-tech.vercel.app/api/auth",
     "https://pgy-tech.vercel.app/auth/auth",
     "https://pgy-tech.vercel.app/auth/shopify/callback",
-    "https://pgy-tech.vercel.app/api/auth/callback"
+    "https://pgy-tech.vercel.app/api/auth/callback",
+    "https://pgy-tech.vercel.app/auth/callback"
 ]
