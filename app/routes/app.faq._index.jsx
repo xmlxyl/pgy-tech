@@ -10,7 +10,7 @@ import {
   summarizeReferencedByProducts,
 } from "../lib/faq-metafields";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 200;
 
 /** @param {{ request: Request }} args */
 export const loader = async ({ request }) => {
