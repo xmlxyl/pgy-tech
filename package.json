@@ -2,7 +2,7 @@
   "name": "pgy-tech",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "echo skip prisma",
     "build": "react-router build",
     "dev": "shopify app dev",
     "config:link": "shopify app config link",
