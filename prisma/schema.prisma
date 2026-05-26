@@ -6,8 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.sqlite"
+  provider  = "postgresql"
+  // Vercel+Neon：运行时用 pooled；迁移用 unpooled（Neon 自动注入的变量名）
+  url       = env("DATABASE_URL")
+  directUrl = env("POSTGRES_URL_DATABASE_URL_UNPOOLED")
 }
 
 model Session {

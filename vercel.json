@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "react-router",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run setup && npm run build",
   "outputDirectory": "build/client"
 }
