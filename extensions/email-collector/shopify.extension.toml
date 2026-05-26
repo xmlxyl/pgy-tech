@@ -1,0 +1,7 @@
+api_version = "2025-10"
+
+[[extensions]]
+name = "邮箱收集"
+handle = "email-collector"
+type = "theme"
+uid = "pgy-tech-email-collector-ext-001"

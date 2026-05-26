@@ -1,0 +1,81 @@
+{% liquid
+  assign heading = block.settings.heading
+  if heading == blank
+    assign heading = 'email_signup.heading_default' | t
+  endif
+  assign proxy_url = '/apps/pgy-tech/email'
+  assign placeholder = block.settings.placeholder
+  if placeholder == blank
+    assign placeholder = 'email_signup.email_placeholder' | t
+  endif
+  assign button_label = block.settings.button_label
+  if button_label == blank
+    assign button_label = 'email_signup.button' | t
+  endif
+%}
+
+<div class="pgy-email-signup" {{ block.shopify_attributes }}>
+  {% if heading != blank %}
+    <h2 class="pgy-email-signup__heading">{{ heading }}</h2>
+  {% endif %}
+
+  <form
+    class="pgy-email-signup__form"
+    method="get"
+    action="{{ proxy_url }}"
+    data-pgy-email-form
+    data-proxy-url="{{ proxy_url }}"
+    data-msg-success="{{ 'email_signup.success' | t | escape }}"
+    data-msg-error-invalid="{{ 'email_signup.error_invalid' | t | escape }}"
+    data-msg-error-generic="{{ 'email_signup.error_generic' | t | escape }}"
+    data-msg-error-preview="{{ 'email_signup.error_preview' | t | escape }}"
+  >
+    <div class="pgy-email-signup__row">
+      <div class="pgy-email-signup__field">
+        <label for="pgy-email-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
+        <input
+          id="pgy-email-{{ block.id }}"
+          type="email"
+          name="email"
+          value=""
+          placeholder="{{ placeholder }}"
+          autocomplete="email"
+          required
+        >
+      </div>
+      <button type="submit" class="pgy-email-signup__button">
+        {{ button_label }}
+      </button>
+    </div>
+    <p class="pgy-email-signup__message" data-pgy-email-message hidden></p>
+  </form>
+</div>
+
+{% schema %}
+{
+  "name": "邮箱订阅",
+  "target": "section",
+  "stylesheet": "email-signup.css",
+  "javascript": "email-signup.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "标题",
+      "default": "订阅我们的资讯"
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "输入框占位符",
+      "default": "you@example.com"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "按钮文字",
+      "default": "订阅"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,65 @@
+.pgy-email-signup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+
+.pgy-email-signup__heading {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.pgy-email-signup__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.pgy-email-signup__field {
+  flex: 1 1 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pgy-email-signup__field label {
+  font-size: 0.875rem;
+}
+
+.pgy-email-signup__field input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.pgy-email-signup__button {
+  padding: 0.625rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.pgy-email-signup__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pgy-email-signup__message {
+  font-size: 0.875rem;
+}
+
+.pgy-email-signup__message--success {
+  color: #0a7a3e;
+}
+
+.pgy-email-signup__message--error {
+  color: #b42318;
+}

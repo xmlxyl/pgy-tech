@@ -12,13 +12,15 @@
     "routeIdToServerBundleId": {
       "routes/webhooks.app.scopes_update": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/webhooks.app.uninstalled": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/apps.pgy-tech.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.$": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.additional": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.faq._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.faq.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
-      "routes/app._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+      "routes/app._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
     },
     "routes": {
       "root": {
@@ -41,6 +43,15 @@
         "parentId": "root",
         "file": "app/routes/webhooks.app.uninstalled.jsx",
         "path": "webhooks/app/uninstalled",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/apps.pgy-tech.email": {
+        "id": "routes/apps.pgy-tech.email",
+        "parentId": "root",
+        "file": "app/routes/apps.pgy-tech.email.jsx",
+        "path": "apps/pgy-tech/email",
         "config": {
           "runtime": "nodejs"
         }
@@ -115,6 +126,15 @@
         "config": {
           "runtime": "nodejs"
         }
+      },
+      "routes/app.email": {
+        "id": "routes/app.email",
+        "parentId": "routes/app",
+        "file": "app/routes/app.email.jsx",
+        "path": "email",
+        "config": {
+          "runtime": "nodejs"
+        }
       }
     }
   },
@@ -148,6 +168,12 @@
         "parentId": "root",
         "file": "routes/webhooks.app.uninstalled.jsx",
         "path": "webhooks/app/uninstalled"
+      },
+      "routes/apps.pgy-tech.email": {
+        "id": "routes/apps.pgy-tech.email",
+        "parentId": "root",
+        "file": "routes/apps.pgy-tech.email.jsx",
+        "path": "apps/pgy-tech/email"
       },
       "routes/auth.login": {
         "id": "routes/auth.login",
@@ -197,6 +223,12 @@
         "parentId": "routes/app",
         "file": "routes/app._index.jsx",
         "index": true
+      },
+      "routes/app.email": {
+        "id": "routes/app.email",
+        "parentId": "routes/app",
+        "file": "routes/app.email.jsx",
+        "path": "email"
       }
     },
     "routeDiscovery": {
@@ -223,6 +255,11 @@
             "id": "routes/webhooks.app.uninstalled",
             "file": "routes/webhooks.app.uninstalled.jsx",
             "path": "webhooks/app/uninstalled"
+          },
+          {
+            "id": "routes/apps.pgy-tech.email",
+            "file": "routes/apps.pgy-tech.email.jsx",
+            "path": "apps/pgy-tech/email"
           },
           {
             "id": "routes/auth.login",
@@ -264,6 +301,11 @@
                 "id": "routes/app._index",
                 "file": "routes/app._index.jsx",
                 "index": true
+              },
+              {
+                "id": "routes/app.email",
+                "file": "routes/app.email.jsx",
+                "path": "email"
               }
             ]
           }
