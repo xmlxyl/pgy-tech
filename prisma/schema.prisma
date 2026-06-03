@@ -7,9 +7,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  // Vercel+Neon：运行时用 pooled；迁移用 unpooled（Neon 自动注入的变量名）
   url       = env("DATABASE_URL")
-  directUrl = env("POSTGRES_URL_DATABASE_URL_UNPOOLED")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Session {
