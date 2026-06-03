@@ -12,6 +12,17 @@
   if button_label == blank
     assign button_label = 'email_signup.button' | t
   endif
+  assign username = ''
+  if customer
+    if customer.name != blank
+      assign username = customer.name
+    elsif customer.first_name != blank
+      assign username = customer.first_name
+      if customer.last_name != blank
+        assign username = username | append: ' ' | append: customer.last_name
+      endif
+    endif
+  endif
 %}
 
 <div class="pgy-email-signup" {{ block.shopify_attributes }}>
@@ -43,6 +54,7 @@
           required
         >
       </div>
+      <input type="hidden" name="username" value="{{ username | escape }}">
       <button type="submit" class="pgy-email-signup__button">
         {{ button_label }}
       </button>

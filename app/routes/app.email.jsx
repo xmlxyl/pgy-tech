@@ -17,6 +17,7 @@ export const loader = async ({ request }) => {
     emails: emails.map((row) => ({
       id: row.id,
       email: row.email,
+      username: row.username,
       createdAt: row.createdAt.toISOString(),
     })),
   };
@@ -54,12 +55,14 @@ export default function EmailPage() {
           <s-table variant="table" paginate={false}>
             <s-table-header-row>
               <s-table-header listSlot="primary">邮箱</s-table-header>
+              <s-table-header>用户名</s-table-header>
               <s-table-header>提交时间</s-table-header>
             </s-table-header-row>
             <s-table-body>
               {emails.map((row) => (
                 <s-table-row key={row.id}>
                   <s-table-cell>{row.email}</s-table-cell>
+                  <s-table-cell>{row.username || "—"}</s-table-cell>
                   <s-table-cell>
                     {new Date(row.createdAt).toLocaleString("zh-CN")}
                   </s-table-cell>

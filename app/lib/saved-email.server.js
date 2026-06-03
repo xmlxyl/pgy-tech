@@ -14,9 +14,14 @@ export function validateEmail(raw) {
   return { ok: true, email };
 }
 
-/** @param {string} shop @param {string} email */
-export async function saveEmailForShop(shop, email) {
+/** @param {string} shop @param {string} email @param {string | null | undefined} username */
+export async function saveEmailForShop(shop, email, username) {
+  const trimmedUsername = String(username ?? "").trim();
   return prisma.savedEmail.create({
-    data: { shop, email },
+    data: {
+      shop,
+      email,
+      username: trimmedUsername || null,
+    },
   });
 }

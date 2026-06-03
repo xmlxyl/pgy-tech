@@ -46,8 +46,8 @@ async function resolveShop(request) {
   return { ok: true, shop };
 }
 
-/** @param {string} shop @param {unknown} emailRaw */
-async function handleSubscribe(shop, emailRaw) {
+/** @param {string} shop @param {unknown} emailRaw @param {unknown} usernameRaw */
+async function handleSubscribe(shop, emailRaw, usernameRaw) {
   const validation = validateEmail(emailRaw);
   if (!validation.ok) {
     return Response.json(
@@ -57,7 +57,7 @@ async function handleSubscribe(shop, emailRaw) {
   }
 
   try {
-    await saveEmailForShop(shop, validation.email);
+    await saveEmailForShop(shop, validation.email, usernameRaw);
     return Response.json({ ok: true, error: null });
   } catch (error) {
     console.error("[email-proxy] save failed", { shop, error });
@@ -82,7 +82,8 @@ export async function handleEmailProxyRequest(request) {
     }
     const shopResult = await resolveShop(request);
     if (!shopResult.ok) return shopResult.response;
-    return handleSubscribe(shopResult.shop, emailParam);
+    const usernameParam = url.searchParams.get("username");
+    return handleSubscribe(shopResult.shop, emailParam, usernameParam);
   }
 
   if (method === "POST") {
@@ -90,15 +91,18 @@ export async function handleEmailProxyRequest(request) {
     if (!shopResult.ok) return shopResult.response;
 
     let emailRaw;
+    let usernameRaw;
     const contentType = request.headers.get("content-type") ?? "";
     if (contentType.includes("application/json")) {
       const body = await request.json();
       emailRaw = body?.email;
+      usernameRaw = body?.username;
     } else {
       const formData = await request.formData();
       emailRaw = formData.get("email");
+      usernameRaw = formData.get("username");
     }
-    return handleSubscribe(shopResult.shop, emailRaw);
+    return handleSubscribe(shopResult.shop, emailRaw, usernameRaw);
   }
 
   return Response.json({ ok: false, error: "Method not allowed" }, { status: 405 });

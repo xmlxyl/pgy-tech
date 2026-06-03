@@ -43,7 +43,9 @@
       if (!proxyUrl) return;
 
       const emailInput = form.querySelector('input[name="email"]');
+      const usernameInput = form.querySelector('input[name="username"]');
       const email = emailInput?.value?.trim() ?? "";
+      const username = usernameInput?.value?.trim() ?? "";
       if (!email) {
         showMessage(messageEl, strings.errorInvalid, true);
         return;
@@ -54,6 +56,7 @@
 
       try {
         const params = new URLSearchParams({ email });
+        if (username) params.set("username", username);
         const url = `${proxyUrl}${proxyUrl.includes("?") ? "&" : "?"}${params}`;
 
         const response = await fetch(url, {
