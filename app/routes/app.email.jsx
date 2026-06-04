@@ -1,5 +1,8 @@
-import { boundary } from "@shopify/shopify-app-react-router/server";
+import { useCallback, useMemo, useState } from "react";
 import { useLoaderData } from "react-router";
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { boundary } from "@shopify/shopify-app-react-router/server";
+import { downloadEmailExport } from "../lib/email-export.js";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
@@ -10,7 +13,6 @@ export const loader = async ({ request }) => {
   const emails = await prisma.savedEmail.findMany({
     where: { shop: session.shop },
     orderBy: { createdAt: "desc" },
-    take: 50,
   });
 
   return {
@@ -25,6 +27,82 @@ export const loader = async ({ request }) => {
 
 export default function EmailPage() {
   const { emails } = useLoaderData();
+  const shopify = useAppBridge();
+  const [selectedIds, setSelectedIds] = useState(/** @type {number[]} */ ([]));
+
+  const allSelected =
+    emails.length > 0 && selectedIds.length === emails.length;
+  const someSelected =
+    selectedIds.length > 0 && selectedIds.length < emails.length;
+  const noneSelected = selectedIds.length === 0;
+
+  const handleSelectAll = useCallback(
+    /** @param {Event} event */
+    (event) => {
+      const checked = /** @type {HTMLInputElement} */ (event.target).checked;
+      setSelectedIds(checked ? emails.map((row) => row.id) : []);
+    },
+    [emails],
+  );
+
+  const handleSelectRow = useCallback(
+    /** @param {number} id */
+    (id) => {
+      setSelectedIds((current) =>
+        current.includes(id)
+          ? current.filter((value) => value !== id)
+          : [...current, id],
+      );
+    },
+    [],
+  );
+
+  const handleExport = useCallback(
+    /** @param {"csv" | "xlsx"} format @param {"all" | "selected"} scope */
+    (format, scope) => {
+      if (scope === "selected" && selectedIds.length === 0) {
+        shopify.toast.show("请先勾选要导出的记录", { isError: true });
+        return;
+      }
+
+      const rows =
+        scope === "all"
+          ? emails
+          : emails.filter((row) => selectedIds.includes(row.id));
+
+      downloadEmailExport(rows, format);
+      shopify.toast.show(`已导出 ${rows.length} 条记录`);
+    },
+    [emails, selectedIds, shopify],
+  );
+
+  const exportButtons = useMemo(
+    () => (
+      <s-stack direction="inline" gap="small">
+        <s-button variant="secondary" onClick={() => handleExport("csv", "all")}>
+          导出 CSV（全部）
+        </s-button>
+        <s-button
+          variant="secondary"
+          disabled={noneSelected}
+          onClick={() => handleExport("csv", "selected")}
+        >
+          导出 CSV（已选）
+        </s-button>
+        <s-button variant="secondary" onClick={() => handleExport("xlsx", "all")}>
+          导出 Excel（全部）
+        </s-button>
+        <s-button
+          variant="secondary"
+          disabled={noneSelected}
+          onClick={() => handleExport("xlsx", "selected")}
+        >
+          导出 Excel（已选）
+        </s-button>
+      </s-stack>
+    ),
+    [handleExport, noneSelected],
+  );
 
   return (
     <s-page heading="邮箱收集" inlineSize="base">
@@ -50,18 +128,71 @@ export default function EmailPage() {
 
       <s-section heading="顾客提交记录">
         {emails.length === 0 ? (
-          <s-paragraph tone="subdued">暂无记录。添加主题区块后，顾客即可在前台订阅。</s-paragraph>
+          <s-paragraph tone="subdued">
+            暂无记录。添加主题区块后，顾客即可在前台订阅。
+          </s-paragraph>
         ) : (
           <s-table variant="table" paginate={false}>
+            {!noneSelected ? (
+              <s-box slot="filters" padding="small" background="strong">
+                <s-stack
+                  direction="inline"
+                  gap="base"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <s-text fontWeight="semibold">
+                    已选 {selectedIds.length} / {emails.length}
+                  </s-text>
+                  {exportButtons}
+                </s-stack>
+              </s-box>
+            ) : (
+              <s-box slot="filters" padding="small">
+                <s-stack
+                  direction="inline"
+                  gap="base"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <s-text tone="subdued">共 {emails.length} 条记录</s-text>
+                  {exportButtons}
+                </s-stack>
+              </s-box>
+            )}
             <s-table-header-row>
-              <s-table-header listSlot="primary">邮箱</s-table-header>
+              <s-table-header listSlot="primary">
+                <s-stack direction="inline" gap="small" alignItems="center">
+                  <s-checkbox
+                    checked={allSelected}
+                    indeterminate={someSelected}
+                    onChange={handleSelectAll}
+                    accessibilityLabel="全选记录"
+                  />
+                  <s-text>邮箱</s-text>
+                </s-stack>
+              </s-table-header>
               <s-table-header>用户名</s-table-header>
               <s-table-header>提交时间</s-table-header>
             </s-table-header-row>
             <s-table-body>
               {emails.map((row) => (
-                <s-table-row key={row.id}>
-                  <s-table-cell>{row.email}</s-table-cell>
+                <s-table-row
+                  key={row.id}
+                  selected={selectedIds.includes(row.id)}
+                  clickDelegate={`email-row-${row.id}-checkbox`}
+                >
+                  <s-table-cell>
+                    <s-stack direction="inline" gap="small" alignItems="center">
+                      <s-checkbox
+                        id={`email-row-${row.id}-checkbox`}
+                        checked={selectedIds.includes(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                        accessibilityLabel={`选择 ${row.email}`}
+                      />
+                      <s-text>{row.email}</s-text>
+                    </s-stack>
+                  </s-table-cell>
                   <s-table-cell>{row.username || "—"}</s-table-cell>
                   <s-table-cell>
                     {new Date(row.createdAt).toLocaleString("zh-CN")}
