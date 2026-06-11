@@ -3,6 +3,10 @@
   if heading == blank
     assign heading = 'email_signup.heading_default' | t
   endif
+  assign subheading = block.settings.subheading
+  if subheading == blank
+    assign subheading = 'email_signup.subheading_default' | t
+  endif
   assign proxy_url = '/apps/pgy-tech/email'
   assign placeholder = block.settings.placeholder
   if placeholder == blank
@@ -12,6 +16,8 @@
   if button_label == blank
     assign button_label = 'email_signup.button' | t
   endif
+  assign border_color = block.settings.border_color | default: '#f97316'
+  assign button_color = block.settings.button_color | default: '#f97316'
   assign username = ''
   if customer
     if customer.name != blank
@@ -25,9 +31,19 @@
   endif
 %}
 
-<div class="pgy-email-signup" {{ block.shopify_attributes }}>
+<div
+  class="pgy-email-signup"
+  style="--pgy-border: {{ border_color }}; --pgy-button: {{ button_color }};"
+  {{ block.shopify_attributes }}
+>
   {% if heading != blank %}
-    <h2 class="pgy-email-signup__heading">{{ heading }}</h2>
+    <h2 class="pgy-email-signup__heading">
+      <span class="pgy-email-signup__heading-text h2">{{ heading }}</span>
+    </h2>
+  {% endif %}
+
+  {% if subheading != blank %}
+    <p class="pgy-email-signup__subheading">{{ subheading }}</p>
   {% endif %}
 
   <form
@@ -43,7 +59,7 @@
   >
     <div class="pgy-email-signup__row">
       <div class="pgy-email-signup__field">
-        <label for="pgy-email-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
+        <label class="pgy-email-signup__label" for="pgy-email-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
         <input
           id="pgy-email-{{ block.id }}"
           type="email"
@@ -71,22 +87,48 @@
   "javascript": "email-signup.js",
   "settings": [
     {
+      "type": "header",
+      "content": "内容"
+    },
+    {
       "type": "text",
       "id": "heading",
-      "label": "标题",
-      "default": "订阅我们的资讯"
+      "label": "大标题",
+      "default": "Mid-Year Event: Be the First to Know"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "副标题",
+      "default": "Get Early Access Before Everyone Else"
     },
     {
       "type": "text",
       "id": "placeholder",
       "label": "输入框占位符",
-      "default": "you@example.com"
+      "default": "Enter Email Address"
     },
     {
       "type": "text",
       "id": "button_label",
       "label": "按钮文字",
-      "default": "订阅"
+      "default": "Unlock My Access"
+    },
+    {
+      "type": "header",
+      "content": "样式"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "边框颜色",
+      "default": "#F97316"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "按钮颜色",
+      "default": "#F97316"
     }
   ]
 }
