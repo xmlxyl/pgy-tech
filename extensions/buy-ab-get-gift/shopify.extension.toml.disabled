@@ -1,0 +1,23 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "t:name"
+handle = "buy-ab-get-gift"
+type = "function"
+uid = "4026adf7-03c8-5469-2ceb-48d4ac75c51920d2ce36"
+description = "t:description"
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/cart_lines_discounts_generate_run.graphql"
+  export = "cart_lines_discounts_generate_run"
+
+  [[extensions.targeting]]
+  target = "cart.delivery-options.discounts.generate.run"
+  input_query = "src/cart_delivery_options_discounts_generate_run.graphql"
+  export = "cart_delivery_options_discounts_generate_run"
+
+  [extensions.build]
+  command = "cargo build --target=wasm32-unknown-unknown --release"
+  path = "target/wasm32-unknown-unknown/release/buy-ab-get-gift.wasm"
+  watch = [ "src/**/*.rs" ]

@@ -1,0 +1,12 @@
+{
+  "name": "buy-ab-get-gift",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@shopify/shopify-function-test-helpers": "^1.0.0",
+    "vitest": "^3.0.0"
+  }
+}

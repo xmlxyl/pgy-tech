@@ -1,0 +1,238 @@
+{% liquid
+  assign heading = block.settings.heading
+  if heading == blank
+    assign heading = 'subscribe_lottery.heading_default' | t
+  endif
+  assign placeholder = block.settings.placeholder
+  if placeholder == blank
+    assign placeholder = 'subscribe_lottery.email_placeholder' | t
+  endif
+  assign button_label = block.settings.button_label
+  if button_label == blank
+    assign button_label = 'subscribe_lottery.button' | t
+  endif
+  assign terms = block.settings.terms
+  if terms == blank
+    assign terms = 'subscribe_lottery.terms_default' | t
+  endif
+  assign proxy_url = '/apps/pgy-tech/lottery'
+  assign bg_color = block.settings.background_color | default: '#fff9e5'
+  assign accent_color = block.settings.accent_color | default: '#f97316'
+  assign heading_color = block.settings.heading_color | default: '#1e3a5f'
+%}
+
+<div
+  class="pgy-lottery"
+  data-pgy-lottery
+  data-proxy-url="{{ proxy_url }}"
+  data-msg-success="{{ 'subscribe_lottery.success' | t | escape }}"
+  data-msg-error-invalid="{{ 'subscribe_lottery.error_invalid' | t | escape }}"
+  data-msg-error-generic="{{ 'subscribe_lottery.error_generic' | t | escape }}"
+  data-msg-error-preview="{{ 'subscribe_lottery.error_preview' | t | escape }}"
+  data-msg-error-already="{{ 'subscribe_lottery.error_already' | t | escape }}"
+  data-msg-spinning="{{ 'subscribe_lottery.spinning' | t | escape }}"
+  style="--pgy-lottery-bg: {{ bg_color }}; --pgy-lottery-accent: {{ accent_color }}; --pgy-lottery-heading: {{ heading_color }};"
+  {{ block.shopify_attributes }}
+>
+  {% if heading != blank %}
+    <h2 class="pgy-lottery__heading">{{ heading }}</h2>
+  {% endif %}
+
+  <div class="pgy-lottery__layout">
+    <div class="pgy-lottery__prizes" data-pgy-lottery-grid>
+      {% for i in (1..6) %}
+        {% liquid
+          assign title_key = 'prize_' | append: i | append: '_title'
+          assign image_key = 'prize_' | append: i | append: '_image'
+          assign prize_title = block.settings[title_key]
+          if prize_title == blank
+            assign prize_title = 'subscribe_lottery.prize_default' | t | append: ' ' | append: i
+          endif
+          assign prize_image = block.settings[image_key]
+        %}
+        <article
+          class="pgy-lottery__prize"
+          data-pgy-lottery-prize
+          data-slot="{{ i }}"
+        >
+          <div class="pgy-lottery__prize-media">
+            {% if prize_image != blank %}
+              <img
+                src="{{ prize_image | image_url: width: 400 }}"
+                alt="{{ prize_title | escape }}"
+                width="200"
+                height="200"
+                loading="lazy"
+              >
+            {% else %}
+              <span class="pgy-lottery__prize-placeholder" aria-hidden="true"></span>
+            {% endif %}
+          </div>
+          <p class="pgy-lottery__prize-label">{{ prize_title }}</p>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="pgy-lottery__action">
+      <div class="pgy-lottery__gift" aria-hidden="true">🎁</div>
+      <form class="pgy-lottery__form" data-pgy-lottery-form>
+        <div class="pgy-lottery__row">
+          <div class="pgy-lottery__field">
+            <label class="visually-hidden" for="pgy-lottery-email-{{ block.id }}">
+              {{ 'subscribe_lottery.email_label' | t }}
+            </label>
+            <input
+              id="pgy-lottery-email-{{ block.id }}"
+              type="email"
+              name="email"
+              placeholder="{{ placeholder }}"
+              autocomplete="email"
+              required
+            >
+          </div>
+          <button type="submit" class="pgy-lottery__button">
+            {{ button_label }}
+          </button>
+        </div>
+        <p class="pgy-lottery__message" data-pgy-lottery-message hidden></p>
+      </form>
+    </div>
+  </div>
+
+  {% if terms != blank %}
+    <div class="pgy-lottery__terms">
+      {{ terms }}
+    </div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "订阅抽奖",
+  "target": "section",
+  "stylesheet": "subscribe-lottery.css",
+  "javascript": "subscribe-lottery.js",
+  "settings": [
+    {
+      "type": "header",
+      "content": "内容"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "大标题",
+      "default": "Subscribe & Unlock Your Reward"
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "邮箱占位符",
+      "default": "Enter Your Email"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "按钮文字",
+      "default": "Enter To Win"
+    },
+    {
+      "type": "richtext",
+      "id": "terms",
+      "label": "条款说明",
+      "default": "<p>Each user is eligible for one valid spin. Only the first prize won will be counted.</p><p>By entering your email, you agree to subscribe to our newsletter.</p>"
+    },
+    {
+      "type": "header",
+      "content": "奖品展示（名称与图片，概率在应用后台配置）"
+    },
+    {
+      "type": "text",
+      "id": "prize_1_title",
+      "label": "奖品 1 名称",
+      "default": "6% OFF Coupon"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize_1_image",
+      "label": "奖品 1 图片"
+    },
+    {
+      "type": "text",
+      "id": "prize_2_title",
+      "label": "奖品 2 名称",
+      "default": "5% OFF Coupon"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize_2_image",
+      "label": "奖品 2 图片"
+    },
+    {
+      "type": "text",
+      "id": "prize_3_title",
+      "label": "奖品 3 名称",
+      "default": "10% OFF Coupon"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize_3_image",
+      "label": "奖品 3 图片"
+    },
+    {
+      "type": "text",
+      "id": "prize_4_title",
+      "label": "奖品 4 名称",
+      "default": "8% OFF Coupon"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize_4_image",
+      "label": "奖品 4 图片"
+    },
+    {
+      "type": "text",
+      "id": "prize_5_title",
+      "label": "奖品 5 名称",
+      "default": "12% OFF Coupon"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize_5_image",
+      "label": "奖品 5 图片"
+    },
+    {
+      "type": "text",
+      "id": "prize_6_title",
+      "label": "奖品 6 名称",
+      "default": "15% OFF Coupon"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize_6_image",
+      "label": "奖品 6 图片"
+    },
+    {
+      "type": "header",
+      "content": "样式"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "背景颜色",
+      "default": "#FFF9E5"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "强调色",
+      "default": "#F97316"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "标题颜色",
+      "default": "#1E3A5F"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,235 @@
+.pgy-lottery {
+  --pgy-lottery-bg: #fff9e5;
+  --pgy-lottery-accent: #f97316;
+  --pgy-lottery-accent-dark: #ea580c;
+  --pgy-lottery-heading: #1e3a5f;
+  --pgy-lottery-card-bg: #ffffff;
+  --pgy-lottery-text: #111827;
+  --pgy-lottery-muted: #6b7280;
+
+  box-sizing: border-box;
+  width: 100%;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--pgy-lottery-bg);
+  color: var(--pgy-lottery-text);
+}
+
+.pgy-lottery *,
+.pgy-lottery *::before,
+.pgy-lottery *::after {
+  box-sizing: border-box;
+}
+
+.pgy-lottery__heading {
+  margin: 0 0 2rem;
+  text-align: center;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--pgy-lottery-heading);
+}
+
+.pgy-lottery__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: center;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.pgy-lottery__prizes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.pgy-lottery__prize {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--pgy-lottery-card-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    outline 0.2s ease;
+}
+
+.pgy-lottery__prize--active {
+  transform: scale(1.03);
+  outline: 3px solid var(--pgy-lottery-accent);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.25);
+}
+
+.pgy-lottery__prize--winner {
+  outline: 3px solid var(--pgy-lottery-accent);
+  animation: pgy-lottery-pulse 0.8s ease infinite alternate;
+}
+
+@keyframes pgy-lottery-pulse {
+  from {
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2);
+  }
+  to {
+    box-shadow: 0 8px 28px rgba(249, 115, 22, 0.45);
+  }
+}
+
+.pgy-lottery__prize-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 1rem;
+  background: #fff;
+}
+
+.pgy-lottery__prize-media img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.pgy-lottery__prize-placeholder {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #f97316);
+  opacity: 0.5;
+}
+
+.pgy-lottery__prize-label {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+  background: linear-gradient(180deg, #fbbf24, var(--pgy-lottery-accent));
+}
+
+.pgy-lottery__action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.pgy-lottery__gift {
+  width: min(100%, 14rem);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  filter: drop-shadow(0 12px 24px rgba(234, 88, 12, 0.25));
+}
+
+.pgy-lottery__form {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.pgy-lottery__row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pgy-lottery__field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pgy-lottery__field input {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.875rem 1.25rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  outline: none;
+}
+
+.pgy-lottery__button {
+  flex: 0 0 auto;
+  min-height: 3.25rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fb923c, var(--pgy-lottery-accent-dark));
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pgy-lottery__button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pgy-lottery__message {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.pgy-lottery__message--success {
+  color: #0a7a3e;
+}
+
+.pgy-lottery__message--error {
+  color: #b42318;
+}
+
+.pgy-lottery__terms {
+  max-width: 72rem;
+  margin: 2rem auto 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--pgy-lottery-muted);
+}
+
+.pgy-lottery__terms p {
+  margin: 0 0 0.35rem;
+}
+
+@media (max-width: 989px) {
+  .pgy-lottery__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pgy-lottery__prizes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 549px) {
+  .pgy-lottery__row {
+    flex-direction: column;
+    border-radius: 1rem;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+    gap: 0.75rem;
+  }
+
+  .pgy-lottery__field input {
+    border-radius: 9999px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .pgy-lottery__button {
+    width: 100%;
+  }
+}

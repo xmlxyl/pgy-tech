@@ -9,5 +9,19 @@
     "error_invalid": "请输入有效的邮箱地址。",
     "error_generic": "提交失败，请稍后再试。",
     "error_preview": "请在店铺前台页面测试（点击「查看商店」），主题编辑器预览无法提交。"
+  },
+  "subscribe_lottery": {
+    "heading_default": "订阅并解锁您的奖励",
+    "email_label": "邮箱",
+    "email_placeholder": "请输入您的邮箱",
+    "button": "立即抽奖",
+    "prize_default": "优惠券",
+    "success": "恭喜！优惠券已发送至您的邮箱。",
+    "spinning": "正在抽奖...",
+    "error_invalid": "请输入有效的邮箱地址。",
+    "error_generic": "提交失败，请稍后再试。",
+    "error_preview": "请在店铺前台页面测试（点击「查看商店」），主题编辑器预览无法提交。",
+    "error_already": "您已参与过抽奖。您的奖品：",
+    "terms_default": "<p>每位用户仅限参与一次有效抽奖，仅以首次中奖为准。</p><p>输入邮箱即表示您同意订阅我们的邮件通讯。</p>"
   }
 }
