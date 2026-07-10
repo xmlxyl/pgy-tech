@@ -1,0 +1,17 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Checkout Benefits"
+description = "Shows checkout trust benefits with icons."
+handle = "checkout-benefits"
+type = "ui_extension"
+uid = "pgy-tech-checkout-benefits-ext-001"
+
+  [[extensions.targeting]]
+  target = "purchase.checkout.block.render"
+  module = "./src/CheckoutBenefits.jsx"
+  default_placement = "PAYMENT4"
+
+  [[extensions.targeting]]
+  target = "purchase.checkout.reductions.render-after"
+  module = "./src/CheckoutBenefits.jsx"
