@@ -1,7 +1,6 @@
 .pgy-email-signup {
   --pgy-border: #f97316;
   --pgy-button: #f97316;
-  --pgy-bg: #ffffff;
   --pgy-underline: #2563eb;
   --pgy-text-muted: #9ca3af;
   --pgy-text: #111827;
@@ -11,9 +10,9 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
+  max-width: 42rem;
   margin-inline: auto;
   text-align: center;
-  background: var(--pgy-bg);
 }
 
 .pgy-email-signup__heading {
@@ -47,7 +46,7 @@
   border: 2px solid var(--pgy-border);
   border-radius: 9999px;
   overflow: hidden;
-  background: var(--pgy-bg);
+  background: #fff;
 }
 
 .pgy-email-signup__field {
@@ -167,7 +166,7 @@
     padding: 0.75rem 1.125rem;
     border: 2px solid var(--pgy-border);
     border-radius: 30px;
-    background: var(--pgy-bg);
+    background: #fff;
   }
 
   .pgy-email-signup__button {

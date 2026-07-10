@@ -9,19 +9,5 @@
     "error_invalid": "Please enter a valid email address.",
     "error_generic": "Something went wrong. Please try again.",
     "error_preview": "Please test on your live storefront (Online Store), not in the theme editor preview."
-  },
-  "subscribe_lottery": {
-    "heading_default": "Subscribe & Unlock Your Reward",
-    "email_label": "Email",
-    "email_placeholder": "Enter Your Email",
-    "button": "Enter To Win",
-    "prize_default": "Coupon",
-    "success": "Congratulations! Your coupon has been sent to your email.",
-    "spinning": "Drawing your prize...",
-    "error_invalid": "Please enter a valid email address.",
-    "error_generic": "Something went wrong. Please try again.",
-    "error_preview": "Please test on your live storefront (Online Store), not in the theme editor preview.",
-    "error_already": "You have already entered. Your prize:",
-    "terms_default": "<p>Each user is eligible for one valid spin. Only the first prize won will be counted.</p><p>By entering your email, you agree to subscribe to our newsletter.</p>"
   }
 }

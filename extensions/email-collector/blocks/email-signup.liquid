@@ -18,7 +18,6 @@
   endif
   assign border_color = block.settings.border_color | default: '#f97316'
   assign button_color = block.settings.button_color | default: '#f97316'
-  assign background_color = block.settings.background_color | default: '#ffffff'
   assign username = ''
   if customer
     if customer.name != blank
@@ -34,7 +33,7 @@
 
 <div
   class="pgy-email-signup"
-  style="--pgy-border: {{ border_color }}; --pgy-button: {{ button_color }}; --pgy-bg: {{ background_color }};"
+  style="--pgy-border: {{ border_color }}; --pgy-button: {{ button_color }};"
   {{ block.shopify_attributes }}
 >
   {% if heading != blank %}
@@ -118,12 +117,6 @@
     {
       "type": "header",
       "content": "样式"
-    },
-    {
-      "type": "color",
-      "id": "background_color",
-      "label": "背景颜色",
-      "default": "#FFFFFF"
     },
     {
       "type": "color",

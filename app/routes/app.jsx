@@ -19,7 +19,6 @@ export default function App() {
         <s-link href="/app">Home</s-link>
         <s-link href="/app/faq">FAQ管理</s-link>
         <s-link href="/app/email">收集邮箱记录</s-link>
-        <s-link href="/app/lottery">订阅抽奖</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>
