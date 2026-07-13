@@ -6,6 +6,7 @@ export default function Index() {
         <s-text>管理功能（陆续迭代）：</s-text>
         </div>
         <s-stack gap="small">
+          <s-link href="/app/free-gift">Free Gift Discount</s-link>
           <s-link href="/app/faq">FAQ管理</s-link>
           <s-link href="/app/email">邮箱收集记录</s-link>
           <s-link>Product Specs管理(开发中……)</s-link>

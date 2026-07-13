@@ -1,0 +1,13 @@
+api_version = "2026-07"
+
+[[extensions]]
+name = "Free Gift Discount"
+handle = "free-gift-discount"
+type = "function"
+uid = "pgy-tech-free-gift-discount-ext-001"
+description = "Discounts PGY free gift cart lines to free when the cart reaches the threshold."
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/run.graphql"
+  export = "cart-lines-discounts-generate-run"

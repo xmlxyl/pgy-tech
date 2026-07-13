@@ -1,0 +1,132 @@
+{% liquid
+  assign enabled = block.settings.enabled
+  assign threshold = block.settings.threshold | default: 99
+  assign threshold_cents = threshold | times: 100
+  assign gift_product = block.settings.gift_product
+  assign gift_variant = gift_product.selected_or_first_available_variant
+  assign gift_variant_id = ''
+  assign gift_variant_price = 0
+  assign gift_available = false
+
+  if gift_variant
+    assign gift_variant_id = gift_variant.id
+    assign gift_variant_price = gift_variant.price
+    assign gift_available = gift_variant.available
+  endif
+
+  assign banner_color = block.settings.banner_color | default: '#111827'
+  assign accent_color = block.settings.accent_color | default: '#16a34a'
+%}
+
+<div
+  data-pgy-free-gift
+  data-enabled="{{ enabled }}"
+  data-threshold-cents="{{ threshold_cents }}"
+  data-gift-variant-id="{{ gift_variant_id }}"
+  data-gift-variant-price-cents="{{ gift_variant_price }}"
+  data-gift-available="{{ gift_available }}"
+  data-gift-title="{{ gift_product.title | default: block.settings.gift_fallback_title | escape }}"
+  data-gift-handle="{{ gift_product.handle | escape }}"
+  data-property-name="_pgy_free_gift"
+  data-property-value="free"
+  data-msg-progress="{{ block.settings.progress_message | escape }}"
+  data-msg-unlocked="{{ block.settings.unlocked_message | escape }}"
+  data-msg-added="{{ block.settings.added_message | escape }}"
+  data-msg-removed="{{ block.settings.removed_message | escape }}"
+  data-msg-locked="{{ block.settings.locked_message | escape }}"
+  style="--pgy-free-gift-text: {{ banner_color }}; --pgy-free-gift-accent: {{ accent_color }};"
+  {{ block.shopify_attributes }}
+></div>
+
+{% if request.design_mode and enabled and gift_variant_id == blank %}
+  <div class="pgy-free-gift-editor-warning">
+    Select a gift product for the free gift app embed.
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Free gift",
+  "target": "body",
+  "stylesheet": "free-gift.css",
+  "javascript": "free-gift.js",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable free gift",
+      "default": true
+    },
+    {
+      "type": "product",
+      "id": "gift_product",
+      "label": "Gift product"
+    },
+    {
+      "type": "range",
+      "id": "threshold",
+      "label": "Cart threshold",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 99
+    },
+    {
+      "type": "text",
+      "id": "gift_fallback_title",
+      "label": "Gift title fallback",
+      "default": "Free gift"
+    },
+    {
+      "type": "header",
+      "content": "Messages"
+    },
+    {
+      "type": "text",
+      "id": "progress_message",
+      "label": "Progress message",
+      "default": "Spend more to unlock a free gift."
+    },
+    {
+      "type": "text",
+      "id": "unlocked_message",
+      "label": "Unlocked message",
+      "default": "Free gift unlocked."
+    },
+    {
+      "type": "text",
+      "id": "added_message",
+      "label": "Added toast",
+      "default": "Free gift added to your cart."
+    },
+    {
+      "type": "text",
+      "id": "removed_message",
+      "label": "Removed toast",
+      "default": "Free gift removed because the cart is below the threshold."
+    },
+    {
+      "type": "text",
+      "id": "locked_message",
+      "label": "Quantity lock toast",
+      "default": "Free gift quantity is fixed at 1."
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#16A34A"
+    },
+    {
+      "type": "color",
+      "id": "banner_color",
+      "label": "Text color",
+      "default": "#111827"
+    }
+  ]
+}
+{% endschema %}

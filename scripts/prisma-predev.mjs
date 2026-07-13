@@ -20,9 +20,17 @@ function ensureDirectDatabaseUrl() {
     process.env.POSTGRES_URL_DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 }
 
-function run(command) {
+function run(command, { required = true } = {}) {
   console.log(`> ${command}`);
-  execSync(command, { stdio: "inherit", env: process.env });
+  try {
+    execSync(command, { stdio: "inherit", env: process.env });
+  } catch (error) {
+    if (required) throw error;
+
+    console.warn(
+      `WARNING: ${command} failed, continuing app dev with the existing database schema.`,
+    );
+  }
 }
 
 ensureDirectDatabaseUrl();
@@ -35,4 +43,4 @@ if (!process.env.DIRECT_DATABASE_URL) {
 }
 
 run("npx prisma generate");
-run("npx prisma db push");
+run("npx prisma db push", { required: false });

@@ -1,0 +1,16 @@
+query CartLinesDiscountsGenerateRunInput {
+  cart {
+    lines {
+      id
+      quantity
+      cost {
+        subtotalAmount {
+          amount
+        }
+      }
+      freeGift: attribute(key: "_pgy_free_gift") {
+        value
+      }
+    }
+  }
+}

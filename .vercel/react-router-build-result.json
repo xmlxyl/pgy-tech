@@ -18,6 +18,7 @@
       "routes/_index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.additional": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.faq._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.free-gift": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.faq.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
@@ -105,6 +106,15 @@
         "file": "app/routes/app.faq._index.jsx",
         "path": "faq",
         "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/app.free-gift": {
+        "id": "routes/app.free-gift",
+        "parentId": "routes/app",
+        "file": "app/routes/app.free-gift.jsx",
+        "path": "free-gift",
         "config": {
           "runtime": "nodejs"
         }
@@ -212,6 +222,12 @@
         "path": "faq",
         "index": true
       },
+      "routes/app.free-gift": {
+        "id": "routes/app.free-gift",
+        "parentId": "routes/app",
+        "file": "routes/app.free-gift.jsx",
+        "path": "free-gift"
+      },
       "routes/app.faq.$id": {
         "id": "routes/app.faq.$id",
         "parentId": "routes/app",
@@ -291,6 +307,11 @@
                 "file": "routes/app.faq._index.jsx",
                 "path": "faq",
                 "index": true
+              },
+              {
+                "id": "routes/app.free-gift",
+                "file": "routes/app.free-gift.jsx",
+                "path": "free-gift"
               },
               {
                 "id": "routes/app.faq.$id",

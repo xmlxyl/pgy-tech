@@ -17,6 +17,7 @@ export default function App() {
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
         <s-link href="/app">Home</s-link>
+        <s-link href="/app/free-gift">Free Gift</s-link>
         <s-link href="/app/faq">FAQ管理</s-link>
         <s-link href="/app/email">收集邮箱记录</s-link>
       </s-app-nav>
