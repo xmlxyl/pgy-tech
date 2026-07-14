@@ -9,14 +9,7 @@
 .pgy-free-gift-line [data-quantity-wrapper],
 .pgy-free-gift-line [data-quantity-input],
 .pgy-free-gift-line [data-quantity-decrement],
-.pgy-free-gift-line [data-quantity-increment],
-.pgy-free-gift-line cart-remove-button,
-.pgy-free-gift-line .cart-remove-button,
-.pgy-free-gift-line .cart__remove,
-.pgy-free-gift-line .cart-item__remove,
-.pgy-free-gift-line .btn-remove,
-.pgy-free-gift-line [data-item-remove],
-.pgy-free-gift-line [href*="/cart/change"] {
+.pgy-free-gift-line [data-quantity-increment] {
   display: none !important;
   pointer-events: none !important;
   visibility: hidden !important;

@@ -478,7 +478,7 @@
 
       line
         .querySelectorAll(
-          "button, cart-remove-button, .cart-remove-button, .btn-remove, [data-item-remove], [href*='/cart/change']",
+          ".quantity-button, [data-quantity-decrement], [data-quantity-increment]",
         )
         .forEach(function (control) {
           control.tabIndex = -1;
@@ -510,7 +510,7 @@
         event.target.closest &&
         event.target.closest(".pgy-free-gift-line") &&
         event.target.closest(
-          "button, input, a, cart-remove-button, [data-item-remove], [data-quantity-input], [data-quantity-decrement], [data-quantity-increment]",
+          "input, [data-quantity-input], [data-quantity-decrement], [data-quantity-increment]",
         )
       ) {
         event.preventDefault();
