@@ -1,83 +1,59 @@
-.pgy-free-gift-banner {
-  box-sizing: border-box;
-  width: 100%;
-  margin: 0 0 1rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--pgy-free-gift-accent, #16a34a) 35%, #d1d5db);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--pgy-free-gift-accent, #16a34a) 8%, #fff);
-  color: var(--pgy-free-gift-text, #111827);
-  font-size: 0.9375rem;
-  line-height: 1.4;
-}
-
-.pgy-free-gift-banner__title {
-  display: block;
-  margin: 0;
-  font-weight: 700;
-}
-
-.pgy-free-gift-banner__meta {
-  display: block;
-  margin-top: 0.25rem;
-  color: color-mix(in srgb, var(--pgy-free-gift-text, #111827) 72%, #fff);
-  font-size: 0.875rem;
-}
-
-.pgy-free-gift-toast {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 2147483647;
-  max-width: min(24rem, calc(100vw - 2rem));
-  padding: 0.875rem 1rem;
-  border-radius: 8px;
-  background: #111827;
-  color: #fff;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  line-height: 1.35;
-  box-shadow: 0 16px 40px rgba(17, 24, 39, 0.2);
-  opacity: 0;
-  transform: translateY(0.5rem);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.pgy-free-gift-toast.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .pgy-free-gift-line [name^="updates"],
+.pgy-free-gift-line input[type="number"],
 .pgy-free-gift-line quantity-input,
 .pgy-free-gift-line .quantity,
 .pgy-free-gift-line .quantity-popover-container,
+.pgy-free-gift-line .cart-item-quantity-wrapper,
+.pgy-free-gift-line .product-quantity-inner,
+.pgy-free-gift-line .quantity-button,
+.pgy-free-gift-line [data-quantity-wrapper],
+.pgy-free-gift-line [data-quantity-input],
+.pgy-free-gift-line [data-quantity-decrement],
+.pgy-free-gift-line [data-quantity-increment],
 .pgy-free-gift-line cart-remove-button,
 .pgy-free-gift-line .cart-remove-button,
 .pgy-free-gift-line .cart__remove,
 .pgy-free-gift-line .cart-item__remove,
+.pgy-free-gift-line .btn-remove,
+.pgy-free-gift-line [data-item-remove],
 .pgy-free-gift-line [href*="/cart/change"] {
+  display: none !important;
   pointer-events: none !important;
-  opacity: 0.45;
+  visibility: hidden !important;
 }
 
-.pgy-free-gift-line [name^="updates"] {
-  user-select: none;
+.pgy-free-gift-line--removing {
+  display: none !important;
+}
+
+.pgy-free-gift-media {
+  position: relative;
 }
 
 .pgy-free-gift-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  margin-top: 0.25rem;
+  justify-content: center;
   padding: 0.1875rem 0.5rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--pgy-free-gift-accent, #16a34a) 12%, #fff);
+  background: color-mix(
+    in srgb,
+    var(--pgy-free-gift-accent, #16a34a) 12%,
+    #fff
+  );
   color: var(--pgy-free-gift-accent, #16a34a);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.2;
+}
+
+.pgy-free-gift-badge--media {
+  position: absolute;
+  top: 0.375rem;
+  left: 0.375rem;
+  z-index: 2;
+  margin: 0;
+  pointer-events: none;
 }
 
 .pgy-free-gift-editor-warning {
@@ -88,13 +64,4 @@
   background: #fffbeb;
   color: #92400e;
   font-size: 0.875rem;
-}
-
-@media (max-width: 749px) {
-  .pgy-free-gift-toast {
-    right: 0.75rem;
-    bottom: 0.75rem;
-    left: 0.75rem;
-    max-width: none;
-  }
 }

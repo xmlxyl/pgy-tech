@@ -17,13 +17,14 @@ var FREE_GIFT_ATTRIBUTE_VALUE = "free";
 var THRESHOLD = 99;
 function cartLinesDiscountsGenerateRun(input) {
   const lines = input.cart.lines;
-  const qualifyingSubtotal = lines.filter((line) => !isFreeGift(line)).reduce((sum, line) => {
+  const freeGiftVariantId = input.cart.freeGiftVariantId?.value;
+  const qualifyingSubtotal = lines.filter((line) => !isFreeGift(line, freeGiftVariantId)).reduce((sum, line) => {
     return sum + Number(line.cost.subtotalAmount.amount || 0);
   }, 0);
   if (qualifyingSubtotal < THRESHOLD) {
     return noDiscounts();
   }
-  const candidates = lines.filter(isFreeGift).map((line) => ({
+  const candidates = lines.filter((line) => isFreeGift(line, freeGiftVariantId)).map((line) => ({
     message: "FREE",
     targets: [
       {
@@ -52,8 +53,14 @@ function cartLinesDiscountsGenerateRun(input) {
     ]
   };
 }
-function isFreeGift(line) {
-  return line.freeGift?.value === FREE_GIFT_ATTRIBUTE_VALUE;
+function isFreeGift(line, freeGiftVariantId) {
+  return line.freeGift?.value === FREE_GIFT_ATTRIBUTE_VALUE || matchesVariantId(line.merchandise, freeGiftVariantId);
+}
+function matchesVariantId(merchandise, variantId) {
+  if (!variantId || merchandise?.__typename !== "ProductVariant") {
+    return false;
+  }
+  return merchandise.id === variantId || merchandise.id.endsWith(`/ProductVariant/${variantId}`);
 }
 function noDiscounts() {
   return { operations: [] };

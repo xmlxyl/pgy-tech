@@ -1,8 +1,17 @@
 query CartLinesDiscountsGenerateRunInput {
   cart {
+    freeGiftVariantId: attribute(key: "_pgy_free_gift_variant_id") {
+      value
+    }
     lines {
       id
       quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+        }
+      }
       cost {
         subtotalAmount {
           amount
