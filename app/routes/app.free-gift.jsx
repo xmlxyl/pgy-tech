@@ -1,4 +1,9 @@
-import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
@@ -24,7 +29,8 @@ export const action = async ({ request }) => {
   if (!functionNode) {
     return {
       ok: false,
-      message: "Free gift discount function was not found. Deploy the app first.",
+      message:
+        "Free gift discount function was not found. Deploy the app first.",
     };
   }
 
@@ -48,6 +54,7 @@ export const action = async ({ request }) => {
         discount: {
           title: DISCOUNT_TITLE,
           functionId: functionNode.id,
+          discountClasses: ["PRODUCT"],
           startsAt: new Date().toISOString(),
           combinesWith: {
             orderDiscounts: true,
@@ -134,9 +141,7 @@ async function findFreeGiftFunction(admin) {
   const json = await response.json();
   const functions = json.data?.shopifyFunctions?.nodes || [];
 
-  return (
-    functions.find((node) => node.title === FUNCTION_TITLE) || null
-  );
+  return functions.find((node) => node.title === FUNCTION_TITLE) || null;
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
