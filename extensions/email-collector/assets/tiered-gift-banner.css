@@ -1,0 +1,123 @@
+.pgy-tiered-gift-banner {
+  display: flex !important;
+  align-items: center;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: #e8f8ee;
+  color: var(--pgy-tiered-gift-text, #111827);
+  border: 1px solid #86efac;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  position: relative;
+  z-index: 5;
+}
+
+.cart-drawer-content-header .pgy-tiered-gift-banner {
+  width: 100%;
+  margin: 0.75rem 0 0;
+}
+
+.cart-heading-wrapper + .pgy-tiered-gift-banner {
+  width: calc(75% - 30px);
+  max-width: none;
+  margin: 1.25rem 0;
+  padding: 0.875rem 1rem;
+}
+
+.pgy-tiered-gift-banner.is-unlocked {
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.pgy-tiered-gift-banner[hidden] {
+  display: none !important;
+}
+
+.pgy-tiered-gift-banner__media {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.pgy-tiered-gift-banner__media[hidden] {
+  display: none !important;
+}
+
+.pgy-tiered-gift-banner__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pgy-tiered-gift-banner__body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pgy-tiered-gift-banner__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.2rem;
+  color: var(--pgy-tiered-gift-text, #111827);
+}
+
+.pgy-tiered-gift-banner__title[hidden] {
+  display: none !important;
+}
+
+.pgy-tiered-gift-banner__message {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.pgy-tiered-gift-line--hidden {
+  display: none !important;
+}
+
+.pgy-tiered-gift-loading {
+  position: relative !important;
+  pointer-events: none !important;
+  cursor: wait !important;
+  opacity: 0.72 !important;
+  color: transparent !important;
+}
+
+.pgy-tiered-gift-loading * {
+  visibility: hidden !important;
+}
+
+.pgy-tiered-gift-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1em;
+  height: 1em;
+  margin: -0.5em 0 0 -0.5em;
+  border: 2px solid rgba(17, 24, 39, 0.2);
+  border-top-color: #111827;
+  border-radius: 50%;
+  animation: pgy-tiered-gift-spin 0.7s linear infinite;
+}
+@media screen and (max-width: 1200px) {
+  .cart-heading-wrapper + .pgy-tiered-gift-banner {
+    width: 100% !important;
+  }
+}
+@keyframes pgy-tiered-gift-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,173 @@
+{% liquid
+  assign enabled = block.settings.enabled
+  assign banner_color = block.settings.banner_color | default: '#111827'
+  assign accent_color = block.settings.accent_color | default: '#16a34a'
+  assign gift_title_fallback = block.settings.gift_fallback_title | default: 'Free gift'
+  assign tier1_threshold = block.settings.tier1_threshold | default: 149
+  assign tier2_threshold = block.settings.tier2_threshold | default: 199
+  assign tier3_threshold = block.settings.tier3_threshold | default: 249
+
+  assign tier1_product = block.settings.tier1_gift_products | first
+  assign tier2_product = block.settings.tier2_gift_products | first
+  assign tier3_product = block.settings.tier3_gift_products | first
+
+  assign tier1_variant = tier1_product.selected_or_first_available_variant
+  assign tier2_variant = tier2_product.selected_or_first_available_variant
+  assign tier3_variant = tier3_product.selected_or_first_available_variant
+%}
+
+<script type="application/json" data-pgy-tiered-gift-config>
+  {
+    "enabled": {{ enabled | json }},
+    "propertyName": "_pgy_tiered_gift",
+    "propertyValue": "free",
+    "giftFallbackTitle": {{ gift_title_fallback | json }},
+    "tiers": [
+      {
+        "tierLevel": 1,
+        "thresholdCents": {{ tier1_threshold | times: 100 }},
+        "variantId": {% if tier1_variant %}{{ tier1_variant.id | json }}{% else %}null{% endif %},
+        "title": {% if tier1_product %}{{ tier1_product.title | json }}{% else %}null{% endif %},
+        "handle": {% if tier1_product %}{{ tier1_product.handle | json }}{% else %}""{% endif %},
+        "image": {% if tier1_product and tier1_product.featured_image %}{{ tier1_product.featured_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+      },
+      {
+        "tierLevel": 2,
+        "thresholdCents": {{ tier2_threshold | times: 100 }},
+        "variantId": {% if tier2_variant %}{{ tier2_variant.id | json }}{% else %}null{% endif %},
+        "title": {% if tier2_product %}{{ tier2_product.title | json }}{% else %}null{% endif %},
+        "handle": {% if tier2_product %}{{ tier2_product.handle | json }}{% else %}""{% endif %},
+        "image": {% if tier2_product and tier2_product.featured_image %}{{ tier2_product.featured_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+      },
+      {
+        "tierLevel": 3,
+        "thresholdCents": {{ tier3_threshold | times: 100 }},
+        "variantId": {% if tier3_variant %}{{ tier3_variant.id | json }}{% else %}null{% endif %},
+        "title": {% if tier3_product %}{{ tier3_product.title | json }}{% else %}null{% endif %},
+        "handle": {% if tier3_product %}{{ tier3_product.handle | json }}{% else %}""{% endif %},
+        "image": {% if tier3_product and tier3_product.featured_image %}{{ tier3_product.featured_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+      }
+    ],
+    "messages": {
+      "locked": {{ block.settings.locked_message | json }},
+      "unlocked": {{ block.settings.unlocked_message | json }},
+      "progress": {{ block.settings.progress_message | json }},
+      "empty": {{ block.settings.empty_message | json }}
+    }
+  }
+</script>
+
+<div
+  data-pgy-tiered-gift
+  style="--pgy-tiered-gift-text: {{ banner_color }}; --pgy-tiered-gift-accent: {{ accent_color }};"
+  {{ block.shopify_attributes }}
+></div>
+
+{% schema %}
+{
+  "name": "Tiered free gift",
+  "target": "body",
+  "stylesheet": "tiered-gift-banner.css",
+  "javascript": "tiered-gift-banner-loader.js",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable tiered free gift",
+      "default": true
+    },
+    {
+      "type": "paragraph",
+      "content": "Select gift products for $149+ / $199+ / $249+ here. Gifts are added at Checkout / Buy now only."
+    },
+    {
+      "type": "number",
+      "id": "tier1_threshold",
+      "label": "Threshold for $149+ gift (shop currency)",
+      "default": 149
+    },
+    {
+      "type": "product_list",
+      "id": "tier1_gift_products",
+      "label": "Gift product ($149+)",
+      "limit": 1
+    },
+    {
+      "type": "number",
+      "id": "tier2_threshold",
+      "label": "Threshold for $199+ gift (shop currency)",
+      "default": 199
+    },
+    {
+      "type": "product_list",
+      "id": "tier2_gift_products",
+      "label": "Gift product ($199+)",
+      "limit": 1
+    },
+    {
+      "type": "number",
+      "id": "tier3_threshold",
+      "label": "Threshold for $249+ gift (shop currency)",
+      "default": 249
+    },
+    {
+      "type": "product_list",
+      "id": "tier3_gift_products",
+      "label": "Gift product ($249+)",
+      "limit": 1
+    },
+    {
+      "type": "text",
+      "id": "gift_fallback_title",
+      "label": "Gift title fallback",
+      "default": "Free gift"
+    },
+    {
+      "type": "header",
+      "content": "Cart banner messages"
+    },
+    {
+      "type": "text",
+      "id": "empty_message",
+      "label": "Empty cart message",
+      "default": "Add items to unlock a free gift."
+    },
+    {
+      "type": "text",
+      "id": "progress_message",
+      "label": "Progress message",
+      "default": "Spend [remaining] more to unlock [title]",
+      "info": "Placeholders: [remaining], [title], [threshold]"
+    },
+    {
+      "type": "text",
+      "id": "unlocked_message",
+      "label": "Unlocked message",
+      "default": "Free gift unlocked: [title] (added at checkout)",
+      "info": "Placeholders: [title], [threshold]"
+    },
+    {
+      "type": "text",
+      "id": "locked_message",
+      "label": "Fallback message",
+      "default": "Free gift will be added at checkout."
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#16A34A"
+    },
+    {
+      "type": "color",
+      "id": "banner_color",
+      "label": "Text color",
+      "default": "#111827"
+    }
+  ]
+}
+{% endschema %}
