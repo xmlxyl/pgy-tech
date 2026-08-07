@@ -58,3 +58,39 @@
   color: #92400e;
   font-size: 0.875rem;
 }
+
+.pgy-free-gift-checkout-loading {
+  position: relative;
+  pointer-events: none !important;
+}
+
+.pgy-free-gift-checkout-loading:not(.summer-backpack-bundles__btn),
+.pgy-free-gift-checkout-loading [data-sbb-btn-label] {
+  color: transparent !important;
+  visibility: hidden;
+}
+
+.pgy-free-gift-checkout-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 1.1em;
+  height: 1.1em;
+  margin: auto;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-right-color: transparent;
+  border-radius: 50%;
+  color: #fff;
+  animation: pgy-free-gift-spin 0.6s linear infinite;
+}
+
+.pgy-free-gift-checkout-loading.summer-backpack-bundles__btn--outline::after {
+  border-color: color-mix(in srgb, var(--sbb-accent, #00a0d5) 35%, #fff);
+  border-right-color: transparent;
+}
+
+@keyframes pgy-free-gift-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

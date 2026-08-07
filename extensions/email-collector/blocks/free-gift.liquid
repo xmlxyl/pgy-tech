@@ -29,6 +29,7 @@
   data-gift-handle="{{ gift_product.handle | escape }}"
   data-property-name="_pgy_free_gift"
   data-property-value="free"
+  data-combo-discount-enabled="{{ block.settings.combo_discount_enabled }}"
   data-msg-progress="{{ block.settings.progress_message | escape }}"
   data-msg-unlocked="{{ block.settings.unlocked_message | escape }}"
   data-msg-added="{{ block.settings.added_message | escape }}"
@@ -61,6 +62,12 @@
       "type": "product",
       "id": "gift_product",
       "label": "Gift product"
+    },
+    {
+      "type": "checkbox",
+      "id": "combo_discount_enabled",
+      "label": "Enable combo discount",
+      "default": true
     },
     {
       "type": "range",

@@ -8,7 +8,7 @@
     lastError: null,
     started: false,
     hasRoot: false,
-    version: "pgy-free-gift-debug-2026-07-14-3",
+    version: "pgy-free-gift-checkout-2026-07-27-1",
   });
   var root = document.querySelector("[data-pgy-free-gift]");
 
@@ -82,11 +82,19 @@
         variantId: config.variantId,
         available: config.available,
       });
+      syncComboDiscountAttribute().catch(function (error) {
+        debug.lastError = error;
+        console.warn(
+          "[PGY free gift] Unable to sync combo discount switch.",
+          error,
+        );
+      });
       return;
     }
 
     var state = {
       syncing: false,
+      ensuringCheckout: false,
       syncTimer: null,
       fallbackTimer: null,
     };
@@ -122,6 +130,7 @@
     removeReminders();
     observeDom();
     bindCartEvents();
+    bindCheckoutEvents();
     syncCart();
 
     function readConfig(element) {
@@ -135,6 +144,7 @@
         giftHandle: element.dataset.giftHandle || "",
         propertyName: element.dataset.propertyName || "_pgy_free_gift",
         propertyValue: element.dataset.propertyValue || "free",
+        comboDiscountEnabled: element.dataset.comboDiscountEnabled !== "false",
         messages: {
           progress:
             element.dataset.msgProgress || "Spend more to unlock a free gift.",
@@ -157,6 +167,7 @@
 
       try {
         var cart = await fetchCart();
+        await syncComboDiscountAttribute(cart);
         var giftLines = cart.items.filter(isGiftLine);
         var subtotal = getSubtotalWithoutGift(cart.items);
         var unlocked = subtotal >= config.thresholdCents;
@@ -267,8 +278,44 @@
         config.variantId,
       );
       attributes[config.propertyName] = config.propertyValue;
+      attributes._pgy_combo_discount_enabled = config.comboDiscountEnabled
+        ? "true"
+        : "false";
 
       return updateGiftLines(updates, attributes);
+    }
+
+    async function syncComboDiscountAttribute(cart) {
+      cart = cart || (await fetchCart());
+
+      var attributes = cart.attributes || {};
+      var nextValue = config.comboDiscountEnabled ? "true" : "false";
+
+      if (attributes._pgy_combo_discount_enabled === nextValue) return cart;
+
+      return updateCartAttributes({
+        _pgy_combo_discount_enabled: nextValue,
+      });
+    }
+
+    async function updateCartAttributes(attributes) {
+      var response = await fetch("/cart/update.js", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          attributes: attributes,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update cart attributes.");
+      }
+
+      return response.json();
     }
 
     async function updateGiftLines(updates, attributes) {
@@ -526,6 +573,629 @@
         )
       ) {
         debounceSync();
+      }
+    }
+
+    var buyNowSelector = [
+      "[data-buy-now]",
+      '[data-action="buy-now"]',
+      ".buy-now",
+      ".buy_now",
+      ".product-buy-now",
+      'button[name="buy"]',
+      "[data-sbb-shop-now]",
+      ".shopify-payment-button",
+      '[data-shopify="payment-button"]',
+      "shopify-accelerated-checkout",
+    ].join(",");
+
+    function bindCheckoutEvents() {
+      document.addEventListener(
+        "mousedown",
+        function (event) {
+          var trigger = getCheckoutTrigger(event.target);
+
+          if (trigger) prepareCheckout(event, trigger);
+        },
+        true,
+      );
+
+      document.addEventListener(
+        "click",
+        function (event) {
+          var trigger = getCheckoutTrigger(event.target);
+
+          if (trigger) prepareCheckout(event, trigger);
+        },
+        true,
+      );
+
+      document.addEventListener(
+        "submit",
+        function (event) {
+          var form = event.target;
+
+          if (!form || !form.matches) return;
+
+          var submitter = event.submitter || null;
+          var checkoutSubmit =
+            (submitter &&
+              submitter.getAttribute &&
+              submitter.getAttribute("name") === "checkout") ||
+            form.querySelector('[name="checkout"]');
+
+          if (
+            !checkoutSubmit &&
+            !isCartScope(form) &&
+            !findBuyNowButton(submitter || form)
+          ) {
+            return;
+          }
+
+          prepareCheckout(event, checkoutSubmit || submitter || form);
+        },
+        true,
+      );
+    }
+
+    function prepareCheckout(event, trigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+
+      if (state.ensuringCheckout) return;
+
+      handleCheckout(trigger);
+    }
+
+    async function handleCheckout(trigger) {
+      var checkoutUrl = getCheckoutUrl(trigger);
+      var buyNow = isBuyNowTrigger(trigger);
+      var navigated = false;
+
+      state.ensuringCheckout = true;
+      setTriggerLoading(trigger, true);
+
+      try {
+        if (buyNow) {
+          await addBuyNowProductToCart(trigger);
+        }
+
+        await ensureGiftInCart();
+
+        logDebug("checkout-ready", {
+          url: checkoutUrl,
+          buyNow: buyNow,
+        });
+
+        navigated = true;
+        window.location.assign(checkoutUrl);
+      } catch (error) {
+        debug.lastError = error;
+        console.warn("[PGY free gift] Unable to prepare checkout gift.", error);
+
+        navigated = true;
+        window.location.assign(checkoutUrl);
+      } finally {
+        state.ensuringCheckout = false;
+        if (!navigated) setTriggerLoading(trigger, false);
+      }
+    }
+
+    async function ensureGiftInCart() {
+      var cart = await fetchCart();
+      await syncComboDiscountAttribute(cart);
+      var subtotal = getSubtotalWithoutGift(cart.items || []);
+      var giftLines = (cart.items || []).filter(isGiftLine);
+      var unlocked = subtotal >= config.thresholdCents;
+
+      logDebug("checkout-ensure", {
+        subtotal: subtotal,
+        thresholdCents: config.thresholdCents,
+        unlocked: unlocked,
+        giftLines: giftLines.length,
+      });
+
+      if (!unlocked) {
+        if (giftLines.length) {
+          await updateGiftLines(toQuantityMap(giftLines, 0));
+        }
+        return;
+      }
+
+      if (!giftLines.length) {
+        await addGift();
+        cart = await fetchCart();
+        giftLines = (cart.items || []).filter(isGiftLine);
+      }
+
+      var wrongQuantityLines = giftLines.filter(function (item) {
+        return item.quantity !== 1;
+      });
+
+      if (wrongQuantityLines.length) {
+        await updateGiftLines(toQuantityMap(wrongQuantityLines, 1));
+        cart = await fetchCart();
+        giftLines = (cart.items || []).filter(isGiftLine);
+      }
+
+      if (!giftLines.length) {
+        throw new Error("Gift variant " + config.variantId + " was not added.");
+      }
+    }
+
+    async function addBuyNowProductToCart(trigger) {
+      var permalink = parseCartPermalink(
+        (trigger && trigger.getAttribute && trigger.getAttribute("href")) ||
+          (trigger && trigger.href),
+      );
+
+      if (permalink && permalink.variantId) {
+        await fetchJson("/cart/add.js", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            items: [
+              {
+                id: permalink.variantId,
+                quantity: permalink.quantity,
+              },
+            ],
+          }),
+        });
+        return;
+      }
+
+      if (
+        trigger &&
+        trigger.closest &&
+        trigger.closest("[data-sbb-shop-now]")
+      ) {
+        await addSummerBackpackBundleToCart(trigger);
+        return;
+      }
+
+      var form = getBuyNowProductForm(trigger);
+      var formData = form
+        ? new FormData(form)
+        : buildBuyNowFallbackFormData(trigger);
+
+      if (!formData) {
+        throw new Error("Unable to find the Buy Now product variant.");
+      }
+
+      formData.delete("sections");
+      formData.delete("sections_url");
+
+      if (!toNumber(formData.get("id"))) {
+        throw new Error("Unable to read the selected Buy Now variant.");
+      }
+
+      await fetchJson("/cart/add.js", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+        body: formData,
+      });
+    }
+
+    async function addSummerBackpackBundleToCart(trigger) {
+      var row = trigger.closest("[data-sbb-row]");
+      var cartSelection = getSummerBackpackSelectedItems(row);
+
+      if (!cartSelection.length) {
+        throw new Error("Unable to find selected bundle variants.");
+      }
+
+      logDebug("buy-now-sbb-items", {
+        items: cartSelection,
+      });
+
+      await fetchJson(
+        typeof cartAddUrl !== "undefined" ? cartAddUrl : "/cart/add.js",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            items: cartSelection,
+          }),
+        },
+      );
+    }
+
+    function getSummerBackpackSelectedItems(row) {
+      if (!row) return [];
+
+      var itemsById = {};
+      var items = [];
+
+      row.querySelectorAll("[data-sbb-card]").forEach(function (card) {
+        var variant = getSummerBackpackSelectedVariant(card);
+
+        if (!variant || !variant.id || variant.available === false) return;
+
+        var variantId = String(variant.id);
+
+        if (!itemsById[variantId]) {
+          itemsById[variantId] = {
+            id: Number(variant.id),
+            quantity: 0,
+          };
+          items.push(itemsById[variantId]);
+        }
+
+        itemsById[variantId].quantity += 1;
+      });
+
+      return items;
+    }
+
+    function getSummerBackpackSelectedVariant(card) {
+      var productData = parseJsonScript(
+        card && card.querySelector("[data-sbb-product-json]"),
+      );
+
+      if (
+        !productData ||
+        !productData.variants ||
+        !productData.variants.length
+      ) {
+        return null;
+      }
+
+      var select = card.querySelector("[data-sbb-sku-select]");
+      var selectedId = select
+        ? String(select.value)
+        : String(card.getAttribute("data-selected-variant-id") || "");
+
+      return (
+        productData.variants.find(function (variant) {
+          return String(variant.id) === selectedId;
+        }) ||
+        productData.variants.find(function (variant) {
+          return variant.available;
+        }) ||
+        productData.variants[0] ||
+        null
+      );
+    }
+
+    function parseJsonScript(element) {
+      if (!element) return null;
+
+      try {
+        return JSON.parse(element.textContent || "{}");
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function fetchJson(url, options) {
+      var response = await fetch(url, options || {});
+
+      if (!response.ok) {
+        throw new Error("Request failed: " + response.status);
+      }
+
+      return response.json();
+    }
+
+    function getCheckoutTrigger(element) {
+      if (!element || !element.closest) return null;
+
+      return (
+        element.closest('[name="checkout"]') ||
+        element.closest(".cart__checkout-button") ||
+        element.closest(".cart-drawer__checkout-button") ||
+        element.closest(".ajaxcart__checkout") ||
+        element.closest("#checkout") ||
+        element.closest("[data-checkout]") ||
+        element.closest(".checkout-button") ||
+        element.closest('a[href="/checkout"]') ||
+        element.closest('a[href^="/checkout?"]') ||
+        findBuyNowButton(element)
+      );
+    }
+
+    function findBuyNowButton(element) {
+      if (!element || !element.closest) return null;
+
+      var candidate = element.closest(buyNowSelector);
+
+      if (candidate) return candidate;
+
+      var button = element.closest("button, a, input[type='submit']");
+
+      if (!button) return null;
+
+      if (parseCartPermalink(button.getAttribute("href") || button.href)) {
+        return button;
+      }
+
+      return isBuyNowLabel(button) ? button : null;
+    }
+
+    function isBuyNowTrigger(trigger) {
+      if (!trigger) return false;
+
+      if (trigger.matches && trigger.matches(buyNowSelector)) return true;
+
+      if (
+        parseCartPermalink(
+          (trigger.getAttribute && trigger.getAttribute("href")) ||
+            trigger.href,
+        )
+      ) {
+        return true;
+      }
+
+      return isBuyNowLabel(trigger);
+    }
+
+    function isBuyNowLabel(element) {
+      var label = getButtonLabel(element);
+
+      return (
+        label.indexOf("buy it now") !== -1 ||
+        label.indexOf("buy now") !== -1 ||
+        label.indexOf("shop now") !== -1
+      );
+    }
+
+    function getButtonLabel(element) {
+      if (!element || !element.getAttribute) return "";
+
+      return (
+        element.getAttribute("aria-label") ||
+        element.value ||
+        element.textContent ||
+        ""
+      )
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    }
+
+    function getBuyNowProductForm(trigger) {
+      if (!trigger) return null;
+
+      if (trigger.form && hasVariantIdField(trigger.form)) {
+        return trigger.form;
+      }
+
+      if (!trigger.closest) return null;
+
+      var closestForm = trigger.closest("form");
+
+      if (closestForm && hasVariantIdField(closestForm)) return closestForm;
+
+      closestForm = trigger.closest('form[action*="/cart/add"]');
+      if (closestForm) return closestForm;
+
+      var formId = trigger.getAttribute && trigger.getAttribute("form");
+      if (formId) {
+        var linkedForm = document.getElementById(formId);
+
+        if (linkedForm && hasVariantIdField(linkedForm)) {
+          return linkedForm;
+        }
+      }
+
+      var productScope = trigger.closest(
+        "product-info, product-form, .product, .product-form, [data-product], [data-product-form]",
+      );
+
+      if (productScope) {
+        var scopedForm =
+          productScope.querySelector('form[action*="/cart/add"]') ||
+          Array.prototype.find.call(
+            productScope.querySelectorAll("form"),
+            hasVariantIdField,
+          );
+
+        if (scopedForm) return scopedForm;
+      }
+
+      return Array.prototype.find.call(
+        document.querySelectorAll('form[action*="/cart/add"], form'),
+        hasVariantIdField,
+      );
+    }
+
+    function buildBuyNowFallbackFormData(trigger) {
+      var variantId = getSelectedVariantId(trigger);
+
+      if (!variantId) return null;
+
+      var formData = new FormData();
+      var quantity = getSelectedQuantity(trigger);
+
+      formData.set("id", String(variantId));
+      if (quantity > 0) formData.set("quantity", String(quantity));
+
+      logDebug("buy-now-fallback-variant", {
+        variantId: variantId,
+        quantity: quantity || 1,
+      });
+
+      return formData;
+    }
+
+    function getSelectedVariantId(trigger) {
+      var scopes = getProductLookupScopes(trigger);
+
+      for (var index = 0; index < scopes.length; index += 1) {
+        var variantId = getVariantIdFromScope(scopes[index]);
+
+        if (variantId) return variantId;
+      }
+
+      try {
+        return toNumber(
+          new URLSearchParams(window.location.search).get("variant"),
+        );
+      } catch (error) {
+        return 0;
+      }
+    }
+
+    function getVariantIdFromScope(scope) {
+      if (!scope || !scope.querySelector) return 0;
+
+      var selectedInput =
+        scope.querySelector('select[name="id"]') ||
+        scope.querySelector('input[name="id"]:checked') ||
+        scope.querySelector('input[name="id"][value]');
+
+      if (selectedInput) {
+        return toNumber(selectedInput.value);
+      }
+
+      var variantElement = scope.querySelector(
+        "[data-selected-variant-id], [data-current-variant-id], [data-variant-id]",
+      );
+
+      if (!variantElement) return 0;
+
+      return toNumber(
+        variantElement.dataset.selectedVariantId ||
+          variantElement.dataset.currentVariantId ||
+          variantElement.dataset.variantId,
+      );
+    }
+
+    function getSelectedQuantity(trigger) {
+      var scopes = getProductLookupScopes(trigger);
+
+      for (var index = 0; index < scopes.length; index += 1) {
+        var quantityInput =
+          scopes[index] &&
+          scopes[index].querySelector &&
+          scopes[index].querySelector('[name="quantity"]');
+
+        if (quantityInput && toNumber(quantityInput.value) > 0) {
+          return toNumber(quantityInput.value);
+        }
+      }
+
+      return 1;
+    }
+
+    function getProductLookupScopes(trigger) {
+      var scopes = [];
+
+      function add(scope) {
+        if (scope && scopes.indexOf(scope) === -1) scopes.push(scope);
+      }
+
+      if (trigger) {
+        add(trigger.form);
+
+        if (trigger.getAttribute) {
+          var formId = trigger.getAttribute("form");
+          if (formId) add(document.getElementById(formId));
+        }
+
+        if (trigger.closest) {
+          add(trigger.closest("form"));
+          add(
+            trigger.closest(
+              "product-info, product-form, .product, .product-form, [data-product], [data-product-form]",
+            ),
+          );
+        }
+      }
+
+      Array.prototype.forEach.call(
+        document.querySelectorAll("form"),
+        function (form) {
+          if (hasVariantIdField(form)) add(form);
+        },
+      );
+
+      add(document);
+
+      return scopes;
+    }
+
+    function hasVariantIdField(scope) {
+      return !!(
+        scope &&
+        scope.querySelector &&
+        scope.querySelector('select[name="id"], input[name="id"]')
+      );
+    }
+
+    function parseCartPermalink(href) {
+      if (!href) return null;
+
+      var match = String(href).match(/\/cart\/(\d+)(?::(\d+))?/i);
+
+      if (!match) return null;
+
+      return {
+        variantId: toNumber(match[1]),
+        quantity: toNumber(match[2]) || 1,
+      };
+    }
+
+    function getCheckoutUrl(trigger) {
+      if (trigger && trigger.tagName === "A" && trigger.href) {
+        if (parseCartPermalink(trigger.href)) return "/checkout";
+        if (/\/checkout/.test(trigger.href)) return trigger.href;
+      }
+
+      if (trigger && trigger.form && trigger.form.action) {
+        if (/\/checkout/.test(trigger.form.action)) return trigger.form.action;
+      }
+
+      return "/checkout";
+    }
+
+    function isCartScope(element) {
+      return !!(
+        element &&
+        element.closest &&
+        element.closest(
+          "#ajax-cart-drawer, [data-cart-drwaer-body], [data-cart-wrapper], cart-drawer, #CartDrawer, .cart-drawer, form[action*='/cart'], .cart, .mini-cart",
+        )
+      );
+    }
+
+    function setTriggerLoading(trigger, loading) {
+      if (!trigger) return;
+
+      if (loading) {
+        trigger.classList.add("pgy-free-gift-checkout-loading");
+        trigger.classList.add("is-loading");
+        trigger.setAttribute("aria-busy", "true");
+        trigger.setAttribute("aria-disabled", "true");
+
+        if ("disabled" in trigger) {
+          trigger.dataset.pgyWasDisabled = trigger.disabled ? "1" : "0";
+          trigger.disabled = true;
+        }
+
+        return;
+      }
+
+      trigger.classList.remove("pgy-free-gift-checkout-loading");
+      trigger.classList.remove("is-loading");
+      trigger.removeAttribute("aria-busy");
+      trigger.removeAttribute("aria-disabled");
+
+      if ("disabled" in trigger) {
+        trigger.disabled = trigger.dataset.pgyWasDisabled === "1";
+        delete trigger.dataset.pgyWasDisabled;
       }
     }
 

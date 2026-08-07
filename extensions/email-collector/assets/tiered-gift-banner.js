@@ -17,7 +17,7 @@
     lastCart: null,
     lastError: null,
     started: false,
-    version: "pgy-tiered-gift-checkout-2026-07-20-1",
+    version: "pgy-tiered-gift-checkout-2026-07-31-1",
   });
 
   var root = document.querySelector("[data-pgy-tiered-gift]");
@@ -261,22 +261,7 @@
 
       if (props[config.propertyName] === config.propertyValue) return true;
 
-      return config.tiers.some(function (tier) {
-        if (tier.variantId > 0 && Number(item.variant_id) === tier.variantId) {
-          return true;
-        }
-
-        if (tier.handle) {
-          if (item.handle === tier.handle) return true;
-          if (item.url && String(item.url).indexOf("/products/" + tier.handle) !== -1) {
-            return true;
-          }
-        }
-
-        if (tier.title && item.product_title === tier.title) return true;
-
-        return false;
-      });
+      return false;
     }
 
     function getCartScopes() {
@@ -335,7 +320,23 @@
     function hideGiftLinesInDom() {
       restoreMisplacedHides();
 
-      getGiftLineElements().forEach(function (line) {
+      var giftLineElements = getGiftLineElements();
+
+      document
+        .querySelectorAll(
+          '[data-pgy-gift-hidden="true"], .pgy-tiered-gift-line--hidden',
+        )
+        .forEach(function (line) {
+          if (!isWithinCartScope(line)) return;
+          if (giftLineElements.indexOf(line) !== -1) return;
+
+          delete line.dataset.pgyGiftHidden;
+          line.classList.remove("pgy-tiered-gift-line--hidden");
+          line.style.removeProperty("display");
+          line.removeAttribute("hidden");
+        });
+
+      giftLineElements.forEach(function (line) {
         if (line.dataset.pgyGiftHidden === "true") return;
         line.dataset.pgyGiftHidden = "true";
         line.style.display = "none";
@@ -347,7 +348,15 @@
     function getGiftLineElements() {
       var lines = [];
       var scopes = getCartScopes();
+      var giftKeys = ((state.cart && state.cart.items) || [])
+        .filter(isGiftLine)
+        .map(function (item) {
+          return item.key;
+        })
+        .filter(Boolean);
+
       if (!scopes.length) return lines;
+      if (!giftKeys.length) return lines;
 
       var lineSelector =
         "tr, cart-item, .cart-item, .cart__item, [data-cart-item], .line-item, .ajaxcart__row";
@@ -358,32 +367,32 @@
       }
 
       scopes.forEach(function (scope) {
-        config.tiers.forEach(function (tier) {
-          if (tier.handle) {
-            scope
-              .querySelectorAll('a[href*="/products/' + tier.handle + '"]')
-              .forEach(function (link) {
-                addLine(link.closest(lineSelector) || link.closest("li"));
+        giftKeys.forEach(function (key) {
+          var escapedKey = cssEscape(key);
+          [
+            '[data-key="' + escapedKey + '"]',
+            '[data-line-key="' + escapedKey + '"]',
+            '[data-cart-item-key="' + escapedKey + '"]',
+            '[data-cart-item-id="' + escapedKey + '"]',
+          ].forEach(function (selector) {
+            try {
+              scope.querySelectorAll(selector).forEach(function (node) {
+                addLine(node.closest(lineSelector) || node.closest("li") || node);
               });
-          }
-
-          if (tier.variantId) {
-            scope
-              .querySelectorAll(
-                'a[href*="variant=' +
-                  tier.variantId +
-                  '"], [data-variant="' +
-                  tier.variantId +
-                  '"]',
-              )
-              .forEach(function (node) {
-                addLine(node.closest(lineSelector) || node.closest("li"));
-              });
-          }
+            } catch (_error) {}
+          });
         });
       });
 
       return lines;
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && typeof window.CSS.escape === "function") {
+        return window.CSS.escape(String(value));
+      }
+
+      return String(value).replace(/["\\]/g, "\\$&");
     }
 
     function observeGiftLineDom() {
@@ -1216,7 +1225,7 @@
       }
 
       var hasGift = (cart.items || []).some(function (item) {
-        return Number(item.variant_id) === active.variantId;
+        return isGiftLine(item) && Number(item.variant_id) === active.variantId;
       });
 
       if (!hasGift) {
@@ -1254,7 +1263,7 @@
       }
 
       var verified = (cart.items || []).some(function (item) {
-        return Number(item.variant_id) === active.variantId;
+        return isGiftLine(item) && Number(item.variant_id) === active.variantId;
       });
 
       if (!verified) {

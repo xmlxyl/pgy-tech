@@ -3,6 +3,12 @@ query CartLinesDiscountsGenerateRunInput {
     freeGiftVariantId: attribute(key: "_pgy_free_gift_variant_id") {
       value
     }
+    comboDiscounts: attribute(key: "_pgy_combo_discounts") {
+      value
+    }
+    comboDiscountEnabled: attribute(key: "_pgy_combo_discount_enabled") {
+      value
+    }
     lines {
       id
       quantity
@@ -10,6 +16,9 @@ query CartLinesDiscountsGenerateRunInput {
         __typename
         ... on ProductVariant {
           id
+          product {
+            id
+          }
         }
       }
       cost {
