@@ -5,11 +5,11 @@ import { authenticate } from "../shopify.server";
 import { formatBeijingDateTime } from "../lib/price-tasks.server";
 
 const STATUS_LABELS = {
-  Pending: "待执行",
-  PriceChanging: "改价中",
-  PriceChanged: "已改价",
+  Pending: "待修改",
+  PriceChanging: "修改中",
+  PriceChanged: "已修改",
   Restoring: "恢复中",
-  Completed: "已完成",
+  Completed: "已恢复",
   PartiallyFailed: "部分失败",
   Failed: "失败",
   Cancelled: "已取消",
@@ -35,8 +35,6 @@ export const loader = async ({ request, params }) => {
       name: task.name,
       status: STATUS_LABELS[task.status] || task.status,
       fileName: task.fileName,
-      scheduledChangeAt: formatBeijingDateTime(task.scheduledChangeAt),
-      scheduledRestoreAt: formatBeijingDateTime(task.scheduledRestoreAt),
       totalCount: task.totalCount,
       successCount: task.successCount,
       failedCount: task.failedCount,
@@ -49,8 +47,6 @@ export const loader = async ({ request, params }) => {
         changeStatus: STATUS_LABELS[item.changeStatus] || item.changeStatus,
         restoreStatus: STATUS_LABELS[item.restoreStatus] || item.restoreStatus,
         errorMessage: item.errorMessage,
-        changedAt: formatBeijingDateTime(item.changedAt),
-        restoredAt: formatBeijingDateTime(item.restoredAt),
       })),
     },
   };
@@ -62,19 +58,15 @@ export default function PriceTaskDetailPage() {
   return (
     <s-page heading={task.name} inlineSize="large">
       <s-section>
-        <s-stack direction="inline" gap="small">
-          <s-link href="/app/price-tasks">
-            <s-button variant="secondary">返回列表</s-button>
-          </s-link>
-        </s-stack>
+        <s-link href="/app/price-tasks">
+          <s-button variant="secondary">返回列表</s-button>
+        </s-link>
       </s-section>
 
       <s-section heading="任务信息">
         <s-stack gap="small">
           <s-text>状态：{task.status}</s-text>
           <s-text>Excel 文件：{task.fileName}</s-text>
-          <s-text>改价时间（北京时间）：{task.scheduledChangeAt}</s-text>
-          <s-text>恢复时间（北京时间）：{task.scheduledRestoreAt}</s-text>
           <s-text>
             SKU 总数：{task.totalCount}，成功：{task.successCount}，失败：
             {task.failedCount}
@@ -89,7 +81,7 @@ export default function PriceTaskDetailPage() {
             <s-table-header listSlot="primary">SKU</s-table-header>
             <s-table-header>原价</s-table-header>
             <s-table-header>目标价格</s-table-header>
-            <s-table-header>改价状态</s-table-header>
+            <s-table-header>修改状态</s-table-header>
             <s-table-header>恢复状态</s-table-header>
             <s-table-header>错误原因</s-table-header>
           </s-table-header-row>

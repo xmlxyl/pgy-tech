@@ -3,12 +3,9 @@ import {
   handleEmailProxyRequest,
   isEmailProxyPath,
 } from "./lib/email-proxy.server";
-import { startPriceTaskScheduler } from "./lib/price-task-scheduler.server";
 import { addDocumentResponseHeaders } from "./shopify.server";
 
 export { streamTimeout } from "@vercel/react-router/entry.server";
-
-startPriceTaskScheduler();
 
 export default async function handleRequest(
   request,

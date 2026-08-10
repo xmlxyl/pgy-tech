@@ -46,8 +46,6 @@ model PriceChangeTask {
   shop               String
   name               String
   status             String                @default("Pending")
-  scheduledChangeAt  DateTime
-  scheduledRestoreAt DateTime
   fileName           String
   totalCount         Int                   @default(0)
   successCount       Int                   @default(0)
@@ -58,8 +56,6 @@ model PriceChangeTask {
   items              PriceChangeTaskItem[]
 
   @@index([shop, status])
-  @@index([scheduledChangeAt])
-  @@index([scheduledRestoreAt])
 }
 
 model PriceChangeTaskItem {

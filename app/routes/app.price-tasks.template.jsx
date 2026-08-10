@@ -23,7 +23,7 @@ export const loader = async ({ request }) => {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition":
-        'attachment; filename="price-task-template.xlsx"',
+        'attachment; filename="compare-at-price-template.xlsx"',
     },
   });
 };

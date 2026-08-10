@@ -18,7 +18,7 @@ export default function App() {
       <s-app-nav>
         <s-link href="/app">Home</s-link>
         <s-link href="/app/free-gift">Free Gift</s-link>
-        <s-link href="/app/price-tasks">定时改价</s-link>
+        <s-link href="/app/price-tasks">划线价修改</s-link>
         <s-link href="/app/faq">FAQ管理</s-link>
         <s-link href="/app/email">收集邮箱记录</s-link>
       </s-app-nav>

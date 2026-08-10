@@ -19,19 +19,10 @@ const ITEM_STATUS = {
   skipped: "Skipped",
 };
 
-const CHANGE_EXECUTION_GRACE_MS = 2 * 60 * 1000;
+const FEISHU_WEBHOOK_URL =
+  "https://open.feishu.cn/open-apis/bot/v2/hook/a61ad8ea-fc5b-4e7f-8af4-9cfe16e9a9a7";
 
 export const BEIJING_TIME_ZONE = "Asia/Shanghai";
-
-export function parseBeijingDateTime(value) {
-  if (!value) return null;
-  const normalized = String(value).trim();
-  if (!normalized) return null;
-  const withSeconds =
-    normalized.length === 16 ? `${normalized}:00` : normalized;
-  const isoLike = withSeconds.replace(" ", "T");
-  return new Date(`${isoLike}+08:00`);
-}
 
 export function formatBeijingDateTime(value) {
   if (!value) return "";
@@ -119,6 +110,10 @@ export async function enrichRowsWithShopifyVariants(admin, rows) {
     if (variant.error) {
       rowErrors.push(variant.error);
       errors.push(`第 ${row.lineNumber} 行：${variant.error}`);
+    } else if (Number(row.targetPrice) >= Number(variant.price)) {
+      const message = "目标价格必须小于当前价格，才能生成划线价";
+      rowErrors.push(message);
+      errors.push(`第 ${row.lineNumber} 行：${message}`);
     }
 
     resultRows.push({
@@ -126,6 +121,7 @@ export async function enrichRowsWithShopifyVariants(admin, rows) {
       productId: variant.productId || "",
       variantId: variant.variantId || "",
       originalPrice: variant.price || "",
+      currentCompareAtPrice: variant.compareAtPrice || "",
       errors: rowErrors,
     });
   }
@@ -137,8 +133,6 @@ export async function createPriceTask({
   shop,
   createdBy,
   name,
-  scheduledChangeAt,
-  scheduledRestoreAt,
   fileName,
   rows,
 }) {
@@ -147,8 +141,6 @@ export async function createPriceTask({
       shop,
       name,
       createdBy,
-      scheduledChangeAt,
-      scheduledRestoreAt,
       fileName,
       totalCount: rows.length,
       items: {
@@ -164,218 +156,95 @@ export async function createPriceTask({
   });
 }
 
-export async function runDuePriceTasks(admin, shop) {
-  const now = new Date();
-  const changeWindowStart = new Date(
-    now.getTime() - CHANGE_EXECUTION_GRACE_MS,
-  );
-
-  const expiredChangeTasks = await prisma.priceChangeTask.findMany({
-    where: {
-      shop,
-      status: { in: [TASK_STATUS.pending, TASK_STATUS.priceChanging] },
-      scheduledChangeAt: { lt: changeWindowStart },
-    },
-    include: { items: true },
-    orderBy: { scheduledChangeAt: "asc" },
-    take: 20,
-  });
-
-  const changeTasks = await prisma.priceChangeTask.findMany({
-    where: {
-      shop,
-      status: { in: [TASK_STATUS.pending, TASK_STATUS.priceChanging] },
-      scheduledChangeAt: { gte: changeWindowStart, lte: now },
-    },
-    include: { items: true },
-    orderBy: { scheduledChangeAt: "asc" },
-    take: 10,
-  });
-
-  const restoreTasks = await prisma.priceChangeTask.findMany({
-    where: {
-      shop,
-      status: {
-        in: [
-          TASK_STATUS.priceChanged,
-          TASK_STATUS.partiallyFailed,
-          TASK_STATUS.restoring,
-        ],
-      },
-      scheduledRestoreAt: { lte: now },
-    },
-    include: { items: true },
-    orderBy: { scheduledRestoreAt: "asc" },
-    take: 10,
-  });
-
-  const changed = [];
-  const restored = [];
-  const expired = [];
-
-  for (const task of expiredChangeTasks) {
-    expired.push(await expireChangeTask(task));
+export async function applyCompareAtPriceTask(admin, shop, taskId) {
+  const task = await getTaskForShop(shop, taskId);
+  if (!task) return { ok: false, message: "任务不存在" };
+  if (
+    ![
+      TASK_STATUS.pending,
+      TASK_STATUS.failed,
+      TASK_STATUS.partiallyFailed,
+    ].includes(task.status)
+  ) {
+    return { ok: false, message: "当前状态不能执行修改价格" };
   }
 
-  for (const task of changeTasks) {
-    changed.push(await executeChangeTask(admin, task));
-  }
-
-  for (const task of restoreTasks) {
-    restored.push(await executeRestoreTask(admin, task));
-  }
-
-  return { changed, restored, expired };
-}
-
-export async function runDuePriceTasksForAllShops(getAdminForShop) {
-  const shops = await prisma.session.findMany({
-    distinct: ["shop"],
-    select: { shop: true },
-    where: {
-      shop: {
-        not: "",
-      },
-      accessToken: {
-        not: "",
-      },
-    },
-  });
-
-  const results = [];
-
-  for (const { shop } of shops) {
-    try {
-      const admin = await getAdminForShop(shop);
-      const result = await runDuePriceTasks(admin, shop);
-      results.push({ shop, ok: true, ...result });
-    } catch (error) {
-      results.push({
-        shop,
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  return results;
-}
-
-async function executeChangeTask(admin, task) {
   await prisma.priceChangeTask.update({
     where: { id: task.id },
     data: { status: TASK_STATUS.priceChanging },
   });
 
-  let successCount = 0;
-  let failedCount = 0;
-
-  for (const item of task.items) {
-    if (item.changeStatus === ITEM_STATUS.success) {
-      successCount += 1;
-      continue;
-    }
-
-    const result = await safelyUpdateVariantPrice(
+  const result = await updateItems(task, async (item) =>
+    updateVariantSalePrice(
       admin,
       item.productId,
       item.variantId,
       item.targetPrice,
-    );
-    if (result.ok) {
-      successCount += 1;
-      await prisma.priceChangeTaskItem.update({
-        where: { id: item.id },
-        data: {
-          changeStatus: ITEM_STATUS.success,
-          errorMessage: null,
-          changedAt: new Date(),
-        },
-      });
-    } else {
-      failedCount += 1;
-      await prisma.priceChangeTaskItem.update({
-        where: { id: item.id },
-        data: {
-          changeStatus: ITEM_STATUS.failed,
-          errorMessage: result.message,
-        },
-      });
-    }
+      item.originalPrice,
+    ),
+  );
+
+  const status = getChangeStatus(result.successCount, result.failedCount);
+  await prisma.priceChangeTask.update({
+    where: { id: task.id },
+    data: {
+      status,
+      successCount: result.successCount,
+      failedCount: result.failedCount,
+    },
+  });
+
+  await sendPriceTaskFeishuNotice(admin, shop, task.id, "修改价格");
+
+  return { ok: true, taskId: task.id, status, ...result };
+}
+
+export async function restorePriceTask(admin, shop, taskId) {
+  const task = await getTaskForShop(shop, taskId);
+  if (!task) return { ok: false, message: "任务不存在" };
+  if (
+    ![
+      TASK_STATUS.priceChanged,
+      TASK_STATUS.restoring,
+      TASK_STATUS.partiallyFailed,
+      TASK_STATUS.completed,
+    ].includes(task.status)
+  ) {
+    return { ok: false, message: "当前状态不能执行恢复价格" };
   }
 
-  const status =
-    failedCount === 0
-      ? TASK_STATUS.priceChanged
-      : successCount > 0
-        ? TASK_STATUS.partiallyFailed
-        : TASK_STATUS.failed;
-
-  await prisma.priceChangeTask.update({
-    where: { id: task.id },
-    data: { status, successCount, failedCount },
-  });
-
-  return { taskId: task.id, status, successCount, failedCount };
-}
-
-async function expireChangeTask(task) {
-  const message = "改价时间已过期，系统未执行改价";
-
-  await prisma.priceChangeTaskItem.updateMany({
-    where: {
-      taskId: task.id,
-      changeStatus: { not: ITEM_STATUS.success },
-    },
-    data: {
-      changeStatus: ITEM_STATUS.skipped,
-      restoreStatus: ITEM_STATUS.skipped,
-      errorMessage: message,
-    },
-  });
-
-  await prisma.priceChangeTask.update({
-    where: { id: task.id },
-    data: {
-      status: TASK_STATUS.failed,
-      successCount: task.items.filter(
-        (item) => item.changeStatus === ITEM_STATUS.success,
-      ).length,
-      failedCount: task.items.filter(
-        (item) => item.changeStatus !== ITEM_STATUS.success,
-      ).length,
-    },
-  });
-
-  return {
-    taskId: task.id,
-    status: TASK_STATUS.failed,
-    message,
-  };
-}
-
-async function executeRestoreTask(admin, task) {
   await prisma.priceChangeTask.update({
     where: { id: task.id },
     data: { status: TASK_STATUS.restoring },
   });
 
+  const restorableItems = task.items.filter(
+    (item) => item.changeStatus === ITEM_STATUS.success,
+  );
+  if (restorableItems.length === 0) {
+    await prisma.priceChangeTask.update({
+      where: { id: task.id },
+      data: { status: TASK_STATUS.failed },
+    });
+    return { ok: false, message: "没有已成功修改的 SKU 可恢复" };
+  }
+
   let successCount = 0;
   let failedCount = 0;
 
-  for (const item of task.items) {
-    if (item.changeStatus !== ITEM_STATUS.success) continue;
+  for (const item of restorableItems) {
     if (item.restoreStatus === ITEM_STATUS.success) {
       successCount += 1;
       continue;
     }
 
-    const result = await safelyUpdateVariantPrice(
-      admin,
-      item.productId,
-      item.variantId,
-      item.originalPrice,
-    );
+    const result = await safelyUpdateVariantPrice(admin, {
+      productId: item.productId,
+      variantId: item.variantId,
+      price: item.originalPrice,
+      compareAtPrice: null,
+    });
+
     if (result.ok) {
       successCount += 1;
       await prisma.priceChangeTaskItem.update({
@@ -398,14 +267,70 @@ async function executeRestoreTask(admin, task) {
     }
   }
 
-  const status = failedCount === 0 ? TASK_STATUS.completed : TASK_STATUS.partiallyFailed;
-
+  const status =
+    failedCount === 0 ? TASK_STATUS.completed : TASK_STATUS.partiallyFailed;
   await prisma.priceChangeTask.update({
     where: { id: task.id },
-    data: { status, successCount, failedCount },
+    data: {
+      status,
+      successCount,
+      failedCount,
+    },
   });
 
-  return { taskId: task.id, status, successCount, failedCount };
+  await sendPriceTaskFeishuNotice(admin, shop, task.id, "恢复价格");
+
+  return { ok: true, taskId: task.id, status, successCount, failedCount };
+}
+
+async function getTaskForShop(shop, taskId) {
+  return prisma.priceChangeTask.findFirst({
+    where: { id: taskId, shop },
+    include: { items: { orderBy: { id: "asc" } } },
+  });
+}
+
+async function updateItems(task, updater) {
+  let successCount = 0;
+  let failedCount = 0;
+
+  for (const item of task.items) {
+    if (item.changeStatus === ITEM_STATUS.success) {
+      successCount += 1;
+      continue;
+    }
+
+    const result = await updater(item);
+    if (result.ok) {
+      successCount += 1;
+      await prisma.priceChangeTaskItem.update({
+        where: { id: item.id },
+        data: {
+          changeStatus: ITEM_STATUS.success,
+          restoreStatus: ITEM_STATUS.pending,
+          errorMessage: null,
+          changedAt: new Date(),
+        },
+      });
+    } else {
+      failedCount += 1;
+      await prisma.priceChangeTaskItem.update({
+        where: { id: item.id },
+        data: {
+          changeStatus: ITEM_STATUS.failed,
+          errorMessage: result.message,
+        },
+      });
+    }
+  }
+
+  return { successCount, failedCount };
+}
+
+function getChangeStatus(successCount, failedCount) {
+  if (failedCount === 0) return TASK_STATUS.priceChanged;
+  if (successCount > 0) return TASK_STATUS.partiallyFailed;
+  return TASK_STATUS.failed;
 }
 
 async function findVariantBySku(admin, sku) {
@@ -417,8 +342,11 @@ async function findVariantBySku(admin, sku) {
             id
             sku
             price
+            compareAtPrice
             product {
               id
+              handle
+              onlineStoreUrl
             }
           }
         }
@@ -436,11 +364,41 @@ async function findVariantBySku(admin, sku) {
   return {
     variantId: variant.id,
     productId: variant.product.id,
+    productHandle: variant.product.handle,
+    onlineStoreUrl: variant.product.onlineStoreUrl,
     price: Number(variant.price).toFixed(2),
+    compareAtPrice: variant.compareAtPrice
+      ? Number(variant.compareAtPrice).toFixed(2)
+      : "",
   };
 }
 
-async function updateVariantPrice(admin, productId, variantId, price) {
+async function updateVariantSalePrice(
+  admin,
+  productId,
+  variantId,
+  targetPrice,
+  originalPrice,
+) {
+  return safelyUpdateVariantPrice(admin, {
+    productId,
+    variantId,
+    price: targetPrice,
+    compareAtPrice: originalPrice,
+  });
+}
+
+async function updateVariantPrice(
+  admin,
+  { productId, variantId, price, compareAtPrice },
+) {
+  const variantInput = {
+    id: variantId,
+    price: Number(price).toFixed(2),
+    compareAtPrice:
+      compareAtPrice === null ? null : Number(compareAtPrice).toFixed(2),
+  };
+
   const response = await admin.graphql(
     `#graphql
       mutation ProductVariantsBulkUpdate(
@@ -460,12 +418,7 @@ async function updateVariantPrice(admin, productId, variantId, price) {
     {
       variables: {
         productId,
-        variants: [
-          {
-            id: variantId,
-            price: Number(price).toFixed(2),
-          },
-        ],
+        variants: [variantInput],
       },
     },
   );
@@ -476,13 +429,143 @@ async function updateVariantPrice(admin, productId, variantId, price) {
   return message ? { ok: false, message } : { ok: true };
 }
 
-async function safelyUpdateVariantPrice(admin, productId, variantId, price) {
+async function safelyUpdateVariantPrice(admin, input) {
   try {
-    return await updateVariantPrice(admin, productId, variantId, price);
+    return await updateVariantPrice(admin, input);
   } catch (error) {
     return {
       ok: false,
       message: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+async function sendPriceTaskFeishuNotice(admin, shop, taskId, modifyType) {
+  try {
+    const task = await getTaskForShop(shop, taskId);
+    if (!task) return;
+
+    const changedItems =
+      modifyType === "恢复价格"
+        ? task.items.filter(
+            (item) => item.restoreStatus === ITEM_STATUS.success,
+          )
+        : task.items.filter(
+            (item) => item.changeStatus === ITEM_STATUS.success,
+          );
+
+    if (changedItems.length === 0) return;
+
+    const shopUrl = await getShopPrimaryUrl(admin);
+    const tableRows = [
+      "| 产品名 | 变体名 | SKU | 原价 | 售价 | 在线链接 |",
+      "| --- | --- | --- | --- | --- | --- |",
+    ];
+
+    for (const item of changedItems) {
+      const variantInfo = await getVariantOnlineInfo(
+        admin,
+        item.variantId,
+        shopUrl,
+      );
+      const salePrice =
+        modifyType === "恢复价格" ? "-" : item.targetPrice.toString();
+      const onlineLink = variantInfo.onlineUrl
+        ? `[查看商品](${variantInfo.onlineUrl})`
+        : "-";
+      tableRows.push(
+        `| ${escapeMarkdownTableCell(variantInfo.productTitle)} | ${escapeMarkdownTableCell(
+          variantInfo.variantTitle,
+        )} | ${escapeMarkdownTableCell(item.sku)} | ${item.originalPrice.toString()} | ${salePrice} | ${onlineLink} |`,
+      );
+    }
+
+    const markdown = [
+      `**店铺：** ${shop}`,
+      `**任务：** ${task.name}`,
+      `**修改类型：** ${modifyType}`,
+      `**成功：** ${task.successCount} / **失败：** ${task.failedCount}`,
+      "",
+      tableRows.join("\n"),
+    ].join("\n");
+
+    await fetch(FEISHU_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        msg_type: "interactive",
+        card: {
+          config: {
+            wide_screen_mode: true,
+          },
+          elements: [
+            {
+              tag: "markdown",
+              content: markdown,
+            },
+          ],
+          header: {
+            title: {
+              tag: "plain_text",
+              content: "划线价修改提醒",
+            },
+          },
+        },
+      }),
+    });
+  } catch (error) {
+    console.error("[price-task-feishu-notice]", error);
+  }
+}
+
+function escapeMarkdownTableCell(value) {
+  return String(value || "")
+    .replaceAll("|", "\\|")
+    .replaceAll("\n", " ");
+}
+
+async function getShopPrimaryUrl(admin) {
+  const response = await admin.graphql(
+    `#graphql
+      query ShopPrimaryUrl {
+        shop {
+          primaryDomain {
+            url
+          }
+        }
+      }`,
+  );
+  const json = await response.json();
+  return json.data?.shop?.primaryDomain?.url || "";
+}
+
+async function getVariantOnlineInfo(admin, variantId, shopUrl) {
+  const response = await admin.graphql(
+    `#graphql
+      query VariantOnlineUrl($id: ID!) {
+        node(id: $id) {
+          ... on ProductVariant {
+            title
+            product {
+              title
+              handle
+              onlineStoreUrl
+            }
+          }
+        }
+      }`,
+    { variables: { id: variantId } },
+  );
+  const json = await response.json();
+  const variant = json.data?.node;
+  const product = json.data?.node?.product;
+  const onlineUrl =
+    product?.onlineStoreUrl ||
+    (shopUrl && product?.handle ? `${shopUrl}/products/${product.handle}` : "");
+
+  return {
+    productTitle: product?.title || "-",
+    variantTitle: variant?.title || "-",
+    onlineUrl,
+  };
 }
