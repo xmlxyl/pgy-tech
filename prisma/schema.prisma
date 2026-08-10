@@ -40,3 +40,46 @@ model SavedEmail {
 
   @@index([shop])
 }
+
+model PriceChangeTask {
+  id                 Int                   @id @default(autoincrement())
+  shop               String
+  name               String
+  status             String                @default("Pending")
+  scheduledChangeAt  DateTime
+  scheduledRestoreAt DateTime
+  fileName           String
+  totalCount         Int                   @default(0)
+  successCount       Int                   @default(0)
+  failedCount        Int                   @default(0)
+  createdBy          String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  items              PriceChangeTaskItem[]
+
+  @@index([shop, status])
+  @@index([scheduledChangeAt])
+  @@index([scheduledRestoreAt])
+}
+
+model PriceChangeTaskItem {
+  id            Int             @id @default(autoincrement())
+  taskId        Int
+  task          PriceChangeTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sku           String
+  productId     String
+  variantId     String
+  originalPrice Decimal         @db.Decimal(12, 2)
+  targetPrice   Decimal         @db.Decimal(12, 2)
+  changeStatus  String          @default("Pending")
+  restoreStatus String          @default("Pending")
+  errorMessage  String?
+  changedAt     DateTime?
+  restoredAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([taskId, sku])
+  @@index([taskId])
+  @@index([sku])
+}

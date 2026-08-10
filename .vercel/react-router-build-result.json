@@ -12,10 +12,16 @@
     "routeIdToServerBundleId": {
       "routes/webhooks.app.scopes_update": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/webhooks.app.uninstalled": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api.price-tasks.run": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/apps.pgy-tech.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.$": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.price-tasks.template": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.price-tasks._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.price-tasks.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.price-tasks.new": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.price-tasks.run": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.additional": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.faq._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.free-gift": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
@@ -44,6 +50,15 @@
         "parentId": "root",
         "file": "app/routes/webhooks.app.uninstalled.jsx",
         "path": "webhooks/app/uninstalled",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/api.price-tasks.run": {
+        "id": "routes/api.price-tasks.run",
+        "parentId": "root",
+        "file": "app/routes/api.price-tasks.run.jsx",
+        "path": "api/price-tasks/run",
         "config": {
           "runtime": "nodejs"
         }
@@ -90,6 +105,58 @@
         "file": "app/routes/app.jsx",
         "path": "app",
         "config": {}
+      },
+      "routes/app.price-tasks": {
+        "id": "routes/app.price-tasks",
+        "parentId": "routes/app",
+        "file": "app/routes/app.price-tasks.jsx",
+        "path": "price-tasks",
+        "config": {}
+      },
+      "routes/app.price-tasks.template": {
+        "id": "routes/app.price-tasks.template",
+        "parentId": "routes/app.price-tasks",
+        "file": "app/routes/app.price-tasks.template.jsx",
+        "path": "template",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/app.price-tasks._index": {
+        "id": "routes/app.price-tasks._index",
+        "parentId": "routes/app.price-tasks",
+        "file": "app/routes/app.price-tasks._index.jsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/app.price-tasks.$id": {
+        "id": "routes/app.price-tasks.$id",
+        "parentId": "routes/app.price-tasks",
+        "file": "app/routes/app.price-tasks.$id.jsx",
+        "path": ":id",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/app.price-tasks.new": {
+        "id": "routes/app.price-tasks.new",
+        "parentId": "routes/app.price-tasks",
+        "file": "app/routes/app.price-tasks.new.jsx",
+        "path": "new",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/app.price-tasks.run": {
+        "id": "routes/app.price-tasks.run",
+        "parentId": "routes/app.price-tasks",
+        "file": "app/routes/app.price-tasks.run.jsx",
+        "path": "run",
+        "config": {
+          "runtime": "nodejs"
+        }
       },
       "routes/app.additional": {
         "id": "routes/app.additional",
@@ -179,6 +246,12 @@
         "file": "routes/webhooks.app.uninstalled.jsx",
         "path": "webhooks/app/uninstalled"
       },
+      "routes/api.price-tasks.run": {
+        "id": "routes/api.price-tasks.run",
+        "parentId": "root",
+        "file": "routes/api.price-tasks.run.jsx",
+        "path": "api/price-tasks/run"
+      },
       "routes/apps.pgy-tech.email": {
         "id": "routes/apps.pgy-tech.email",
         "parentId": "root",
@@ -208,6 +281,42 @@
         "parentId": "root",
         "file": "routes/app.jsx",
         "path": "app"
+      },
+      "routes/app.price-tasks": {
+        "id": "routes/app.price-tasks",
+        "parentId": "routes/app",
+        "file": "routes/app.price-tasks.jsx",
+        "path": "price-tasks"
+      },
+      "routes/app.price-tasks.template": {
+        "id": "routes/app.price-tasks.template",
+        "parentId": "routes/app.price-tasks",
+        "file": "routes/app.price-tasks.template.jsx",
+        "path": "template"
+      },
+      "routes/app.price-tasks._index": {
+        "id": "routes/app.price-tasks._index",
+        "parentId": "routes/app.price-tasks",
+        "file": "routes/app.price-tasks._index.jsx",
+        "index": true
+      },
+      "routes/app.price-tasks.$id": {
+        "id": "routes/app.price-tasks.$id",
+        "parentId": "routes/app.price-tasks",
+        "file": "routes/app.price-tasks.$id.jsx",
+        "path": ":id"
+      },
+      "routes/app.price-tasks.new": {
+        "id": "routes/app.price-tasks.new",
+        "parentId": "routes/app.price-tasks",
+        "file": "routes/app.price-tasks.new.jsx",
+        "path": "new"
+      },
+      "routes/app.price-tasks.run": {
+        "id": "routes/app.price-tasks.run",
+        "parentId": "routes/app.price-tasks",
+        "file": "routes/app.price-tasks.run.jsx",
+        "path": "run"
       },
       "routes/app.additional": {
         "id": "routes/app.additional",
@@ -273,6 +382,11 @@
             "path": "webhooks/app/uninstalled"
           },
           {
+            "id": "routes/api.price-tasks.run",
+            "file": "routes/api.price-tasks.run.jsx",
+            "path": "api/price-tasks/run"
+          },
+          {
             "id": "routes/apps.pgy-tech.email",
             "file": "routes/apps.pgy-tech.email.jsx",
             "path": "apps/pgy-tech/email"
@@ -297,6 +411,38 @@
             "file": "routes/app.jsx",
             "path": "app",
             "children": [
+              {
+                "id": "routes/app.price-tasks",
+                "file": "routes/app.price-tasks.jsx",
+                "path": "price-tasks",
+                "children": [
+                  {
+                    "id": "routes/app.price-tasks.template",
+                    "file": "routes/app.price-tasks.template.jsx",
+                    "path": "template"
+                  },
+                  {
+                    "id": "routes/app.price-tasks._index",
+                    "file": "routes/app.price-tasks._index.jsx",
+                    "index": true
+                  },
+                  {
+                    "id": "routes/app.price-tasks.$id",
+                    "file": "routes/app.price-tasks.$id.jsx",
+                    "path": ":id"
+                  },
+                  {
+                    "id": "routes/app.price-tasks.new",
+                    "file": "routes/app.price-tasks.new.jsx",
+                    "path": "new"
+                  },
+                  {
+                    "id": "routes/app.price-tasks.run",
+                    "file": "routes/app.price-tasks.run.jsx",
+                    "path": "run"
+                  }
+                ]
+              },
               {
                 "id": "routes/app.additional",
                 "file": "routes/app.additional.jsx",
