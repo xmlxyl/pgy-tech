@@ -10,12 +10,15 @@
       }
     },
     "routeIdToServerBundleId": {
+      "routes/apps.pgy-tech.mystery-box-entry": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/webhooks.app.scopes_update": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/apps.pgy-tech.mystery-box": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/webhooks.app.uninstalled": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/apps.pgy-tech.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.$": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.mystery-box": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.price-tasks.template": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.price-tasks._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.price-tasks.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
@@ -34,11 +37,29 @@
         "path": "",
         "config": {}
       },
+      "routes/apps.pgy-tech.mystery-box-entry": {
+        "id": "routes/apps.pgy-tech.mystery-box-entry",
+        "parentId": "root",
+        "file": "app/routes/apps.pgy-tech.mystery-box-entry.jsx",
+        "path": "apps/pgy-tech/mystery-box-entry",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
       "routes/webhooks.app.scopes_update": {
         "id": "routes/webhooks.app.scopes_update",
         "parentId": "root",
         "file": "app/routes/webhooks.app.scopes_update.jsx",
         "path": "webhooks/app/scopes_update",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/apps.pgy-tech.mystery-box": {
+        "id": "routes/apps.pgy-tech.mystery-box",
+        "parentId": "root",
+        "file": "app/routes/apps.pgy-tech.mystery-box.jsx",
+        "path": "apps/pgy-tech/mystery-box",
         "config": {
           "runtime": "nodejs"
         }
@@ -94,6 +115,15 @@
         "file": "app/routes/app.jsx",
         "path": "app",
         "config": {}
+      },
+      "routes/app.mystery-box": {
+        "id": "routes/app.mystery-box",
+        "parentId": "routes/app",
+        "file": "app/routes/app.mystery-box.jsx",
+        "path": "mystery-box",
+        "config": {
+          "runtime": "nodejs"
+        }
       },
       "routes/app.price-tasks": {
         "id": "routes/app.price-tasks",
@@ -214,11 +244,23 @@
         "file": "root.jsx",
         "path": ""
       },
+      "routes/apps.pgy-tech.mystery-box-entry": {
+        "id": "routes/apps.pgy-tech.mystery-box-entry",
+        "parentId": "root",
+        "file": "routes/apps.pgy-tech.mystery-box-entry.jsx",
+        "path": "apps/pgy-tech/mystery-box-entry"
+      },
       "routes/webhooks.app.scopes_update": {
         "id": "routes/webhooks.app.scopes_update",
         "parentId": "root",
         "file": "routes/webhooks.app.scopes_update.jsx",
         "path": "webhooks/app/scopes_update"
+      },
+      "routes/apps.pgy-tech.mystery-box": {
+        "id": "routes/apps.pgy-tech.mystery-box",
+        "parentId": "root",
+        "file": "routes/apps.pgy-tech.mystery-box.jsx",
+        "path": "apps/pgy-tech/mystery-box"
       },
       "routes/webhooks.app.uninstalled": {
         "id": "routes/webhooks.app.uninstalled",
@@ -255,6 +297,12 @@
         "parentId": "root",
         "file": "routes/app.jsx",
         "path": "app"
+      },
+      "routes/app.mystery-box": {
+        "id": "routes/app.mystery-box",
+        "parentId": "routes/app",
+        "file": "routes/app.mystery-box.jsx",
+        "path": "mystery-box"
       },
       "routes/app.price-tasks": {
         "id": "routes/app.price-tasks",
@@ -340,9 +388,19 @@
         "file": "root.jsx",
         "children": [
           {
+            "id": "routes/apps.pgy-tech.mystery-box-entry",
+            "file": "routes/apps.pgy-tech.mystery-box-entry.jsx",
+            "path": "apps/pgy-tech/mystery-box-entry"
+          },
+          {
             "id": "routes/webhooks.app.scopes_update",
             "file": "routes/webhooks.app.scopes_update.jsx",
             "path": "webhooks/app/scopes_update"
+          },
+          {
+            "id": "routes/apps.pgy-tech.mystery-box",
+            "file": "routes/apps.pgy-tech.mystery-box.jsx",
+            "path": "apps/pgy-tech/mystery-box"
           },
           {
             "id": "routes/webhooks.app.uninstalled",
@@ -374,6 +432,11 @@
             "file": "routes/app.jsx",
             "path": "app",
             "children": [
+              {
+                "id": "routes/app.mystery-box",
+                "file": "routes/app.mystery-box.jsx",
+                "path": "mystery-box"
+              },
               {
                 "id": "routes/app.price-tasks",
                 "file": "routes/app.price-tasks.jsx",

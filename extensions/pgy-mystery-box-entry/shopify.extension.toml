@@ -1,0 +1,19 @@
+api_version = "2026-07"
+
+[[extensions]]
+name = "PGY Mystery Box Entry"
+handle = "pgy-mystery-box-entry"
+type = "ui_extension"
+uid = "pgy-tech-mystery-box-entry-ext-001"
+
+  [[extensions.targeting]]
+  target = "purchase.thank-you.block.render"
+  module = "./src/ThankYou.jsx"
+
+  [[extensions.targeting]]
+  target = "customer-account.order-status.block.render"
+  module = "./src/OrderStatus.jsx"
+
+  [extensions.capabilities]
+  network_access = true
+  api_access = true

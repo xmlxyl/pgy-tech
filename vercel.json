@@ -2,5 +2,41 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "react-router",
   "buildCommand": "npm run setup && npm run build",
-  "outputDirectory": "build/client"
+  "outputDirectory": "build/client",
+  "headers": [
+    {
+      "source": "/api/mystery-box-entry(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Shopify-Access-Token"
+        }
+      ]
+    },
+    {
+      "source": "/apps/pgy-tech/mystery-box-entry(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Shopify-Access-Token"
+        }
+      ]
+    }
+  ]
 }

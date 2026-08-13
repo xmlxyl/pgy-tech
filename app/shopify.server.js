@@ -9,11 +9,16 @@ import prisma from "./db.server";
 
 const requiredScopes = [
   "read_metaobjects",
+  "read_customers",
+  "read_orders",
+  "read_order_edits",
   "read_products",
   "write_app_proxy",
   "write_discounts",
   "write_metaobject_definitions",
   "write_metaobjects",
+  "write_order_edits",
+  "write_orders",
   "write_products",
 ];
 const scopes = [

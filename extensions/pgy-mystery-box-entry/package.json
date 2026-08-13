@@ -1,0 +1,11 @@
+{
+  "name": "pgy-mystery-box-entry",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@preact/signals": "^2.3.x",
+    "@shopify/ui-extensions": "2026.7.x",
+    "preact": "^10.10.x"
+  }
+}
