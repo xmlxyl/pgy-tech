@@ -374,6 +374,7 @@ export async function getMysteryBoxEntryStatus(request) {
   }
 
   const minOrderAmount = Number(setting.minOrderAmount || 0);
+  const startDate = setting.exists ? setting.startDate : "";
   const orderId = url.searchParams.get("order_id");
   const orderName = url.searchParams.get("order_name");
   const totalParam = Number(url.searchParams.get("total") || 0);
@@ -397,7 +398,9 @@ export async function getMysteryBoxEntryStatus(request) {
   const order = await getOrderTagSummarySafe(admin, { orderId, orderName });
   if (!order) {
     return buildMysteryBoxEntryResponse({
-      qualifies: totalParam >= minOrderAmount,
+      qualifies:
+        isRequestOrderAfterStartDate(url, startDate) &&
+        totalParam >= minOrderAmount,
       orderName,
       orderTotal: totalParam,
       currencyCode: url.searchParams.get("currency") || "",
@@ -414,7 +417,9 @@ export async function getMysteryBoxEntryStatus(request) {
   });
 
   return buildMysteryBoxEntryResponse({
-    qualifies: alreadyDrawn || order.total >= minOrderAmount,
+    qualifies:
+      isOrderAfterStartDate(order, startDate) &&
+      (alreadyDrawn || order.total >= minOrderAmount),
     alreadyDrawn,
     orderName: order.name,
     orderTotal: order.total,
@@ -436,6 +441,7 @@ export async function getMysteryBoxEntryTagStatus(request, sessionToken) {
   }
 
   const minOrderAmount = Number(setting.minOrderAmount || 0);
+  const startDate = setting.exists ? setting.startDate : "";
   const orderId = url.searchParams.get("order_id");
   const totalParam = Number(url.searchParams.get("total") || 0);
   const currencyCode = url.searchParams.get("currency") || "";
@@ -451,7 +457,9 @@ export async function getMysteryBoxEntryTagStatus(request, sessionToken) {
 
   if (!orderId) {
     return buildMysteryBoxEntryResponse({
-      qualifies: totalParam >= minOrderAmount,
+      qualifies:
+        isRequestOrderAfterStartDate(url, startDate) &&
+        totalParam >= minOrderAmount,
       orderTotal: totalParam,
       currencyCode,
       minOrderAmount,
@@ -462,7 +470,9 @@ export async function getMysteryBoxEntryTagStatus(request, sessionToken) {
   const order = await getOrderTagsById(admin, orderId);
   if (!order) {
     return buildMysteryBoxEntryResponse({
-      qualifies: totalParam >= minOrderAmount,
+      qualifies:
+        isRequestOrderAfterStartDate(url, startDate) &&
+        totalParam >= minOrderAmount,
       orderTotal: totalParam,
       currencyCode,
       minOrderAmount,
@@ -478,7 +488,9 @@ export async function getMysteryBoxEntryTagStatus(request, sessionToken) {
   });
 
   return buildMysteryBoxEntryResponse({
-    qualifies: alreadyDrawn || order.total >= minOrderAmount,
+    qualifies:
+      isOrderAfterStartDate(order, startDate) &&
+      (alreadyDrawn || order.total >= minOrderAmount),
     alreadyDrawn,
     orderName: order.name,
     orderTotal: order.total,
@@ -501,6 +513,7 @@ export async function getMysteryBoxEntryDrawStatus(request, sessionToken = null)
   }
 
   const minOrderAmount = Number(setting.minOrderAmount || 0);
+  const startDate = setting.exists ? setting.startDate : "";
   const orderId = url.searchParams.get("order_id");
   const orderName = url.searchParams.get("order_name") || "";
   const totalParam = Number(url.searchParams.get("total") || 0);
@@ -517,7 +530,9 @@ export async function getMysteryBoxEntryDrawStatus(request, sessionToken = null)
 
   if (!orderId || !hasMysteryBoxModels()) {
     return buildMysteryBoxEntryResponse({
-      qualifies: totalParam >= minOrderAmount,
+      qualifies:
+        isRequestOrderAfterStartDate(url, startDate) &&
+        totalParam >= minOrderAmount,
       orderName,
       orderTotal: totalParam,
       currencyCode,
@@ -540,7 +555,9 @@ export async function getMysteryBoxEntryDrawStatus(request, sessionToken = null)
   });
 
   return buildMysteryBoxEntryResponse({
-    qualifies: alreadyDrawn || totalParam >= minOrderAmount,
+    qualifies:
+      isRequestOrderAfterStartDate(url, startDate) &&
+      (alreadyDrawn || totalParam >= minOrderAmount),
     alreadyDrawn,
     orderName: draw?.orderName || orderName,
     orderTotal: draw ? Number(draw.orderTotal) : totalParam,
@@ -753,6 +770,26 @@ async function findEligibleOrders(admin, customerId, setting) {
     .filter((order) => order.total >= minOrderAmount);
 }
 
+function isOrderAfterStartDate(order, startDate) {
+  return isAfterStartDate(order?.createdAt, startDate);
+}
+
+function isRequestOrderAfterStartDate(url, startDate) {
+  return isAfterStartDate(
+    url.searchParams.get("processed_at") ||
+      url.searchParams.get("created_at") ||
+      url.searchParams.get("order_processed_at"),
+    startDate,
+  );
+}
+
+function isAfterStartDate(value, startDate) {
+  if (!startDate) return false;
+  const startTime = new Date(`${startDate}T00:00:00+08:00`).getTime();
+  const orderTime = value ? new Date(value).getTime() : NaN;
+  return Number.isFinite(startTime) && Number.isFinite(orderTime) && orderTime >= startTime;
+}
+
 async function getOrderTagSummary(admin, { orderId, orderName }) {
   if (orderId) {
     const order = await getOrderTagSummaryById(admin, orderId);
@@ -777,6 +814,7 @@ async function getOrderTagsById(admin, orderId) {
         order(id: $id) {
           id
           name
+          createdAt
           tags
           currentTotalPriceSet {
             shopMoney {
@@ -801,6 +839,7 @@ async function getOrderTagSummaryById(admin, orderId) {
         order(id: $id) {
           id
           name
+          createdAt
           tags
           currentTotalPriceSet {
             shopMoney {
@@ -826,6 +865,7 @@ async function getOrderTagSummaryByName(admin, orderName) {
           nodes {
             id
             name
+            createdAt
             tags
             currentTotalPriceSet {
               shopMoney {
@@ -847,6 +887,7 @@ function normalizeOrderTagSummary(order) {
   return {
     id: order.id,
     name: order.name,
+    createdAt: order.createdAt,
     tags: order.tags || [],
     total: Number(order.currentTotalPriceSet?.shopMoney?.amount || 0),
     currencyCode: order.currentTotalPriceSet?.shopMoney?.currencyCode || "",
