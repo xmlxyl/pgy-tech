@@ -1,8 +1,15 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   drawMysteryBoxPrize,
   getMysteryBoxPageData,
   MYSTERY_BOX_PROXY_PATH,
 } from "../lib/mystery-box.server";
+
+const MYSTERY_BOX_FRONT_IMAGE = loadPublicImageDataUrl(
+  "images",
+  "mystery-box-front.png",
+);
 
 export const loader = async ({ request }) => {
   let data;
@@ -448,6 +455,9 @@ function renderPage(data) {
         background: #fafafa;
         padding: 12px;
       }
+      .record-main {
+        min-width: 0;
+      }
       .record strong,
       .record span {
         display: block;
@@ -550,6 +560,374 @@ function renderPage(data) {
           height: 270px;
         }
       }
+      body {
+        background: #f3f7fb;
+        color: #1c2f66;
+      }
+      .page {
+        width: min(100%, 1120px);
+        min-height: 100vh;
+        padding: 58px 28px 38px;
+      }
+      .panel {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
+      }
+      .panel + .panel {
+        margin-top: 34px;
+      }
+      .info {
+        position: relative;
+        display: grid;
+        justify-items: center;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        color: #1b2d63;
+        font-size: clamp(42px, 6vw, 58px);
+        font-weight: 850;
+        letter-spacing: 0;
+        line-height: 1;
+      }
+      .stats-line {
+        display: flex;
+        justify-content: center;
+        gap: 58px;
+        margin: 14px 0 0;
+        color: #696c73;
+        font-size: 21px;
+        font-weight: 760;
+      }
+      .stats-line strong {
+        color: #555b66;
+      }
+      .stats-divider {
+        display: none;
+      }
+      .info-links {
+        top: 6px;
+        right: 0;
+        gap: 28px;
+      }
+      .text-button,
+      .icon-button {
+        color: #686b72;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .prize-heading {
+        margin: 0 0 42px;
+        color: #1b2d63;
+        font-size: clamp(26px, 3.2vw, 34px);
+        font-weight: 850;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .prize-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .prize {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-content: end;
+        border: 0;
+        border-radius: 4px;
+        background: #fff;
+        padding: 26px 22px 18px;
+      }
+      .prize-image {
+        display: grid;
+        place-items: center;
+        min-height: 164px;
+        border: 0;
+        background: #fff;
+      }
+      .prize-image img {
+        max-height: 164px;
+      }
+      .placeholder {
+        color: #1b2d63;
+        font-size: 18px;
+      }
+      .prize-body {
+        display: block;
+        padding: 0;
+        text-align: center;
+      }
+      .prize-name {
+        min-height: 36px;
+        color: #05070b;
+        font-size: 14px;
+        font-weight: 650;
+        line-height: 1.25;
+      }
+      .prize-price {
+        display: block;
+        margin-top: 10px;
+        color: #ff4a14;
+        font-size: 25px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .probability {
+        display: none;
+      }
+      .draw-panel {
+        margin-top: 78px;
+      }
+      .draw-panel h2 {
+        display: none;
+      }
+      .draw-stage {
+        gap: 22px;
+      }
+      .flip-card {
+        width: min(400px, 72vw);
+        height: auto;
+        perspective: none;
+        cursor: default;
+      }
+      .flip-inner,
+      .face {
+        position: static;
+        display: block;
+        width: 100%;
+        height: auto;
+        transform: none !important;
+        transition: none;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        color: inherit;
+        backface-visibility: visible;
+      }
+      .back {
+        display: none;
+      }
+      .box-art {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+      .result {
+        min-height: auto;
+        margin: 0;
+        color: #1b2d63;
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 850;
+      }
+      .result:empty {
+        display: none;
+      }
+      .button {
+        width: min(394px, 78vw);
+        min-height: 66px;
+        border-radius: 8px;
+        background: #1d3068;
+        font-size: 31px;
+        font-weight: 760;
+      }
+      .footer-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 34px;
+      }
+      .link-button {
+        width: min(220px, 42vw);
+        min-height: 46px;
+        border-color: #1d3068;
+        border-radius: 8px;
+        color: #1d3068;
+        font-size: 16px;
+        font-weight: 760;
+      }
+      .link-button:first-child {
+        background: #1d3068;
+        color: #fff;
+      }
+      @media (max-width: 820px) {
+        .page {
+          width: min(100%, 520px);
+          padding: 86px 24px 46px;
+        }
+        .info-links {
+          position: absolute;
+          top: -30px;
+          right: 0;
+          gap: 14px;
+          margin: 0;
+        }
+        .text-button,
+        .icon-button {
+          font-size: 12px;
+          text-underline-offset: 2px;
+        }
+        h1 {
+          font-size: 36px;
+          line-height: 1;
+        }
+        .stats-line {
+          gap: 44px;
+          margin-top: 12px;
+          font-size: 15px;
+          line-height: 1.2;
+          white-space: nowrap;
+        }
+        .panel + .panel {
+          margin-top: 14px;
+        }
+        .prize-heading {
+          margin: 30px;
+          font-size: 23px;
+        }
+        .prize-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 18px 12px;
+        }
+        .prize {
+          padding: 24px 12px 22px;
+        }
+        .prize-image {
+          min-height: 128px;
+        }
+        .prize-image img {
+          max-height: 128px;
+        }
+        .prize-name {
+          min-height: 32px;
+          font-size: 11px;
+        }
+        .prize-price {
+          margin-top: 8px;
+          font-size: 23px;
+        }
+        .draw-panel {
+          margin-top: 62px;
+        }
+        .flip-card {
+          width: min(285px, 76vw);
+        }
+        .result {
+          font-size: 24px;
+        }
+        .button {
+          width: min(244px, 68vw);
+          min-height: 44px;
+          font-size: 22px;
+        }
+        .footer-actions {
+          margin-top: 28px;
+        }
+      }
+      @media (max-width: 460px) {
+        .page {
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+        h1 {
+          font-size: 34px;
+        }
+        .stats-line {
+          gap: 34px;
+          font-size: 13px;
+        }
+        .prize-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px 12px;
+        }
+        .prize {
+          padding: 24px 10px 20px;
+        }
+        .prize-image {
+          min-height: 128px;
+        }
+        .prize-image img {
+          max-height: 128px;
+        }
+        .prize-heading {
+          font-size: 22px;
+        }
+        .draw-panel {
+          margin-top: 60px;
+        }
+        .button {
+          font-size: 22px;
+        }
+        .footer-actions {
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+        .link-button {
+          width: min(244px, 68vw);
+        }
+        .modal {
+          align-items: start;
+          padding: 76px 20px 24px;
+        }
+        .modal-card {
+          width: 100%;
+          max-height: calc(100vh - 112px);
+          overflow: hidden;
+          border-radius: 8px;
+        }
+        .modal-head {
+          padding: 24px 24px 18px;
+        }
+        .modal-head h2 {
+          color: #1b2d63;
+          font-size: 24px;
+          line-height: 1.15;
+        }
+        .modal-close {
+          width: 44px;
+          height: 44px;
+          flex: 0 0 44px;
+          font-size: 18px;
+        }
+        .modal-body {
+          max-height: calc(100vh - 210px);
+          overflow: auto;
+          padding: 24px;
+        }
+        .record-list {
+          gap: 12px;
+        }
+        .record {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          align-items: start;
+          padding: 16px;
+        }
+        .record strong {
+          color: #1b2d63;
+          font-size: 20px;
+          line-height: 1.1;
+        }
+        .record span {
+          font-size: 16px;
+          line-height: 1.25;
+        }
+        .record-result {
+          display: flex;
+          width: 100%;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 8px 12px;
+          font-size: 14px;
+          line-height: 1.15;
+          text-align: center;
+          white-space: normal;
+        }
+      }
     </style>
   </head>
   <body>
@@ -559,8 +937,8 @@ function renderPage(data) {
       ${renderDrawTemplate({ loginRequired, notConfigured, hasAvailableDraw, canOpen, loginUrl, data })}
 
       <div class="footer-actions">
-        <a class="link-button" href="/">Back to home</a>
-        <a class="link-button" href="/account">Back to account</a>
+        <a class="link-button" href="/">Back to Home</a>
+        <a class="link-button" href="/account/orders">View Orders</a>
       </div>
     </main>
 
@@ -626,7 +1004,6 @@ function renderPage(data) {
             return;
           }
 
-          card.classList.remove("is-open");
           card.classList.add("is-shuffling");
           button.disabled = true;
           button.textContent = "Opening...";
@@ -642,17 +1019,7 @@ function renderPage(data) {
             if (!json.ok) throw new Error(json.message || "Draw failed");
 
             var draw = json.draw;
-            var title = card.querySelector("[data-card-title]");
-            var copy = card.querySelector("[data-card-copy]");
             card.classList.remove("is-shuffling");
-            card.classList.add("is-open");
-
-            if (title) title.textContent = draw.prizeType === "prize" ? "WIN" : "PGY";
-            if (copy) {
-              copy.textContent = draw.prizeType === "prize"
-                ? (draw.prizeTitle || "Prize unlocked")
-                : "No prize this time";
-            }
 
             result.dataset.tone = draw.prizeType === "prize" ? "success" : "neutral";
             result.textContent = draw.prizeType === "prize"
@@ -665,7 +1032,7 @@ function renderPage(data) {
             }
             if (json.remainingDrawCount > 0) {
               button.disabled = false;
-              button.textContent = "Open next reward";
+              button.textContent = "Open It";
             } else {
               button.textContent = json.alreadyDrawn ? "Already opened" : "Opened";
             }
@@ -674,7 +1041,7 @@ function renderPage(data) {
             result.dataset.tone = "critical";
             result.textContent = error.message || "Something went wrong.";
             button.disabled = false;
-            button.textContent = "Try again";
+            button.textContent = "Open It";
           }
         });
 
@@ -687,7 +1054,7 @@ function renderPage(data) {
             ? (draw.prizeTitle || draw.prizeSku || "Prize")
             : "No prize";
           item.innerHTML =
-            '<div><strong>' + escapeText(draw.orderName || "Order") + '</strong>' +
+            '<div class="record-main"><strong>' + escapeText(draw.orderName || "Order") + '</strong>' +
             '<span>' + escapeText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })) + '</span></div>' +
             '<div class="record-result ' + (draw.prizeType === "prize" ? "is-win" : "") + '">' + escapeText(resultLabel) + '</div>';
           recordList.prepend(item);
@@ -726,41 +1093,28 @@ function renderInfoTemplate(data) {
 
 function renderPrizeTemplate(rules) {
   return `<section class="panel">
-    <h2>Prizes</h2>
+    <h2 class="prize-heading">${escapeHtml(getPrizeHeading(rules))}</h2>
     <div class="prize-grid">${renderPrizeCards(rules)}</div>
   </section>`;
 }
 
 function renderDrawTemplate({ loginRequired, notConfigured, hasAvailableDraw, canOpen, loginUrl, data }) {
-  return `<section class="panel">
+  return `<section class="panel draw-panel">
     <h2>Draw</h2>
     <div class="draw-stage">
       <button class="flip-card" type="button" data-draw-card tabindex="-1" aria-label="Lucky box reward card">
         <span class="flip-inner">
           <span class="face front">
-            <span>
-              <span class="card-mark">?</span>
-              <span class="card-copy">Lucky Box</span>
-            </span>
-          </span>
-          <span class="face back">
-            <span>
-              <span class="card-mark" data-card-title>PGY</span>
-              <span class="card-copy" data-card-copy>Reward result</span>
-            </span>
+            ${renderMysteryBoxArt()}
           </span>
         </span>
       </button>
-      <p class="result" data-result>${escapeHtml(
-        data.eligibleOrder
-          ? `Next reward uses order ${data.eligibleOrder.name}.`
-          : "Your reward status will appear here.",
-      )}</p>
       <button class="button" data-draw-button ${
         loginRequired ? `data-login-url="${escapeHtml(loginUrl)}"` : ""
       } ${canOpen ? "" : "disabled"}>${escapeHtml(
         getButtonLabel({ loginRequired, notConfigured, hasAvailableDraw }),
       )}</button>
+      <p class="result" data-result></p>
     </div>
   </section>`;
 }
@@ -773,6 +1127,7 @@ function renderPrizeCards(rules) {
       <div class="prize-image">${renderPrizeImage(prize, name)}</div>
       <div class="prize-body">
         <p class="prize-name">${escapeHtml(name)}</p>
+        ${renderPrizePrice(prize)}
         <span class="probability">${escapeHtml(formatProbability(prize.probability))}</span>
       </div>
     </article>`;
@@ -794,6 +1149,27 @@ function renderPrizeImage(prize, name) {
   return `<img src="${escapeHtml(prize.imageUrl)}" alt="${escapeHtml(
     prize.imageAlt || name,
   )}" loading="lazy">`;
+}
+
+function renderPrizePrice(prize) {
+  const price = Number(prize.price || 0);
+  if (!Number.isFinite(price) || price <= 0) return "";
+  return `<span class="prize-price">${escapeHtml(formatUsd(price))}</span>`;
+}
+
+function getPrizeHeading(rules) {
+  const prices = (rules?.prizes || [])
+    .map((prize) => Number(prize.price || 0))
+    .filter((price) => Number.isFinite(price) && price > 0);
+  if (!prices.length) return "What's inside";
+  return `What's inside · Max value ${formatUsd(Math.max(...prices))}`;
+}
+
+function renderMysteryBoxArt() {
+  if (!MYSTERY_BOX_FRONT_IMAGE) {
+    return `<span class="placeholder">Mystery box image missing</span>`;
+  }
+  return `<img class="box-art" src="${MYSTERY_BOX_FRONT_IMAGE}" alt="Mystery box" loading="eager">`;
 }
 
 function renderRecordDialog(draws = []) {
@@ -838,7 +1214,7 @@ function renderDrawRecords(draws = []) {
           ? draw.prizeTitle || draw.prizeSku || "Prize"
           : "No prize";
       return `<li class="record">
-        <div>
+        <div class="record-main">
           <strong>${escapeHtml(draw.orderName || "Order")}</strong>
           <span>${escapeHtml(formatDate(draw.createdAt))}</span>
         </div>
@@ -879,7 +1255,7 @@ function getButtonLabel({ loginRequired, notConfigured, hasAvailableDraw }) {
   if (notConfigured) return "Not available";
   if (loginRequired) return "Log in";
   if (!hasAvailableDraw) return "No eligible draw";
-  return "Open reward";
+  return "Open It";
 }
 
 function getMysteryBoxStatus(data) {
@@ -906,6 +1282,12 @@ function formatAmount(value) {
   return Number.isInteger(number) ? String(number) : number.toFixed(2);
 }
 
+function formatUsd(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "";
+  return `$${number.toFixed(2)}`;
+}
+
 function formatDate(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -929,4 +1311,14 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function loadPublicImageDataUrl(...segments) {
+  try {
+    const file = readFileSync(join(process.cwd(), "public", ...segments));
+    return `data:image/png;base64,${file.toString("base64")}`;
+  } catch (error) {
+    console.warn("[mystery-box-front-image]", error?.message || error);
+    return "";
+  }
 }

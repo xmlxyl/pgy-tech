@@ -7,13 +7,14 @@ export const DEFAULT_FEISHU_WEBHOOK =
 export const DEFAULT_MIN_ORDER_AMOUNT = 0;
 const CLAIMED_ORDER_TAG = "8月盲盒活动中奖";
 
-const BEIJING_OFFSET_MINUTES = 8 * 60;
+const PDT_OFFSET_MINUTES = -7 * 60;
+const PDT_OFFSET = "-07:00";
 
 const DEFAULT_RULES = {
   prizes: [
-    { sku: "", title: "", imageUrl: "", imageAlt: "", probability: 0 },
-    { sku: "", title: "", imageUrl: "", imageAlt: "", probability: 0 },
-    { sku: "", title: "", imageUrl: "", imageAlt: "", probability: 0 },
+    { sku: "", title: "", imageUrl: "", imageAlt: "", price: "", probability: 0 },
+    { sku: "", title: "", imageUrl: "", imageAlt: "", price: "", probability: 0 },
+    { sku: "", title: "", imageUrl: "", imageAlt: "", price: "", probability: 0 },
   ],
   noPrizeProbability: 100,
 };
@@ -75,7 +76,7 @@ export async function saveMysteryBoxSetting(shop, formData, admin) {
   }
 
   const startDateRaw = String(formData.get("startDate") || "").trim();
-  const startDate = parseBeijingDateInput(startDateRaw);
+  const startDate = parsePdtDateInput(startDateRaw);
   const minOrderAmount = Number(formData.get("minOrderAmount") || 0);
   const webhookUrl = String(formData.get("webhookUrl") || "").trim();
   const usRules = normalizeRulesFromForm(formData, "us");
@@ -581,7 +582,8 @@ export async function getMysteryBoxEntryConfig(request, sessionToken = null) {
     exists: Boolean(setting.exists),
     shop,
     startDate,
-    startDateBeijing: startDate ? `${startDate}T00:00:00+08:00` : "",
+    startDatePdt: startDate ? `${startDate}${PDT_OFFSET}` : "",
+    startDateBeijing: startDate ? `${startDate}${PDT_OFFSET}` : "",
     minOrderAmount: Number(setting.minOrderAmount || 0),
   };
 }
@@ -785,7 +787,7 @@ function isRequestOrderAfterStartDate(url, startDate) {
 
 function isAfterStartDate(value, startDate) {
   if (!startDate) return false;
-  const startTime = new Date(`${startDate}T00:00:00+08:00`).getTime();
+  const startTime = new Date(`${normalizePdtDateTimeInput(startDate)}${PDT_OFFSET}`).getTime();
   const orderTime = value ? new Date(value).getTime() : NaN;
   return Number.isFinite(startTime) && Number.isFinite(orderTime) && orderTime >= startTime;
 }
@@ -1362,6 +1364,7 @@ async function enrichRulesWithVariantData(admin, rules) {
           nodes {
             sku
             displayName
+            price
             image {
               url(transform: { maxWidth: 360, maxHeight: 360 })
               altText
@@ -1410,6 +1413,7 @@ async function enrichRulesWithVariantData(admin, rules) {
           title: variant.displayName,
           imageUrl: image?.url || "",
           imageAlt: image?.altText || variant.displayName || "",
+          price: variant.price || "",
         },
       ];
     }),
@@ -1434,6 +1438,7 @@ async function enrichRulesWithVariantData(admin, rules) {
         title: data?.title || prize.title || "",
         imageUrl: data?.imageUrl || prize.imageUrl || "",
         imageAlt: data?.imageAlt || prize.imageAlt || "",
+        price: data?.price || prize.price || "",
       };
     }),
   };
@@ -1445,6 +1450,7 @@ function normalizeRulesFromForm(formData, prefix) {
     title: "",
     imageUrl: "",
     imageAlt: "",
+    price: "",
     probability: Number(formData.get(`${prefix}Probability${index}`) || 0),
   }));
   return normalizeRules({
@@ -1464,6 +1470,7 @@ function normalizeRules(rawRules) {
         title: String(prize.title || "").trim(),
         imageUrl: String(prize.imageUrl || "").trim(),
         imageAlt: String(prize.imageAlt || "").trim(),
+        price: String(prize.price || "").trim(),
         probability: Math.max(0, Number(prize.probability || 0)),
       };
     }),
@@ -1524,15 +1531,31 @@ function serializeDraw(draw) {
 }
 
 function dateInputValue(date) {
-  const beijingTime = new Date(
-    new Date(date).getTime() + BEIJING_OFFSET_MINUTES * 60 * 1000,
+  const pdtTime = new Date(
+    new Date(date).getTime() + PDT_OFFSET_MINUTES * 60 * 1000,
   );
-  return beijingTime.toISOString().slice(0, 10);
+  return pdtTime.toISOString().slice(0, 19);
 }
 
-function parseBeijingDateInput(value) {
-  const [year, month, day] = String(value).split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day, -8, 0, 0, 0));
+function parsePdtDateInput(value) {
+  const normalized = normalizePdtDateTimeInput(value);
+  const [datePart, timePart] = normalized.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute, second] = timePart.split(":").map(Number);
+  return new Date(
+    Date.UTC(year, month - 1, day, hour + 7, minute, second, 0),
+  );
+}
+
+function normalizePdtDateTimeInput(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const [datePart, rawTimePart = "00:00:00"] = raw.split("T");
+  const timeParts = rawTimePart.split(":");
+  const hour = timeParts[0] || "00";
+  const minute = timeParts[1] || "00";
+  const second = timeParts[2] || "00";
+  return `${datePart}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:${second.padStart(2, "0")}`;
 }
 
 function escapeSearchValue(value) {

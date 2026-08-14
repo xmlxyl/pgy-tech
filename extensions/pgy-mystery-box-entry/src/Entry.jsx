@@ -79,7 +79,7 @@ function MysteryBoxEntry({
   const storefrontOrigin = getStorefrontOrigin();
   const [config, setConfig] = useState({
     loading: true,
-    activityStartBeijing: "",
+    activityStartPdt: "",
     minOrderAmount: FALLBACK_MIN_ORDER_AMOUNT,
   });
 
@@ -105,7 +105,7 @@ function MysteryBoxEntry({
         if (!active) return;
         setConfig({
           loading: false,
-          activityStartBeijing: data.startDateBeijing || "",
+          activityStartPdt: data.startDatePdt || data.startDateBeijing || "",
           minOrderAmount:
             Number(data.minOrderAmount) || FALLBACK_MIN_ORDER_AMOUNT,
         });
@@ -126,7 +126,7 @@ function MysteryBoxEntry({
 
   const afterActivityStart = isAfterActivityStart(
     orderProcessedAt,
-    config.activityStartBeijing,
+    config.activityStartPdt,
   );
   const eligible = orderTotal.amount >= config.minOrderAmount;
   const alreadyClaimed = hasClaimedPrizeLine(orderLines);
@@ -137,7 +137,7 @@ function MysteryBoxEntry({
     orderName,
     orderProcessedAt,
     configLoading: config.loading,
-    activityStartBeijing: config.activityStartBeijing,
+    activityStartPdt: config.activityStartPdt,
     afterActivityStart,
     total: orderTotal.amount,
     currency: orderTotal.currencyCode,
@@ -172,10 +172,10 @@ function MysteryBoxEntry({
 }
 /* eslint-enable react/prop-types */
 
-function isAfterActivityStart(processedAt, activityStartBeijing) {
-  if (!activityStartBeijing) return false;
+function isAfterActivityStart(processedAt, activityStartPdt) {
+  if (!activityStartPdt) return false;
   const processedTime = processedAt ? new Date(processedAt).getTime() : Date.now();
-  const startTime = new Date(activityStartBeijing).getTime();
+  const startTime = new Date(activityStartPdt).getTime();
   return Number.isFinite(processedTime) && processedTime >= startTime;
 }
 

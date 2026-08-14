@@ -51,9 +51,10 @@ export default function MysteryBoxSettingsPage() {
           <s-section heading="Campaign rules">
             <s-stack gap="base">
               <s-text-field
-                label="Order start date (Beijing time)"
+                label="Order start date/time (PDT)"
                 name="startDate"
-                type="date"
+                type="datetime-local"
+                step={1}
                 defaultValue={setting.startDate}
               />
               <s-text-field

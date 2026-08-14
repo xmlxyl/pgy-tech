@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { config, parse } from "dotenv";
 
 // Load .env and prefer file values for DB URLs (Shopify CLI may inject invalid placeholders).
@@ -33,6 +34,29 @@ function run(command, { required = true } = {}) {
   }
 }
 
+function generatePrismaClient() {
+  const prismaClient = join(
+    process.cwd(),
+    "node_modules",
+    ".prisma",
+    "client",
+    "index.js",
+  );
+
+  try {
+    run("npx prisma generate");
+  } catch (error) {
+    if (existsSync(prismaClient)) {
+      console.warn(
+        "WARNING: prisma generate failed because the Prisma engine file is probably locked. Continuing with the existing Prisma Client.",
+      );
+      return;
+    }
+
+    throw error;
+  }
+}
+
 ensureDirectDatabaseUrl();
 
 if (!process.env.DIRECT_DATABASE_URL) {
@@ -42,5 +66,5 @@ if (!process.env.DIRECT_DATABASE_URL) {
   process.exit(1);
 }
 
-run("npx prisma generate");
-run("npx prisma db push", { required: false });
+generatePrismaClient();
+run("npx prisma db push --skip-generate", { required: false });
