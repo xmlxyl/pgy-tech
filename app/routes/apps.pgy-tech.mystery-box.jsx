@@ -1133,14 +1133,6 @@ function renderPrizeCards(rules) {
     </article>`;
   });
 
-  cards.push(`<article class="prize">
-    <div class="prize-image"><div class="placeholder">THANKS</div></div>
-    <div class="prize-body">
-      <p class="prize-name">No prize</p>
-      <span class="probability probability-muted">${escapeHtml(formatProbability(normalized.noPrizeProbability))}</span>
-    </div>
-  </article>`);
-
   return cards.join("");
 }
 
