@@ -467,6 +467,24 @@ function renderPage(data) {
         color: #6b7280;
         font-size: 13px;
       }
+      .rules-list .rule-item {
+        display: block;
+        line-height: 1.6;
+      }
+      .rules-list .rule-item + .rule-item {
+        margin-top: 14px;
+      }
+      .rules-list .rule-item strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #111827;
+        font-size: 14px;
+      }
+      .rules-list .rule-item p {
+        margin: 0;
+        color: #4b5563;
+        font-size: 13px;
+      }
       .empty {
         margin: 0;
         line-height: 1.5;
@@ -1184,9 +1202,12 @@ function renderRulesDialog(data) {
         <button class="modal-close" type="button" data-close-rules aria-label="Close">x</button>
       </div>
       <div class="modal-body">
-        <ul class="record-list">
-          ${getRulesList(data)
-            .map((rule) => `<li class="record"><span>${escapeHtml(rule)}</span></li>`)
+        <ul class="record-list rules-list">
+          ${getRulesList()
+            .map(
+              (rule) =>
+                `<li class="record rule-item"><strong>${escapeHtml(rule.title)}:</strong><p>${escapeHtml(rule.content)}</p></li>`,
+            )
             .join("")}
         </ul>
       </div>
@@ -1216,18 +1237,28 @@ function renderDrawRecords(draws = []) {
     .join("")}</ul>`;
 }
 
-function getRulesList(data) {
-  const startDate = data.startDate || "the campaign start date";
-  const amount =
-    data.minOrderAmount == null
-      ? "the configured amount"
-      : formatAmount(data.minOrderAmount);
+function getRulesList() {
   return [
-    `Paid orders from ${startDate} and over ${amount} qualify.`,
-    "Each qualified order gives one draw chance.",
-    "Each chance opens one reward card.",
-    `The result follows the ${data.region === "US" ? "US" : "Global"} prize probabilities.`,
-    "Opened orders cannot be used again.",
+    {
+      title: "Eligibility",
+      content:
+        "This offer applies only to orders placed on the official PGYTECH website between August 17 and August 28 (PDT) with a final payment amount of $159 or more (after all discounts are applied). Each qualifying order automatically earns one lucky draw entry; no additional registration is required.",
+    },
+    {
+      title: "Prize Terms",
+      content:
+        "Prizes are non-transferable and cannot be exchanged for cash.",
+    },
+    {
+      title: "Order Eligibility Restrictions",
+      content:
+        "Cancelled, refunded, or returned orders, as well as fraudulent or irregular orders, are ineligible for the lucky draw. If a refund or return occurs after a prize has been awarded, PGYTECH reserves the right to reclaim the prize, void any unused account balance, or require the user to repay an amount equivalent to the prize value.",
+    },
+    {
+      title: "Event Modifications",
+      content:
+        "PGYTECH reserves the right to modify, suspend, or terminate this event at any time based on operational requirements.",
+    },
   ];
 }
 
