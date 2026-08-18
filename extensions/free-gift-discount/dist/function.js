@@ -46,13 +46,18 @@ var DEFAULT_COMBO_DISCOUNT_RULES = [
 ];
 function cartLinesDiscountsGenerateRun(input) {
   const lines = input.cart.lines;
-  const freeGiftVariantId = input.cart.freeGiftVariantId?.value;
+  const giftContext = {
+    freeGiftVariantId: input.cart.freeGiftVariantId?.value,
+    tieredGiftVariantId: input.cart.tieredGiftVariantId?.value,
+    discountLabel: input.cart.giftDiscountLabel?.value,
+    hasTieredGiftLine: lines.some((line) => hasGiftFlag(line.tieredGift))
+  };
   const candidates = [];
-  const qualifyingSubtotal = lines.filter((line) => !isFreeGift(line, freeGiftVariantId)).reduce((sum, line) => {
+  const qualifyingSubtotal = lines.filter((line) => !isFreeGift(line, giftContext)).reduce((sum, line) => {
     return sum + Number(line.cost.subtotalAmount.amount || 0);
   }, 0);
   if (qualifyingSubtotal >= THRESHOLD) {
-    candidates.push(...buildFreeGiftCandidates(lines, freeGiftVariantId));
+    candidates.push(...buildFreeGiftCandidates(lines, giftContext));
   }
   if (isComboDiscountEnabled(input.cart.comboDiscountEnabled?.value)) {
     candidates.push(
@@ -76,13 +81,14 @@ function cartLinesDiscountsGenerateRun(input) {
     ]
   };
 }
-function buildFreeGiftCandidates(lines, freeGiftVariantId) {
-  return lines.filter((line) => isFreeGift(line, freeGiftVariantId)).map((line) => ({
-    message: "FREE",
+function buildFreeGiftCandidates(lines, giftContext) {
+  return lines.filter((line) => isFreeGift(line, giftContext)).map((line) => ({
+    message: giftDiscountMessage(giftContext),
     targets: [
       {
         cartLine: {
-          id: line.id
+          id: line.id,
+          quantity: 1
         }
       }
     ],
@@ -262,8 +268,21 @@ function getRemainingQuantity(remainingQuantities, line) {
 function uniqueLines(lines) {
   return lines.filter((line, index) => lines.indexOf(line) === index);
 }
-function isFreeGift(line, freeGiftVariantId) {
-  return line.freeGift?.value === FREE_GIFT_ATTRIBUTE_VALUE || matchesVariantId(line.merchandise, freeGiftVariantId);
+function isFreeGift(line, giftContext) {
+  if (hasGiftFlag(line.freeGift) || hasGiftFlag(line.tieredGift)) {
+    return true;
+  }
+  if (giftContext?.hasTieredGiftLine || giftContext?.tieredGiftVariantId) {
+    return false;
+  }
+  return matchesVariantId(line.merchandise, giftContext?.freeGiftVariantId);
+}
+function hasGiftFlag(attribute) {
+  return String(attribute?.value || "").trim().toLowerCase() === FREE_GIFT_ATTRIBUTE_VALUE;
+}
+function giftDiscountMessage(giftContext) {
+  const label = String(giftContext?.discountLabel || "").trim();
+  return label || "BTSFREE";
 }
 function matchesVariantId(merchandise, variantId) {
   if (!variantId || merchandise?.__typename !== "ProductVariant") {

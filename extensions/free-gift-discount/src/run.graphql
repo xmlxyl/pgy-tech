@@ -3,6 +3,12 @@ query CartLinesDiscountsGenerateRunInput {
     freeGiftVariantId: attribute(key: "_pgy_free_gift_variant_id") {
       value
     }
+    tieredGiftVariantId: attribute(key: "_pgy_tiered_gift_variant_id") {
+      value
+    }
+    giftDiscountLabel: attribute(key: "_pgy_gift_discount_label") {
+      value
+    }
     comboDiscounts: attribute(key: "_pgy_combo_discounts") {
       value
     }
@@ -27,6 +33,9 @@ query CartLinesDiscountsGenerateRunInput {
         }
       }
       freeGift: attribute(key: "_pgy_free_gift") {
+        value
+      }
+      tieredGift: attribute(key: "_pgy_tiered_gift") {
         value
       }
     }

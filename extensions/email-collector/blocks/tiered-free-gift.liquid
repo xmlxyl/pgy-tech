@@ -11,9 +11,86 @@
   assign tier2_product = block.settings.tier2_gift_products | first
   assign tier3_product = block.settings.tier3_gift_products | first
 
-  assign tier1_variant = tier1_product.selected_or_first_available_variant
-  assign tier2_variant = tier2_product.selected_or_first_available_variant
-  assign tier3_variant = tier3_product.selected_or_first_available_variant
+  assign tier1_sku = block.settings.tier1_gift_sku | strip
+  assign tier2_sku = block.settings.tier2_gift_sku | strip
+  assign tier3_sku = block.settings.tier3_gift_sku | strip
+  assign tier1_sku_key = tier1_sku | downcase
+  assign tier2_sku_key = tier2_sku | downcase
+  assign tier3_sku_key = tier3_sku | downcase
+
+  assign tier1_variant = nil
+  assign tier2_variant = nil
+  assign tier3_variant = nil
+
+  if tier1_product
+    if tier1_sku_key != blank
+      for variant in tier1_product.variants
+        assign variant_sku_key = variant.sku | strip | downcase
+        if variant_sku_key == tier1_sku_key
+          assign tier1_variant = variant
+        endif
+      endfor
+    endif
+    if tier1_variant == nil
+      assign tier1_variant = tier1_product.selected_or_first_available_variant
+    endif
+  endif
+
+  if tier2_product
+    if tier2_sku_key != blank
+      for variant in tier2_product.variants
+        assign variant_sku_key = variant.sku | strip | downcase
+        if variant_sku_key == tier2_sku_key
+          assign tier2_variant = variant
+        endif
+      endfor
+    endif
+    if tier2_variant == nil
+      assign tier2_variant = tier2_product.selected_or_first_available_variant
+    endif
+  endif
+
+  if tier3_product
+    if tier3_sku_key != blank
+      for variant in tier3_product.variants
+        assign variant_sku_key = variant.sku | strip | downcase
+        if variant_sku_key == tier3_sku_key
+          assign tier3_variant = variant
+        endif
+      endfor
+    endif
+    if tier3_variant == nil
+      assign tier3_variant = tier3_product.selected_or_first_available_variant
+    endif
+  endif
+
+  assign tier1_image = nil
+  assign tier2_image = nil
+  assign tier3_image = nil
+
+  if tier1_variant.featured_image != blank
+    assign tier1_image = tier1_variant.featured_image
+  elsif tier1_variant.image != blank
+    assign tier1_image = tier1_variant.image
+  elsif tier1_product.featured_image != blank
+    assign tier1_image = tier1_product.featured_image
+  endif
+
+  if tier2_variant.featured_image != blank
+    assign tier2_image = tier2_variant.featured_image
+  elsif tier2_variant.image != blank
+    assign tier2_image = tier2_variant.image
+  elsif tier2_product.featured_image != blank
+    assign tier2_image = tier2_product.featured_image
+  endif
+
+  if tier3_variant.featured_image != blank
+    assign tier3_image = tier3_variant.featured_image
+  elsif tier3_variant.image != blank
+    assign tier3_image = tier3_variant.image
+  elsif tier3_product.featured_image != blank
+    assign tier3_image = tier3_product.featured_image
+  endif
 %}
 
 <script type="application/json" data-pgy-tiered-gift-config>
@@ -21,31 +98,35 @@
     "enabled": {{ enabled | json }},
     "propertyName": "_pgy_tiered_gift",
     "propertyValue": "free",
+    "discountLabel": {{ block.settings.gift_discount_label | default: 'BTSFREE' | json }},
     "giftFallbackTitle": {{ gift_title_fallback | json }},
     "tiers": [
       {
         "tierLevel": 1,
         "thresholdCents": {{ tier1_threshold | times: 100 }},
         "variantId": {% if tier1_variant %}{{ tier1_variant.id | json }}{% else %}null{% endif %},
+        "sku": {{ tier1_sku | json }},
         "title": {% if tier1_product %}{{ tier1_product.title | json }}{% else %}null{% endif %},
         "handle": {% if tier1_product %}{{ tier1_product.handle | json }}{% else %}""{% endif %},
-        "image": {% if tier1_product and tier1_product.featured_image %}{{ tier1_product.featured_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+        "image": {% if tier1_image %}{{ tier1_image | image_url: width: 160 | json }}{% else %}null{% endif %}
       },
       {
         "tierLevel": 2,
         "thresholdCents": {{ tier2_threshold | times: 100 }},
         "variantId": {% if tier2_variant %}{{ tier2_variant.id | json }}{% else %}null{% endif %},
+        "sku": {{ tier2_sku | json }},
         "title": {% if tier2_product %}{{ tier2_product.title | json }}{% else %}null{% endif %},
         "handle": {% if tier2_product %}{{ tier2_product.handle | json }}{% else %}""{% endif %},
-        "image": {% if tier2_product and tier2_product.featured_image %}{{ tier2_product.featured_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+        "image": {% if tier2_image %}{{ tier2_image | image_url: width: 160 | json }}{% else %}null{% endif %}
       },
       {
         "tierLevel": 3,
         "thresholdCents": {{ tier3_threshold | times: 100 }},
         "variantId": {% if tier3_variant %}{{ tier3_variant.id | json }}{% else %}null{% endif %},
+        "sku": {{ tier3_sku | json }},
         "title": {% if tier3_product %}{{ tier3_product.title | json }}{% else %}null{% endif %},
         "handle": {% if tier3_product %}{{ tier3_product.handle | json }}{% else %}""{% endif %},
-        "image": {% if tier3_product and tier3_product.featured_image %}{{ tier3_product.featured_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+        "image": {% if tier3_image %}{{ tier3_image | image_url: width: 160 | json }}{% else %}null{% endif %}
       }
     ],
     "messages": {
@@ -78,43 +159,83 @@
     },
     {
       "type": "paragraph",
-      "content": "Select gift products for $149+ / $199+ / $249+ here. Gifts are added at Checkout / Buy now only."
+      "content": "Set a threshold and gift for each tier. Enter a SKU to pin a specific variant. Gifts are added at Checkout / Buy now only."
+    },
+    {
+      "type": "header",
+      "content": "Tier 1"
     },
     {
       "type": "number",
       "id": "tier1_threshold",
-      "label": "Threshold for $149+ gift (shop currency)",
+      "label": "Threshold (shop currency)",
+      "info": "Gift unlocks when cart subtotal reaches this amount. Do not include a currency symbol.",
       "default": 149
     },
     {
       "type": "product_list",
       "id": "tier1_gift_products",
-      "label": "Gift product ($149+)",
+      "label": "Gift product",
       "limit": 1
+    },
+    {
+      "type": "text",
+      "id": "tier1_gift_sku",
+      "label": "Gift SKU",
+      "info": "Optional. Must belong to the selected gift product. If empty, the first available variant is used."
+    },
+    {
+      "type": "header",
+      "content": "Tier 2"
     },
     {
       "type": "number",
       "id": "tier2_threshold",
-      "label": "Threshold for $199+ gift (shop currency)",
+      "label": "Threshold (shop currency)",
+      "info": "Gift unlocks when cart subtotal reaches this amount. Do not include a currency symbol.",
       "default": 199
     },
     {
       "type": "product_list",
       "id": "tier2_gift_products",
-      "label": "Gift product ($199+)",
+      "label": "Gift product",
       "limit": 1
+    },
+    {
+      "type": "text",
+      "id": "tier2_gift_sku",
+      "label": "Gift SKU",
+      "info": "Optional. Must belong to the selected gift product. If empty, the first available variant is used."
+    },
+    {
+      "type": "header",
+      "content": "Tier 3"
     },
     {
       "type": "number",
       "id": "tier3_threshold",
-      "label": "Threshold for $249+ gift (shop currency)",
+      "label": "Threshold (shop currency)",
+      "info": "Gift unlocks when cart subtotal reaches this amount. Do not include a currency symbol.",
       "default": 249
     },
     {
       "type": "product_list",
       "id": "tier3_gift_products",
-      "label": "Gift product ($249+)",
+      "label": "Gift product",
       "limit": 1
+    },
+    {
+      "type": "text",
+      "id": "tier3_gift_sku",
+      "label": "Gift SKU",
+      "info": "Optional. Must belong to the selected gift product. If empty, the first available variant is used."
+    },
+    {
+      "type": "text",
+      "id": "gift_discount_label",
+      "label": "Gift discount label",
+      "default": "BTSFREE",
+      "info": "Shown on the gift line instead of FREE. Items with this label are removed when leaving the cart."
     },
     {
       "type": "text",

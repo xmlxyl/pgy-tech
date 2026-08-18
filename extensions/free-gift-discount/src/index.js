@@ -36,16 +36,21 @@ const DEFAULT_COMBO_DISCOUNT_RULES = [
  */
 export function cartLinesDiscountsGenerateRun(input) {
   const lines = input.cart.lines;
-  const freeGiftVariantId = input.cart.freeGiftVariantId?.value;
+  const giftContext = {
+    freeGiftVariantId: input.cart.freeGiftVariantId?.value,
+    tieredGiftVariantId: input.cart.tieredGiftVariantId?.value,
+    discountLabel: input.cart.giftDiscountLabel?.value,
+    hasTieredGiftLine: lines.some((line) => hasGiftFlag(line.tieredGift)),
+  };
   const candidates = [];
   const qualifyingSubtotal = lines
-    .filter((line) => !isFreeGift(line, freeGiftVariantId))
+    .filter((line) => !isFreeGift(line, giftContext))
     .reduce((sum, line) => {
       return sum + Number(line.cost.subtotalAmount.amount || 0);
     }, 0);
 
   if (qualifyingSubtotal >= THRESHOLD) {
-    candidates.push(...buildFreeGiftCandidates(lines, freeGiftVariantId));
+    candidates.push(...buildFreeGiftCandidates(lines, giftContext));
   }
 
   if (isComboDiscountEnabled(input.cart.comboDiscountEnabled?.value)) {
@@ -73,15 +78,16 @@ export function cartLinesDiscountsGenerateRun(input) {
   };
 }
 
-function buildFreeGiftCandidates(lines, freeGiftVariantId) {
+function buildFreeGiftCandidates(lines, giftContext) {
   return lines
-    .filter((line) => isFreeGift(line, freeGiftVariantId))
+    .filter((line) => isFreeGift(line, giftContext))
     .map((line) => ({
-      message: "FREE",
+      message: giftDiscountMessage(giftContext),
       targets: [
         {
           cartLine: {
             id: line.id,
+            quantity: 1,
           },
         },
       ],
@@ -327,11 +333,30 @@ function uniqueLines(lines) {
   return lines.filter((line, index) => lines.indexOf(line) === index);
 }
 
-function isFreeGift(line, freeGiftVariantId) {
+function isFreeGift(line, giftContext) {
+  if (hasGiftFlag(line.freeGift) || hasGiftFlag(line.tieredGift)) {
+    return true;
+  }
+
+  // Real sellable SKUs are identified by line attributes, not product title.
+  // Do not zero every matching variant when a tiered gift is in the cart.
+  if (giftContext?.hasTieredGiftLine || giftContext?.tieredGiftVariantId) {
+    return false;
+  }
+
+  return matchesVariantId(line.merchandise, giftContext?.freeGiftVariantId);
+}
+
+function hasGiftFlag(attribute) {
   return (
-    line.freeGift?.value === FREE_GIFT_ATTRIBUTE_VALUE ||
-    matchesVariantId(line.merchandise, freeGiftVariantId)
+    String(attribute?.value || "").trim().toLowerCase() ===
+    FREE_GIFT_ATTRIBUTE_VALUE
   );
+}
+
+function giftDiscountMessage(giftContext) {
+  const label = String(giftContext?.discountLabel || "").trim();
+  return label || "BTSFREE";
 }
 
 function matchesVariantId(merchandise, variantId) {

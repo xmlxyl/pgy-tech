@@ -11,13 +11,14 @@
   }
 
   var STORAGE_KEY = "pgy_tiered_gift_checkout";
+  var CART_VISIT_KEY = "pgy_tiered_gift_cart";
   var debug = (window.__pgyTieredGiftDebug = {
     config: null,
     events: [],
     lastCart: null,
     lastError: null,
     started: false,
-    version: "pgy-tiered-gift-checkout-2026-07-31-1",
+    version: "pgy-tiered-gift-checkout-2026-08-18-2",
   });
 
   var root = document.querySelector("[data-pgy-tiered-gift]");
@@ -85,14 +86,53 @@
       restoreMisplacedHides();
 
       try {
-        await cleanupGiftLines({ immediate: true });
+        if (isCartPage()) {
+          sessionStorage.setItem(CART_VISIT_KEY, "1");
+          var cart = await fetchCart();
+          var attributes = cart.attributes || {};
+          if (attributes._pgy_gift_discount_label !== config.discountLabel) {
+            await fetchJson("/cart/update.js", {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              credentials: "same-origin",
+              body: JSON.stringify({
+                attributes: {
+                  _pgy_gift_discount_label: config.discountLabel,
+                },
+              }),
+            });
+          }
+        } else {
+          await cleanupGiftLines({ immediate: true });
+        }
       } catch (error) {
         console.warn("[PGY tiered gift] Boot cleanup failed.", error);
       }
 
       bindCheckoutInterceptors();
       bindCartWatchers();
+      bindReturnPageHandlers();
       refreshBanner();
+    }
+
+    function normalizeSku(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase();
+    }
+
+    function findVariantBySku(variants, sku) {
+      var skuKey = normalizeSku(sku);
+      if (!skuKey || !variants || !variants.length) return null;
+
+      return (
+        variants.find(function (item) {
+          return normalizeSku(item.sku) === skuKey;
+        }) || null
+      );
     }
 
     function normalizeTier(tier, fallbackTitle) {
@@ -100,6 +140,7 @@
         tierLevel: toNumber(tier.tierLevel),
         thresholdCents: toNumber(tier.thresholdCents),
         variantId: toNumber(tier.variantId),
+        sku: String(tier.sku || "").trim(),
         title: tier.title || fallbackTitle || "Free gift",
         handle: (tier.handle || "").replace(/^\/+|\/+$/g, ""),
         image: tier.image || "",
@@ -167,6 +208,7 @@
         enabled: raw.enabled !== false,
         propertyName: raw.propertyName || "_pgy_tiered_gift",
         propertyValue: raw.propertyValue || "free",
+        discountLabel: String(raw.discountLabel || "BTSFREE").trim() || "BTSFREE",
         giftFallbackTitle: fallbackTitle,
         tiers: tiers,
         messages: {
@@ -209,24 +251,41 @@
     async function ensureTierVariants() {
       await Promise.all(
         config.tiers.map(async function (tier) {
-          if (tier.variantId > 0) return;
+          if (tier.variantId > 0 && tier.image && !tier.sku) return;
           if (!tier.handle) return;
 
           try {
             var product = await fetchJson(
               "/products/" + encodeURIComponent(tier.handle) + ".js",
             );
+            var variants = product.variants || [];
             var variant =
-              (product.variants || []).find(function (item) {
+              findVariantBySku(variants, tier.sku) ||
+              variants.find(function (item) {
+                return tier.variantId > 0 && toNumber(item.id) === tier.variantId;
+              }) ||
+              variants.find(function (item) {
                 return item.available;
               }) ||
-              (product.variants && product.variants[0]);
+              variants[0];
 
             if (variant) {
               tier.variantId = toNumber(variant.id);
+              if (variant.sku) tier.sku = String(variant.sku).trim();
+
+              var variantImage =
+                variant.featured_image ||
+                variant.image ||
+                (variant.featured_image && variant.featured_image.src) ||
+                "";
+              if (variantImage) {
+                tier.image = normalizeImageUrl(variantImage);
+              }
             }
 
-            tier.title = product.title || tier.title;
+            if (tier.title == null || tier.title === "") {
+              tier.title = product.title || tier.title;
+            }
 
             if (!tier.image) {
               var featured =
@@ -258,10 +317,81 @@
 
     function isGiftLine(item) {
       var props = item.properties || {};
+      var labels = getGiftLabelKeys();
 
-      if (props[config.propertyName] === config.propertyValue) return true;
+      if (hasGiftFlag(props[config.propertyName])) return true;
+      if (hasGiftFlag(props._pgy_tiered_gift)) return true;
+      if (hasGiftFlag(props._pgy_free_gift)) return true;
+
+      if (
+        Object.keys(props).some(function (key) {
+          return (
+            isGiftLabel(key, labels) || isGiftLabel(props[key], labels)
+          );
+        })
+      ) {
+        return true;
+      }
+
+      var discounts = item.discounts || [];
+      if (
+        discounts.some(function (discount) {
+          return isGiftLabel(discount && discount.title, labels);
+        })
+      ) {
+        return true;
+      }
 
       return false;
+    }
+
+    function getGiftLabelKeys() {
+      var labels = ["free", "btsfree"];
+      var configured = String(config.discountLabel || "")
+        .trim()
+        .toLowerCase();
+
+      if (configured && labels.indexOf(configured) === -1) {
+        labels.push(configured);
+      }
+
+      return labels;
+    }
+
+    function isGiftLabel(value, labels) {
+      var normalized = String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "");
+
+      if (!normalized) return false;
+
+      return (labels || getGiftLabelKeys()).some(function (label) {
+        if (!label) return false;
+        if (normalized === label) return true;
+        if (normalized.indexOf(label) !== 0) return false;
+        return /^\d/.test(normalized.slice(label.length));
+      });
+    }
+
+    function hasGiftFlag(value) {
+      return String(value || "").trim().toLowerCase() === config.propertyValue;
+    }
+
+    function giftAttributePayload(extra) {
+      var attributes = {
+        _pgy_tiered_gift: config.propertyValue,
+        _pgy_free_gift: config.propertyValue,
+        _pgy_gift_discount_label: config.discountLabel,
+      };
+
+      if (extra) {
+        Object.keys(extra).forEach(function (key) {
+          attributes[key] = extra[key];
+        });
+      }
+
+      return attributes;
     }
 
     function getCartScopes() {
@@ -318,6 +448,20 @@
     }
 
     function hideGiftLinesInDom() {
+      if (isCartPage()) {
+        document
+          .querySelectorAll(
+            '[data-pgy-gift-hidden="true"], .pgy-tiered-gift-line--hidden',
+          )
+          .forEach(function (line) {
+            delete line.dataset.pgyGiftHidden;
+            line.classList.remove("pgy-tiered-gift-line--hidden");
+            line.style.removeProperty("display");
+            line.removeAttribute("hidden");
+          });
+        return;
+      }
+
       restoreMisplacedHides();
 
       var giftLineElements = getGiftLineElements();
@@ -348,22 +492,35 @@
     function getGiftLineElements() {
       var lines = [];
       var scopes = getCartScopes();
-      var giftKeys = ((state.cart && state.cart.items) || [])
-        .filter(isGiftLine)
+      var cartItems = (state.cart && state.cart.items) || [];
+      var giftItems = cartItems.filter(isGiftLine);
+      var giftKeys = giftItems
         .map(function (item) {
           return item.key;
         })
         .filter(Boolean);
+      var labels = getGiftLabelKeys();
 
       if (!scopes.length) return lines;
-      if (!giftKeys.length) return lines;
 
       var lineSelector =
-        "tr, cart-item, .cart-item, .cart__item, [data-cart-item], .line-item, .ajaxcart__row";
+        "tr, cart-item, .cart-item, .cart__item, [data-cart-item], .line-item, .ajaxcart__row, .ajaxcart__product";
 
       function addLine(line) {
         if (!line || !isWithinCartScope(line)) return;
-        if (lines.indexOf(line) === -1) lines.push(line);
+        if (line.closest && line.closest("[data-pgy-tiered-gift-banner]")) return;
+        if (lines.indexOf(line) !== -1) return;
+        lines.push(line);
+      }
+
+      function closestLine(node) {
+        if (!node) return null;
+        return (
+          node.closest(lineSelector) ||
+          node.closest("li") ||
+          node.closest("[data-cart-item]") ||
+          node
+        );
       }
 
       scopes.forEach(function (scope) {
@@ -377,14 +534,42 @@
           ].forEach(function (selector) {
             try {
               scope.querySelectorAll(selector).forEach(function (node) {
-                addLine(node.closest(lineSelector) || node.closest("li") || node);
+                addLine(closestLine(node));
               });
             } catch (_error) {}
           });
         });
+
+        Array.prototype.forEach.call(
+          scope.querySelectorAll(lineSelector + ", li"),
+          function (line) {
+            if (!isWithinCartScope(line)) return;
+            var text = String(line.textContent || "")
+              .replace(/\s+/g, " ")
+              .toLowerCase();
+            if (
+              labels.some(function (label) {
+                return (
+                  text.indexOf(label + "(-") !== -1 ||
+                  text.indexOf("◆ " + label) !== -1 ||
+                  text.indexOf("◆" + label) !== -1 ||
+                  text.indexOf(label + " (-") !== -1
+                );
+              })
+            ) {
+              addLine(line);
+            }
+          },
+        );
       });
 
       return lines;
+    }
+
+    function removeGiftLinesFromDom() {
+      getGiftLineElements().forEach(function (line) {
+        if (line && line.parentElement) line.remove();
+      });
     }
 
     function cssEscape(value) {
@@ -450,54 +635,318 @@
 
     async function refreshCartPageUi(cart) {
       updateHeaderCartCount(cart && cart.item_count);
+      removeGiftLinesFromDom();
+      hideGiftLinesInDom();
+      dispatchCartUpdated(cart);
 
-      if (!isCartPage()) {
-        hideGiftLinesInDom();
-        return;
-      }
+      var sections = getCartSectionIds();
+      var htmlMap = (cart && cart.sections) || null;
 
       try {
-        var sections = ["main-cart-items", "main-cart-footer", "cart-icon-bubble"];
-        var response = await fetch(
-          "/cart?sections=" +
-            encodeURIComponent(sections.join(",")) +
-            "&sections_url=" +
-            encodeURIComponent(window.location.pathname),
-          {
-            headers: { Accept: "application/json" },
-            credentials: "same-origin",
-          },
-        );
+        if (!htmlMap || !Object.keys(htmlMap).length) {
+          var response = await fetch(
+            "/cart?sections=" +
+              encodeURIComponent(sections.join(",")) +
+              "&sections_url=" +
+              encodeURIComponent(window.location.pathname),
+            {
+              headers: { Accept: "application/json" },
+              credentials: "same-origin",
+            },
+          );
 
-        if (!response.ok) throw new Error("Failed to refresh cart sections");
-
-        var htmlMap = await response.json();
+          if (!response.ok) throw new Error("Failed to refresh cart sections");
+          htmlMap = await response.json();
+        }
 
         Object.keys(htmlMap).forEach(function (sectionId) {
-          var html = htmlMap[sectionId];
-          if (!html) return;
-
-          var parsed = new DOMParser().parseFromString(html, "text/html");
-          var current = document.getElementById("shopify-section-" + sectionId);
-          var next = parsed.getElementById("shopify-section-" + sectionId);
-
-          if (current && next) {
-            current.innerHTML = next.innerHTML;
-            return;
-          }
-
-          var directCurrent = document.getElementById(sectionId);
-          var directNext = parsed.getElementById(sectionId);
-
-          if (directCurrent && directNext) {
-            directCurrent.innerHTML = directNext.innerHTML;
-          }
+          renderCartSection(sectionId, htmlMap[sectionId]);
         });
       } catch (error) {
         console.warn("[PGY tiered gift] Unable to refresh cart page UI.", error);
       }
 
+      removeGiftLinesFromDom();
       hideGiftLinesInDom();
+      updateHeaderCartCount(cart && cart.item_count);
+      dispatchCartUpdated(cart);
+      rebindThemeCart(document.querySelector("[data-cart-drwaer-body]") || document);
+    }
+
+    function getCartSectionIds() {
+      var sections = [];
+
+      function add(sectionId) {
+        if (!sectionId || sections.indexOf(sectionId) !== -1) return;
+        sections.push(sectionId);
+      }
+
+      document
+        .querySelectorAll("cart-drawer, cart-notification, [data-cart-wrapper]")
+        .forEach(function (element) {
+          if (typeof element.getSectionsToRender !== "function") return;
+          try {
+            element.getSectionsToRender().forEach(function (section) {
+              add(section && section.id);
+            });
+          } catch (_error) {}
+        });
+
+      if (document.querySelector("[data-cart-drwaer-body], #ajax-cart-drawer")) {
+        add("ajax-cart-drawer");
+      }
+
+      add("cart-drawer");
+      add("cart-icon-bubble");
+
+      if (isCartPage()) {
+        add("main-cart-items");
+        add("main-cart-footer");
+      }
+
+      return sections.slice(0, 5);
+    }
+
+    function renderCartSection(sectionId, html) {
+      if (!html) return;
+
+      var parsed = new DOMParser().parseFromString(html, "text/html");
+
+      if (sectionId === "ajax-cart-drawer") {
+        var body = document.querySelector("[data-cart-drwaer-body]");
+        var nextWrapper =
+          parsed.querySelector(".shopify-section") ||
+          parsed.querySelector("[data-cart-drwaer-body]") ||
+          parsed.body;
+
+        if (body && nextWrapper) {
+          body.innerHTML = nextWrapper.innerHTML;
+          return;
+        }
+
+        replaceFirstMatching(
+          ["[data-cart-drwaer-body]", "[data-cart-wrapper]", "#ajax-cart-drawer"],
+          parsed,
+        );
+        return;
+      }
+
+      if (sectionId === "cart-drawer") {
+        replaceFirstMatching(
+          [
+            "#CartDrawer .drawer__inner",
+            ".cart-drawer .drawer__inner",
+            "cart-drawer .drawer__inner",
+            "#CartDrawer .cart-drawer__items",
+            ".cart-drawer .cart-drawer__items",
+          ],
+          parsed,
+        );
+        return;
+      }
+
+      if (sectionId === "cart-icon-bubble") {
+        var currentIcon = document.getElementById("cart-icon-bubble");
+        var nextIcon = parsed.getElementById("cart-icon-bubble");
+        if (currentIcon && nextIcon) {
+          currentIcon.innerHTML = nextIcon.innerHTML;
+          return;
+        }
+
+        var currentBubble = document.querySelector(".cart-count-bubble");
+        var nextBubble = parsed.querySelector(".cart-count-bubble");
+        if (currentBubble && nextBubble) {
+          currentBubble.innerHTML = nextBubble.innerHTML;
+          return;
+        }
+        if (currentBubble && !nextBubble) currentBubble.remove();
+        return;
+      }
+
+      var current = document.getElementById("shopify-section-" + sectionId);
+      var next = parsed.getElementById("shopify-section-" + sectionId);
+
+      if (current && next) {
+        current.innerHTML = next.innerHTML;
+        return;
+      }
+
+      var directCurrent = document.getElementById(sectionId);
+      var directNext = parsed.getElementById(sectionId);
+
+      if (directCurrent && directNext) {
+        directCurrent.innerHTML = directNext.innerHTML;
+      }
+    }
+
+    function replaceFirstMatching(selectors, parsed) {
+      for (var index = 0; index < selectors.length; index += 1) {
+        var current = document.querySelector(selectors[index]);
+        var next = parsed.querySelector(selectors[index]);
+        if (current && next) {
+          current.innerHTML = next.innerHTML;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function rebindThemeCart(scope) {
+      [
+        "getAllDetails",
+        "getQuantityElement",
+        "cartNoteUpdate",
+        "getCartItemRemoveElements",
+        "SidedrawerEventInit",
+        "cartGiftWrapElement",
+        "cartTotalprice",
+      ].forEach(function (name) {
+        if (typeof window[name] !== "function") return;
+        try {
+          window[name](scope);
+        } catch (_error) {}
+      });
+    }
+
+    function dispatchCartUpdated(cart) {
+      try {
+        var detail = { cart: cart || state.cart, source: "pgy-tiered-gift" };
+        [
+          "cart:updated",
+          "cart:refresh",
+          "theme:cart:change",
+          "ajaxCart:updated",
+          "cart-drawer:updated",
+        ].forEach(function (eventName) {
+          document.dispatchEvent(new CustomEvent(eventName, { detail: detail }));
+        });
+      } catch (_error) {}
+    }
+
+    function scheduleReturnCleanup(reason) {
+      window.setTimeout(function () {
+        runReturnCleanup(reason);
+      }, 0);
+    }
+
+    async function runReturnCleanup(reason) {
+      if (isCartPage()) {
+        sessionStorage.setItem(CART_VISIT_KEY, "1");
+        return;
+      }
+
+      log("return-cleanup", { reason: reason || "unknown" });
+      state.ensuring = false;
+      state.cleaning = false;
+      state.refreshing = false;
+
+      try {
+        removeGiftLinesFromDom();
+        await cleanupGiftLines({ immediate: true, forceUi: true });
+        await refreshBanner();
+      } catch (error) {
+        console.warn("[PGY tiered gift] Return cleanup failed.", error);
+        removeGiftLinesFromDom();
+        hideGiftLinesInDom();
+        refreshBanner();
+      }
+    }
+
+    function isCartDrawerOpen() {
+      var drawer = document.querySelector(
+        "#ajax-cart-drawer, cart-drawer, #CartDrawer, .cart-drawer, .ajaxcart",
+      );
+      if (!drawer) {
+        return (
+          document.body.classList.contains("ajax-cart-open") ||
+          document.documentElement.classList.contains("cart-open") ||
+          document.documentElement.classList.contains("js-drawer-open")
+        );
+      }
+
+      if (drawer.getAttribute("aria-hidden") === "false") return true;
+      if (drawer.classList.contains("active")) return true;
+      if (drawer.classList.contains("open")) return true;
+      if (drawer.classList.contains("is-open")) return true;
+      if (drawer.classList.contains("drawer--is-open")) return true;
+
+      return (
+        document.body.classList.contains("ajax-cart-open") ||
+        document.documentElement.classList.contains("cart-open") ||
+        document.documentElement.classList.contains("js-drawer-open")
+      );
+    }
+
+    function bindReturnPageHandlers() {
+      if (window.__pgyTieredGiftReturnBound) return;
+      window.__pgyTieredGiftReturnBound = true;
+
+      window.addEventListener("pageshow", function (event) {
+        var fromCheckout = sessionStorage.getItem(STORAGE_KEY) === "1";
+        var fromCart = sessionStorage.getItem(CART_VISIT_KEY) === "1";
+
+        if (isCartPage()) {
+          sessionStorage.setItem(CART_VISIT_KEY, "1");
+          return;
+        }
+
+        if (!event.persisted && !fromCheckout && !fromCart) return;
+
+        log("pageshow", {
+          persisted: !!event.persisted,
+          fromCheckout: fromCheckout,
+          fromCart: fromCart,
+        });
+        scheduleReturnCleanup("pageshow");
+      });
+
+      document.addEventListener(
+        "click",
+        function (event) {
+          if (isCartPage()) {
+            sessionStorage.setItem(CART_VISIT_KEY, "1");
+            return;
+          }
+
+          var target = event.target && event.target.closest && event.target.closest(
+            [
+              '[href="#ajax-cart-drawer"]',
+              "[data-cart-drawer]",
+              "[data-cart-drawer-close]",
+              "[aria-controls='ajax-cart-drawer']",
+              ".cart.header-icons-link",
+              "#cart-icon-bubble",
+              ".drawer__close",
+              ".ajaxcart__close",
+              ".js-drawer-close",
+              ".cart-drawer__close",
+              ".modal-close",
+              ".drawer-overlay",
+              ".js-drawer-overlay",
+            ].join(", "),
+          );
+
+          if (!target) return;
+
+          var closing =
+            target.matches(
+              "[data-cart-drawer-close], .drawer__close, .ajaxcart__close, .js-drawer-close, .cart-drawer__close, .modal-close, .drawer-overlay, .js-drawer-overlay",
+            ) ||
+            (isCartDrawerOpen() &&
+              target.matches(
+                '[href="#ajax-cart-drawer"], [data-cart-drawer], [aria-controls="ajax-cart-drawer"], .cart.header-icons-link, #cart-icon-bubble',
+              ));
+
+          if (closing) {
+            sessionStorage.setItem(CART_VISIT_KEY, "1");
+            scheduleReturnCleanup("cart-drawer-close");
+            return;
+          }
+
+          sessionStorage.setItem(CART_VISIT_KEY, "1");
+        },
+        true,
+      );
     }
 
     function isCartPage() {
@@ -1228,13 +1677,49 @@
         return isGiftLine(item) && Number(item.variant_id) === active.variantId;
       });
 
+      var needsDiscountFlags = (cart.items || []).some(function (item) {
+        if (!isGiftLine(item) || Number(item.variant_id) !== active.variantId) {
+          return false;
+        }
+
+        var props = item.properties || {};
+        return !hasGiftFlag(props._pgy_free_gift);
+      });
+
+      if (hasGift && needsDiscountFlags) {
+        var restamp = {};
+        (cart.items || []).forEach(function (item) {
+          if (isGiftLine(item) && Number(item.variant_id) === active.variantId) {
+            restamp[item.key] = 0;
+          }
+        });
+
+        if (Object.keys(restamp).length) {
+          await fetchJson("/cart/update.js", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({ updates: restamp }),
+          });
+          cart = await fetchCart();
+          hasGift = false;
+        }
+      }
+
       if (!hasGift) {
         var properties = {};
         properties[config.propertyName] = config.propertyValue;
+        properties._pgy_free_gift = config.propertyValue;
+        properties._pgy_tiered_gift = config.propertyValue;
+        properties._pgy_tiered_gift_variant_id = String(active.variantId);
 
         log("checkout-add-gift", {
           variantId: active.variantId,
           title: active.title,
+          sku: active.sku || "",
         });
 
         await fetchJson("/cart/add.js", {
@@ -1252,10 +1737,9 @@
                 properties: properties,
               },
             ],
-            attributes: {
-              _pgy_tiered_gift: config.propertyValue,
+            attributes: giftAttributePayload({
               _pgy_tiered_gift_variant_id: String(active.variantId),
-            },
+            }),
           }),
         });
 
@@ -1279,6 +1763,20 @@
         title: active.title,
         itemCount: cart.item_count,
       });
+
+      await fetchJson("/cart/update.js", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          attributes: giftAttributePayload({
+            _pgy_tiered_gift_variant_id: String(active.variantId),
+          }),
+        }),
+      });
     }
 
     async function cleanupGiftLines(options) {
@@ -1288,6 +1786,7 @@
 
       try {
         await ensureTierVariants();
+        removeGiftLinesFromDom();
         hideGiftLinesInDom();
 
         var cart = await fetchCart();
@@ -1297,8 +1796,21 @@
         }, 0);
 
         if (!giftLines.length) {
+          var shouldRefreshUi =
+            options.forceUi ||
+            sessionStorage.getItem(STORAGE_KEY) === "1" ||
+            sessionStorage.getItem(CART_VISIT_KEY) === "1";
+
           sessionStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(CART_VISIT_KEY);
           updateHeaderCartCount(cart.item_count);
+          removeGiftLinesFromDom();
+          hideGiftLinesInDom();
+
+          if (shouldRefreshUi) {
+            await refreshCartPageUi(cart);
+          }
+
           return cart;
         }
 
@@ -1309,6 +1821,7 @@
         });
 
         updateHeaderCartCount(Math.max(0, Number(cart.item_count || 0) - giftQty));
+        removeGiftLinesFromDom();
         hideGiftLinesInDom();
 
         var updates = {};
@@ -1328,11 +1841,17 @@
             attributes: {
               _pgy_tiered_gift: "",
               _pgy_tiered_gift_variant_id: "",
+              _pgy_free_gift: "",
+              _pgy_free_gift_variant_id: "",
+              _pgy_gift_discount_label: "",
             },
+            sections: getCartSectionIds(),
+            sections_url: window.location.pathname,
           }),
         });
 
         sessionStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(CART_VISIT_KEY);
         state.cart = updatedCart;
         debug.lastCart = updatedCart;
 
@@ -1341,6 +1860,7 @@
       } catch (error) {
         debug.lastError = error;
         console.warn("[PGY tiered gift] Unable to cleanup gift lines.", error);
+        removeGiftLinesFromDom();
         hideGiftLinesInDom();
         throw error;
       } finally {
