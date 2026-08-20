@@ -1098,7 +1098,7 @@ function renderInfoTemplate(data) {
       <button class="text-button" type="button" data-open-records>Lucky draw records</button>
       <button class="icon-button" type="button" data-open-rules>Game rules</button>
     </div>
-    <h1>PGY Lucky Box</h1>
+    <h1>Lucky Box</h1>
     <div class="info-actions">
       <p class="stats-line">
         <span>Draw chances: <strong data-remaining-count>${escapeHtml(data.availableDrawCount || 0)}</strong></span>
