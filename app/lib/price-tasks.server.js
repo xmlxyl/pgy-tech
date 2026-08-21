@@ -149,6 +149,7 @@ export async function createPriceTask({
           productId: row.productId,
           variantId: row.variantId,
           originalPrice: row.originalPrice,
+          originalCompareAtPrice: row.currentCompareAtPrice || null,
           targetPrice: row.targetPrice,
         })),
       },
@@ -181,6 +182,7 @@ export async function applyCompareAtPriceTask(admin, shop, taskId) {
       item.variantId,
       item.targetPrice,
       item.originalPrice,
+      item.originalCompareAtPrice,
     ),
   );
 
@@ -242,7 +244,7 @@ export async function restorePriceTask(admin, shop, taskId) {
       productId: item.productId,
       variantId: item.variantId,
       price: item.originalPrice,
-      compareAtPrice: null,
+      compareAtPrice: item.originalCompareAtPrice ?? null,
     });
 
     if (result.ok) {
@@ -379,12 +381,15 @@ async function updateVariantSalePrice(
   variantId,
   targetPrice,
   originalPrice,
+  originalCompareAtPrice,
 ) {
+  const compareAtPrice = originalCompareAtPrice || originalPrice;
+
   return safelyUpdateVariantPrice(admin, {
     productId,
     variantId,
     price: targetPrice,
-    compareAtPrice: originalPrice,
+    compareAtPrice,
   });
 }
 
@@ -468,15 +473,20 @@ async function sendPriceTaskFeishuNotice(admin, shop, taskId, modifyType) {
         item.variantId,
         shopUrl,
       );
+      const compareAtPrice =
+        item.originalCompareAtPrice?.toString() ||
+        (modifyType === "恢复价格" ? "-" : item.originalPrice.toString());
       const salePrice =
-        modifyType === "恢复价格" ? "-" : item.targetPrice.toString();
+        modifyType === "恢复价格"
+          ? item.originalPrice.toString()
+          : item.targetPrice.toString();
       const onlineLink = variantInfo.onlineUrl
         ? `[查看商品](${variantInfo.onlineUrl})`
         : "-";
       tableRows.push(
         `| ${escapeMarkdownTableCell(variantInfo.productTitle)} | ${escapeMarkdownTableCell(
           variantInfo.variantTitle,
-        )} | ${escapeMarkdownTableCell(item.sku)} | ${item.originalPrice.toString()} | ${salePrice} | ${onlineLink} |`,
+        )} | ${escapeMarkdownTableCell(item.sku)} | ${compareAtPrice} | ${salePrice} | ${onlineLink} |`,
       );
     }
 

@@ -198,6 +198,7 @@ export default function NewPriceTaskPage() {
                 <s-table-header-row>
                   <s-table-header>行号</s-table-header>
                   <s-table-header listSlot="primary">SKU</s-table-header>
+                  <s-table-header>原价</s-table-header>
                   <s-table-header>当前价格</s-table-header>
                   <s-table-header>目标价格</s-table-header>
                   <s-table-header>校验结果</s-table-header>
@@ -207,6 +208,7 @@ export default function NewPriceTaskPage() {
                     <s-table-row key={`${row.lineNumber}-${row.sku}`}>
                       <s-table-cell>{row.lineNumber}</s-table-cell>
                       <s-table-cell>{row.sku || "-"}</s-table-cell>
+                      <s-table-cell>{row.currentCompareAtPrice || "-"}</s-table-cell>
                       <s-table-cell>{row.originalPrice || "-"}</s-table-cell>
                       <s-table-cell>{row.targetPrice || "-"}</s-table-cell>
                       <s-table-cell>

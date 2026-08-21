@@ -65,8 +65,9 @@ model PriceChangeTaskItem {
   sku           String
   productId     String
   variantId     String
-  originalPrice Decimal         @db.Decimal(12, 2)
-  targetPrice   Decimal         @db.Decimal(12, 2)
+  originalPrice           Decimal  @db.Decimal(12, 2)
+  originalCompareAtPrice  Decimal? @db.Decimal(12, 2)
+  targetPrice             Decimal  @db.Decimal(12, 2)
   changeStatus  String          @default("Pending")
   restoreStatus String          @default("Pending")
   errorMessage  String?
