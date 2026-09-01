@@ -3,6 +3,8 @@
   assign banner_color = block.settings.banner_color | default: '#111827'
   assign accent_color = block.settings.accent_color | default: '#16a34a'
   assign gift_title_fallback = block.settings.gift_fallback_title | default: 'Free gift'
+  assign active_region = block.settings.active_region | default: 'all'
+  assign current_country = localization.country.iso_code | default: ''
   assign tier1_threshold = block.settings.tier1_threshold | default: 149
   assign tier2_threshold = block.settings.tier2_threshold | default: 199
   assign tier3_threshold = block.settings.tier3_threshold | default: 249
@@ -98,6 +100,8 @@
     "enabled": {{ enabled | json }},
     "propertyName": "_pgy_tiered_gift",
     "propertyValue": "free",
+    "activeRegion": {{ active_region | json }},
+    "currentCountry": {{ current_country | json }},
     "discountLabel": {{ block.settings.gift_discount_label | default: 'BTSFREE' | json }},
     "giftFallbackTitle": {{ gift_title_fallback | json }},
     "tiers": [
@@ -160,6 +164,22 @@
     {
       "type": "paragraph",
       "content": "Set a threshold and gift for each tier. Enter a SKU to pin a specific variant. Gifts are added at Checkout / Buy now only."
+    },
+    {
+      "type": "select",
+      "id": "active_region",
+      "label": "Active region",
+      "default": "all",
+      "options": [
+        {
+          "value": "all",
+          "label": "All"
+        },
+        {
+          "value": "us",
+          "label": "United States"
+        }
+      ]
     },
     {
       "type": "header",

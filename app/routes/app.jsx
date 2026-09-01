@@ -21,6 +21,7 @@ export default function App() {
         <s-link href="/app/mystery-box">Lucky Box</s-link>
         <s-link href="/app/price-tasks">Price Tasks</s-link>
         <s-link href="/app/faq">FAQ</s-link>
+        <s-link href="/app/manuals">User Manuals</s-link>
         <s-link href="/app/email">Email Records</s-link>
       </s-app-nav>
       <Outlet />

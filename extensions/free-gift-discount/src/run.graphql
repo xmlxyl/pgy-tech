@@ -9,6 +9,9 @@ query CartLinesDiscountsGenerateRunInput {
     giftDiscountLabel: attribute(key: "_pgy_gift_discount_label") {
       value
     }
+    tieredGiftRegion: attribute(key: "_pgy_tiered_gift_region") {
+      value
+    }
     comboDiscounts: attribute(key: "_pgy_combo_discounts") {
       value
     }
@@ -38,6 +41,11 @@ query CartLinesDiscountsGenerateRunInput {
       tieredGift: attribute(key: "_pgy_tiered_gift") {
         value
       }
+    }
+  }
+  localization {
+    country {
+      isoCode
     }
   }
 }

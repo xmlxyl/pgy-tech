@@ -49,6 +49,8 @@ function cartLinesDiscountsGenerateRun(input) {
   const giftContext = {
     freeGiftVariantId: input.cart.freeGiftVariantId?.value,
     tieredGiftVariantId: input.cart.tieredGiftVariantId?.value,
+    tieredGiftRegion: input.cart.tieredGiftRegion?.value,
+    countryCode: input.localization?.country?.isoCode,
     discountLabel: input.cart.giftDiscountLabel?.value,
     hasTieredGiftLine: lines.some((line) => hasGiftFlag(line.tieredGift))
   };
@@ -82,7 +84,9 @@ function cartLinesDiscountsGenerateRun(input) {
   };
 }
 function buildFreeGiftCandidates(lines, giftContext) {
-  return lines.filter((line) => isFreeGift(line, giftContext)).map((line) => ({
+  return lines.filter(
+    (line) => isFreeGift(line, giftContext) && isFreeGiftRegionEligible(line, giftContext)
+  ).map((line) => ({
     message: giftDiscountMessage(giftContext),
     targets: [
       {
@@ -101,6 +105,15 @@ function buildFreeGiftCandidates(lines, giftContext) {
 }
 function isComboDiscountEnabled(value) {
   return String(value || "").toLowerCase() !== "false";
+}
+function isTieredGiftRegionEligible(giftContext) {
+  const region = String(giftContext?.tieredGiftRegion || "all").trim().toLowerCase();
+  if (region !== "us") return true;
+  return String(giftContext?.countryCode || "").toUpperCase() === "US";
+}
+function isFreeGiftRegionEligible(line, giftContext) {
+  if (!hasGiftFlag(line.tieredGift)) return true;
+  return isTieredGiftRegionEligible(giftContext);
 }
 function buildComboDiscountCandidates(lines, rules) {
   if (!rules.length) return [];

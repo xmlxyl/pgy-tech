@@ -14,6 +14,8 @@
       "routes/webhooks.app.scopes_update": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/apps.pgy-tech.mystery-box": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/webhooks.app.uninstalled": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api.mystery-box-entry": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/apps.pgy-tech.manuals": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/apps.pgy-tech.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/auth.$": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
@@ -27,6 +29,7 @@
       "routes/app.faq._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.free-gift": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.faq.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/app.manuals": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/app.email": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
     },
@@ -69,6 +72,24 @@
         "parentId": "root",
         "file": "app/routes/webhooks.app.uninstalled.jsx",
         "path": "webhooks/app/uninstalled",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/api.mystery-box-entry": {
+        "id": "routes/api.mystery-box-entry",
+        "parentId": "root",
+        "file": "app/routes/api.mystery-box-entry.jsx",
+        "path": "api/mystery-box-entry",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/apps.pgy-tech.manuals": {
+        "id": "routes/apps.pgy-tech.manuals",
+        "parentId": "root",
+        "file": "app/routes/apps.pgy-tech.manuals.jsx",
+        "path": "apps/pgy-tech/manuals",
         "config": {
           "runtime": "nodejs"
         }
@@ -205,6 +226,15 @@
           "runtime": "nodejs"
         }
       },
+      "routes/app.manuals": {
+        "id": "routes/app.manuals",
+        "parentId": "routes/app",
+        "file": "app/routes/app.manuals.jsx",
+        "path": "manuals",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
       "routes/app._index": {
         "id": "routes/app._index",
         "parentId": "routes/app",
@@ -267,6 +297,18 @@
         "parentId": "root",
         "file": "routes/webhooks.app.uninstalled.jsx",
         "path": "webhooks/app/uninstalled"
+      },
+      "routes/api.mystery-box-entry": {
+        "id": "routes/api.mystery-box-entry",
+        "parentId": "root",
+        "file": "routes/api.mystery-box-entry.jsx",
+        "path": "api/mystery-box-entry"
+      },
+      "routes/apps.pgy-tech.manuals": {
+        "id": "routes/apps.pgy-tech.manuals",
+        "parentId": "root",
+        "file": "routes/apps.pgy-tech.manuals.jsx",
+        "path": "apps/pgy-tech/manuals"
       },
       "routes/apps.pgy-tech.email": {
         "id": "routes/apps.pgy-tech.email",
@@ -359,6 +401,12 @@
         "file": "routes/app.faq.$id.jsx",
         "path": "faq/:id"
       },
+      "routes/app.manuals": {
+        "id": "routes/app.manuals",
+        "parentId": "routes/app",
+        "file": "routes/app.manuals.jsx",
+        "path": "manuals"
+      },
       "routes/app._index": {
         "id": "routes/app._index",
         "parentId": "routes/app",
@@ -406,6 +454,16 @@
             "id": "routes/webhooks.app.uninstalled",
             "file": "routes/webhooks.app.uninstalled.jsx",
             "path": "webhooks/app/uninstalled"
+          },
+          {
+            "id": "routes/api.mystery-box-entry",
+            "file": "routes/api.mystery-box-entry.jsx",
+            "path": "api/mystery-box-entry"
+          },
+          {
+            "id": "routes/apps.pgy-tech.manuals",
+            "file": "routes/apps.pgy-tech.manuals.jsx",
+            "path": "apps/pgy-tech/manuals"
           },
           {
             "id": "routes/apps.pgy-tech.email",
@@ -484,6 +542,11 @@
                 "id": "routes/app.faq.$id",
                 "file": "routes/app.faq.$id.jsx",
                 "path": "faq/:id"
+              },
+              {
+                "id": "routes/app.manuals",
+                "file": "routes/app.manuals.jsx",
+                "path": "manuals"
               },
               {
                 "id": "routes/app._index",

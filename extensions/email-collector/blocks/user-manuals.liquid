@@ -1,0 +1,45 @@
+{% liquid
+  assign proxy_url = '/apps/pgy-tech/manuals?embedded=1'
+  assign min_height = block.settings.min_height | default: 860
+%}
+
+<div
+  class="pgy-user-manuals"
+  style="--pgy-user-manuals-min-height: {{ min_height }}px;"
+  {{ block.shopify_attributes }}
+>
+  <iframe
+    class="pgy-user-manuals__frame"
+    src="{{ proxy_url }}"
+    title="{{ block.settings.iframe_title | default: 'PGYTECH User Manuals' | escape }}"
+    loading="lazy"
+    data-pgy-user-manuals-frame
+  ></iframe>
+</div>
+
+{% schema %}
+{
+  "name": "用户手册",
+  "target": "section",
+  "stylesheet": "user-manuals.css",
+  "javascript": "user-manuals.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "iframe_title",
+      "label": "无障碍标题",
+      "default": "PGYTECH User Manuals"
+    },
+    {
+      "type": "range",
+      "id": "min_height",
+      "label": "最小高度",
+      "min": 520,
+      "max": 1400,
+      "step": 20,
+      "unit": "px",
+      "default": 860
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,20 @@
+.pgy-user-manuals {
+  width: 100%;
+  min-height: var(--pgy-user-manuals-min-height, 860px);
+  background: #f7f8fa;
+}
+
+.pgy-user-manuals__frame {
+  display: block;
+  width: 100%;
+  min-height: var(--pgy-user-manuals-min-height, 860px);
+  border: 0;
+  background: #f7f8fa;
+}
+
+@media screen and (max-width: 680px) {
+  .pgy-user-manuals,
+  .pgy-user-manuals__frame {
+    min-height: max(720px, var(--pgy-user-manuals-min-height, 860px));
+  }
+}

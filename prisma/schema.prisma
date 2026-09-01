@@ -23,7 +23,7 @@ model Session {
   firstName           String?
   lastName            String?
   email               String?
-  accountOwner          Boolean   @default(false)
+  accountOwner        Boolean   @default(false)
   locale              String?
   collaborator        Boolean?  @default(false)
   emailVerified       Boolean?  @default(false)
@@ -35,46 +35,46 @@ model SavedEmail {
   id        Int      @id @default(autoincrement())
   shop      String
   email     String
-  username  String?
   createdAt DateTime @default(now())
+  username  String?
 
   @@index([shop])
 }
 
 model PriceChangeTask {
-  id                 Int                   @id @default(autoincrement())
-  shop               String
-  name               String
-  status             String                @default("Pending")
-  fileName           String
-  totalCount         Int                   @default(0)
-  successCount       Int                   @default(0)
-  failedCount        Int                   @default(0)
-  createdBy          String?
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-  items              PriceChangeTaskItem[]
+  id           Int                   @id @default(autoincrement())
+  shop         String
+  name         String
+  status       String                @default("Pending")
+  fileName     String
+  totalCount   Int                   @default(0)
+  successCount Int                   @default(0)
+  failedCount  Int                   @default(0)
+  createdBy    String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  items        PriceChangeTaskItem[]
 
   @@index([shop, status])
 }
 
 model PriceChangeTaskItem {
-  id            Int             @id @default(autoincrement())
-  taskId        Int
-  task          PriceChangeTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  sku           String
-  productId     String
-  variantId     String
-  originalPrice           Decimal  @db.Decimal(12, 2)
-  originalCompareAtPrice  Decimal? @db.Decimal(12, 2)
-  targetPrice             Decimal  @db.Decimal(12, 2)
-  changeStatus  String          @default("Pending")
-  restoreStatus String          @default("Pending")
-  errorMessage  String?
-  changedAt     DateTime?
-  restoredAt    DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                     Int             @id @default(autoincrement())
+  taskId                 Int
+  sku                    String
+  productId              String
+  variantId              String
+  originalPrice          Decimal         @db.Decimal(12, 2)
+  targetPrice            Decimal         @db.Decimal(12, 2)
+  changeStatus           String          @default("Pending")
+  restoreStatus          String          @default("Pending")
+  errorMessage           String?
+  changedAt              DateTime?
+  restoredAt             DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  originalCompareAtPrice Decimal?        @db.Decimal(12, 2)
+  task                   PriceChangeTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, sku])
   @@index([taskId])
@@ -109,4 +109,20 @@ model MysteryBoxDraw {
 
   @@unique([shop, orderId])
   @@index([shop, customerId])
+}
+
+model UserManual {
+  id            Int      @id @default(autoincrement())
+  shop          String
+  title         String   @default("")
+  fileName      String
+  sku           String
+  productSeries String
+  fileId        String
+  fileUrl       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([shop, productSeries])
+  @@index([shop, createdAt])
 }
