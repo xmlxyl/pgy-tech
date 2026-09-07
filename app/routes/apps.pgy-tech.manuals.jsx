@@ -136,6 +136,12 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         border-color: #111827;
         box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
       }
+      .search input:disabled,
+      .search input[readonly] {
+        color: #6b7280;
+        background: #f3f4f6;
+        cursor: not-allowed;
+      }
       .search-submit {
         display: inline-flex;
         align-items: center;
@@ -176,19 +182,24 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       body.is-loading .search-submit-label {
         display: none;
       }
-      .page-loading {
-        position: fixed;
+      .manual-content {
+        position: relative;
+        min-height: 240px;
+      }
+      .content-loading {
+        position: absolute;
         inset: 0;
-        z-index: 50;
+        z-index: 20;
         display: none;
         place-items: center;
-        background: rgba(247, 248, 250, 0.72);
+        border-radius: 16px;
+        background: rgba(247, 248, 250, 0.78);
         backdrop-filter: blur(2px);
       }
-      body.is-loading .page-loading {
+      body.is-loading .content-loading {
         display: grid;
       }
-      .page-loading-card {
+      .content-loading-card {
         display: grid;
         gap: 12px;
         justify-items: center;
@@ -202,7 +213,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         font-size: 14px;
         font-weight: 650;
       }
-      .page-loading-spinner {
+      .content-loading-spinner {
         width: 28px;
         height: 28px;
         border: 3px solid #e5e7eb;
@@ -381,10 +392,25 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           font-size: 14px;
         }
         .search {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 8px;
+        }
+        .search input {
+          min-height: 44px;
+          border-radius: 12px;
+          font-size: 14px;
         }
         .search-submit {
-          width: 100%;
+          width: auto;
+          min-width: 72px;
+          min-height: 44px;
+          padding: 0 14px;
+          border-radius: 12px;
+          font-size: 13px;
+        }
+        .search-submit-spinner {
+          width: 14px;
+          height: 14px;
         }
         .manual-list {
           grid-template-columns: 1fr;
@@ -476,23 +502,34 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       </div>
       ${
         manuals.length
-          ? `<ul class="manual-list">${manuals
-              .map((manual) => renderManualItem(manual, normalizedQuery))
-              .join("")}</ul>`
-          : `<div class="empty">No manuals found.</div>`
+          ? `<div class="manual-content" data-manual-content>
+          <ul class="manual-list">${manuals
+            .map((manual) => renderManualItem(manual, normalizedQuery))
+            .join("")}</ul>
+          <div class="empty" data-filter-empty hidden>No manuals found in this category.</div>
+          <div class="content-loading" data-content-loading aria-live="polite" aria-busy="false" hidden>
+            <div class="content-loading-card">
+              <div class="content-loading-spinner" aria-hidden="true"></div>
+              <span>Searching...</span>
+            </div>
+          </div>
+        </div>`
+          : `<div class="manual-content" data-manual-content>
+          <div class="empty">No manuals found.</div>
+          <div class="content-loading" data-content-loading aria-live="polite" aria-busy="false" hidden>
+            <div class="content-loading-card">
+              <div class="content-loading-spinner" aria-hidden="true"></div>
+              <span>Searching...</span>
+            </div>
+          </div>
+        </div>`
       }
-      <div class="empty" data-filter-empty hidden>No manuals found in this category.</div>
     </main>
-    <div class="page-loading" data-page-loading aria-live="polite" aria-busy="false" hidden>
-      <div class="page-loading-card">
-        <div class="page-loading-spinner" aria-hidden="true"></div>
-        <span>Searching...</span>
-      </div>
-    </div>
     <script>
       (function () {
         var form = document.querySelector("[data-manual-search]");
-        var loading = document.querySelector("[data-page-loading]");
+        var loading = document.querySelector("[data-content-loading]");
+        var searchInput = form ? form.querySelector('input[name="q"]') : null;
         var submitButton = form ? form.querySelector(".search-submit") : null;
 
         function setLoading(isLoading) {
@@ -500,6 +537,10 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           if (loading) {
             loading.hidden = !isLoading;
             loading.setAttribute("aria-busy", isLoading ? "true" : "false");
+          }
+          if (searchInput) {
+            searchInput.readOnly = isLoading;
+            if (isLoading) searchInput.blur();
           }
           if (submitButton) submitButton.disabled = isLoading;
         }
