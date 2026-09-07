@@ -278,18 +278,22 @@
         config.variantId,
       );
       attributes[config.propertyName] = config.propertyValue;
-      attributes._pgy_combo_discount_enabled = config.comboDiscountEnabled
+      attributes._pgy_combo_discount_enabled = isComboDiscountActive()
         ? "true"
         : "false";
 
       return updateGiftLines(updates, attributes);
     }
 
+    function isComboDiscountActive() {
+      return Boolean(config.enabled && config.comboDiscountEnabled);
+    }
+
     async function syncComboDiscountAttribute(cart) {
       cart = cart || (await fetchCart());
 
       var attributes = cart.attributes || {};
-      var nextValue = config.comboDiscountEnabled ? "true" : "false";
+      var nextValue = isComboDiscountActive() ? "true" : "false";
 
       if (attributes._pgy_combo_discount_enabled === nextValue) return cart;
 

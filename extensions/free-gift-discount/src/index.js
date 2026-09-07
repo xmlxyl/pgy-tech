@@ -106,7 +106,7 @@ function buildFreeGiftCandidates(lines, giftContext) {
 }
 
 function isComboDiscountEnabled(value) {
-  return String(value || "").toLowerCase() !== "false";
+  return String(value || "").trim().toLowerCase() === "true";
 }
 
 function isTieredGiftRegionEligible(giftContext) {
