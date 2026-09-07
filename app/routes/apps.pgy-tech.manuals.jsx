@@ -191,19 +191,22 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         inset: 0;
         z-index: 20;
         display: none;
-        place-items: center;
         border-radius: 16px;
         background: rgba(247, 248, 250, 0.78);
         backdrop-filter: blur(2px);
       }
       body.is-loading .content-loading {
-        display: grid;
+        display: block;
       }
       .content-loading-card {
+        position: sticky;
+        top: 24vh;
         display: grid;
         gap: 12px;
         justify-items: center;
+        width: fit-content;
         min-width: 160px;
+        margin: 48px auto 0;
         padding: 22px 28px;
         border: 1px solid #e5e7eb;
         border-radius: 16px;
