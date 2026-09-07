@@ -99,7 +99,14 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         margin-bottom: 28px;
       }
       .search {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: stretch;
+      }
+      .search-field {
         position: relative;
+        min-width: 0;
       }
       .search-icon {
         position: absolute;
@@ -128,6 +135,83 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       .search input:focus {
         border-color: #111827;
         box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+      }
+      .search-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 112px;
+        min-height: 52px;
+        border: 0;
+        border-radius: 14px;
+        padding: 0 20px;
+        color: #fff;
+        background: #111827;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 750;
+        cursor: pointer;
+        transition: background 0.15s ease, opacity 0.15s ease;
+      }
+      .search-submit:hover {
+        background: #000;
+      }
+      .search-submit:disabled {
+        opacity: 0.72;
+        cursor: wait;
+      }
+      .search-submit-spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: pgy-spin 0.7s linear infinite;
+      }
+      body.is-loading .search-submit-spinner {
+        display: inline-block;
+      }
+      body.is-loading .search-submit-label {
+        display: none;
+      }
+      .page-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        place-items: center;
+        background: rgba(247, 248, 250, 0.72);
+        backdrop-filter: blur(2px);
+      }
+      body.is-loading .page-loading {
+        display: grid;
+      }
+      .page-loading-card {
+        display: grid;
+        gap: 12px;
+        justify-items: center;
+        min-width: 160px;
+        padding: 22px 28px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(17, 24, 39, 0.08);
+        color: #374151;
+        font-size: 14px;
+        font-weight: 650;
+      }
+      .page-loading-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid #e5e7eb;
+        border-top-color: #111827;
+        border-radius: 50%;
+        animation: pgy-spin 0.7s linear infinite;
+      }
+      @keyframes pgy-spin {
+        to { transform: rotate(360deg); }
       }
       .categories {
         display: flex;
@@ -174,7 +258,6 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         min-height: 100%;
         border: 1px solid #e8eaee;
         border-radius: 16px;
-        padding: 24px 20px 18px;
         background: #fff;
         box-shadow: 0 1px 2px rgba(17, 24, 39, 0.03);
         transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
@@ -186,6 +269,15 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       }
       .manual-item[hidden] {
         display: none;
+      }
+      .manual-card {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 100%;
+        padding: 24px 20px 18px;
+        color: inherit;
+        text-decoration: none;
       }
       .manual-icon-wrap {
         position: relative;
@@ -235,42 +327,25 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         line-height: 1.45;
         overflow-wrap: anywhere;
       }
-      .manual-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-top: 20px;
-      }
-      .btn {
+      .manual-view {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        min-height: 40px;
-        border-radius: 10px;
-        padding: 0 12px;
+        align-self: flex-start;
+        gap: 4px;
+        margin-top: 20px;
+        color: #111827;
         font-size: 14px;
         font-weight: 750;
-        text-decoration: none;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        line-height: 1.2;
       }
-      .btn-preview {
-        border: 1px solid #d1d5db;
-        color: #111827;
-        background: #fff;
+      .manual-view-arrow {
+        transition: transform 0.15s ease;
       }
-      .btn-preview:hover {
-        border-color: #111827;
-        background: #f9fafb;
+      .manual-item:hover .manual-view-arrow {
+        transform: translateX(2px);
       }
-      .btn-download {
-        border: 1px solid #111827;
-        color: #fff;
-        background: #111827;
-      }
-      .btn-download:hover {
-        background: #000;
+      .manual-chevron {
+        display: none;
       }
       mark {
         border-radius: 4px;
@@ -305,27 +380,31 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         .manual-subtitle {
           font-size: 14px;
         }
+        .search {
+          grid-template-columns: 1fr;
+        }
+        .search-submit {
+          width: 100%;
+        }
         .manual-list {
           grid-template-columns: 1fr;
           gap: 12px;
         }
         .manual-item {
-          display: grid;
-          grid-template-columns: 56px minmax(0, 1fr);
-          grid-template-areas:
-            "icon main"
-            "actions actions";
-          gap: 12px 14px;
-          align-items: center;
-          padding: 16px;
           border-radius: 14px;
         }
         .manual-item:hover {
           transform: none;
           box-shadow: 0 1px 2px rgba(17, 24, 39, 0.03);
         }
+        .manual-card {
+          display: grid;
+          grid-template-columns: 56px minmax(0, 1fr) auto;
+          gap: 12px 14px;
+          align-items: center;
+          padding: 16px;
+        }
         .manual-icon-wrap {
-          grid-area: icon;
           height: auto;
           margin: 0;
         }
@@ -338,7 +417,6 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           font-size: 11px;
         }
         .manual-main {
-          grid-area: main;
           text-align: left;
         }
         .manual-name {
@@ -348,13 +426,17 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           margin-top: 4px;
           font-size: 12px;
         }
-        .manual-actions {
-          grid-area: actions;
-          margin-top: 0;
+        .manual-view {
+          display: none;
         }
-        .btn {
-          min-height: 38px;
-          font-size: 13px;
+        .manual-chevron {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          color: #9ca3af;
+          font-size: 22px;
+          line-height: 1;
         }
       }
     </style>
@@ -366,12 +448,18 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         <p class="manual-subtitle">Find the manual for your PGYTECH product.</p>
       </header>
       <div class="toolbar">
-        <form class="search" method="get" action="${escapeHtml(path)}">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
-            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-          </svg>
-          <input type="search" name="q" value="${escapeHtml(query)}" placeholder="Search by product name, model or SKU" aria-label="Search manuals">
+        <form class="search" method="get" action="${escapeHtml(path)}" data-manual-search>
+          <div class="search-field">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+            <input type="search" name="q" value="${escapeHtml(query)}" placeholder="Search by product name, model or SKU" aria-label="Search manuals" enterkeyhint="search">
+          </div>
+          <button class="search-submit" type="submit">
+            <span class="search-submit-spinner" aria-hidden="true"></span>
+            <span class="search-submit-label">Search</span>
+          </button>
           <input type="hidden" name="embedded" value="${embedded ? "1" : "0"}">
           ${
             pdfIcon && /^https?:\/\//i.test(pdfIcon)
@@ -395,8 +483,33 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       }
       <div class="empty" data-filter-empty hidden>No manuals found in this category.</div>
     </main>
+    <div class="page-loading" data-page-loading aria-live="polite" aria-busy="false" hidden>
+      <div class="page-loading-card">
+        <div class="page-loading-spinner" aria-hidden="true"></div>
+        <span>Searching...</span>
+      </div>
+    </div>
     <script>
       (function () {
+        var form = document.querySelector("[data-manual-search]");
+        var loading = document.querySelector("[data-page-loading]");
+        var submitButton = form ? form.querySelector(".search-submit") : null;
+
+        function setLoading(isLoading) {
+          document.body.classList.toggle("is-loading", isLoading);
+          if (loading) {
+            loading.hidden = !isLoading;
+            loading.setAttribute("aria-busy", isLoading ? "true" : "false");
+          }
+          if (submitButton) submitButton.disabled = isLoading;
+        }
+
+        if (form) {
+          form.addEventListener("submit", function () {
+            setLoading(true);
+          });
+        }
+
         var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-category-button]"));
         var items = Array.prototype.slice.call(document.querySelectorAll("[data-manual-category]"));
         var empty = document.querySelector("[data-filter-empty]");
@@ -431,24 +544,24 @@ function renderCategoryButton(label, value) {
 }
 
 function renderManualItem(manual, query) {
-  const titleHtml = highlightText(manual.title || manual.fileName, query);
+  const titleText = manual.title || manual.fileName || "User Manual";
+  const titleHtml = highlightText(titleText, query);
   const skuHtml = `Model: ${highlightText(orderSkuList(manual.sku, query), query)}`;
   const fileUrl = escapeHtml(manual.fileUrl);
-  const fileName = escapeHtml(manual.fileName || `${manual.title || "manual"}.pdf`);
 
   return `<li class="manual-item" data-manual-category="${escapeHtml(categoryKey(manual.productSeries))}">
-    <div class="manual-icon-wrap">
-      <span class="manual-icon" role="img" aria-label="PDF"></span>
-      <span class="manual-icon-fallback" aria-hidden="true">PDF</span>
-    </div>
-    <div class="manual-main">
-      <span class="manual-name">${titleHtml}</span>
-      <span class="manual-sku">${skuHtml}</span>
-    </div>
-    <div class="manual-actions">
-      <a class="btn btn-preview" href="${fileUrl}" target="_blank" rel="noopener">Preview</a>
-      <a class="btn btn-download" href="${fileUrl}" download="${fileName}" target="_blank" rel="noopener">Download</a>
-    </div>
+    <a class="manual-card" href="${fileUrl}" target="_blank" rel="noopener" aria-label="View manual: ${escapeHtml(titleText)}">
+      <div class="manual-icon-wrap">
+        <span class="manual-icon" role="img" aria-label="PDF"></span>
+        <span class="manual-icon-fallback" aria-hidden="true">PDF</span>
+      </div>
+      <div class="manual-main">
+        <span class="manual-name">${titleHtml}</span>
+        <span class="manual-sku">${skuHtml}</span>
+      </div>
+      <span class="manual-view">View Manual <span class="manual-view-arrow" aria-hidden="true">→</span></span>
+      <span class="manual-chevron" aria-hidden="true">›</span>
+    </a>
   </li>`;
 }
 
