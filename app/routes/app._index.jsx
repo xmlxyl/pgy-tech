@@ -8,6 +8,7 @@ export default function Index() {
         <s-stack gap="small">
           <s-link href="/app/free-gift">Free Gift Discount</s-link>
           <s-link href="/app/mystery-box">Lucky Box Settings</s-link>
+          <s-link href="/app/coupon-lottery">Coupon Lottery</s-link>
           <s-link href="/app/faq">FAQ</s-link>
           <s-link href="/app/email">Email Records</s-link>
           <s-link>Product Specs Management (Coming soon)</s-link>

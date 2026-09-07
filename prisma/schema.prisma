@@ -126,3 +126,31 @@ model UserManual {
   @@index([shop, productSeries])
   @@index([shop, createdAt])
 }
+
+model CouponLotterySetting {
+  id           Int      @id @default(autoincrement())
+  shop         String   @unique
+  enabled      Boolean  @default(true)
+  codePrefix   String   @default("PGY-")
+  codeStartsAt DateTime
+  codeEndsAt   DateTime
+  prizes       Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CouponLotteryClaim {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  email             String
+  couponCode        String
+  discountAmount    Decimal  @db.Decimal(12, 2)
+  minSpend          Decimal  @db.Decimal(12, 2)
+  shopifyDiscountId String?
+  agreedMarketing   Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  @@unique([shop, email])
+  @@unique([shop, couponCode])
+  @@index([shop, createdAt])
+}

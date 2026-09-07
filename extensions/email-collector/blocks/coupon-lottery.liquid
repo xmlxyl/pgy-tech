@@ -1,0 +1,254 @@
+{% liquid
+  assign intro_heading = block.settings.intro_heading
+  if intro_heading == blank
+    assign intro_heading = 'Open Your Anniversary Coupon'
+  endif
+  assign intro_subheading = block.settings.intro_subheading
+  if intro_subheading == blank
+    assign intro_subheading = 'Every box unlocks a coupon'
+  endif
+  assign intro_button = block.settings.intro_button
+  if intro_button == blank
+    assign intro_button = 'Open My Coupon'
+  endif
+  assign form_heading = block.settings.form_heading
+  if form_heading == blank
+    assign form_heading = 'Open Your Anniversary Coupon'
+  endif
+  assign form_subheading = block.settings.form_subheading
+  if form_subheading == blank
+    assign form_subheading = 'Subscribe to reveal one guaranteed extra coupon. Your reward will be shown after you open the box.'
+  endif
+  assign agree_label = block.settings.agree_label
+  if agree_label == blank
+    assign agree_label = 'I agree to receive PGYTECH anniversary news and offers.'
+  endif
+  assign reveal_button = block.settings.reveal_button
+  if reveal_button == blank
+    assign reveal_button = 'Reveal My Coupon'
+  endif
+  assign button_color = block.settings.button_color | default: '#FF6A00'
+  assign proxy_url = '/apps/pgy-tech/coupon-lottery'
+  assign customer_email = ''
+  if customer and customer.email != blank
+    assign customer_email = customer.email
+  endif
+%}
+
+<div
+  class="pgy-coupon-lottery"
+  style="--pgy-cl-accent: {{ button_color }};"
+  data-pgy-coupon-lottery
+  data-proxy-url="{{ proxy_url }}"
+  data-customer-email="{{ customer_email | escape }}"
+  data-msg-invalid="Please enter a valid email address."
+  data-msg-agree="Please agree to receive anniversary news and offers."
+  data-msg-error="Something went wrong. Please try again."
+  data-msg-preview="Please test on the live storefront. Theme editor preview does not support App Proxy."
+  {{ block.shopify_attributes }}
+>
+  <section class="pgy-coupon-lottery__stage" aria-labelledby="pgy-cl-intro-title-{{ block.id }}">
+    <div class="pgy-coupon-lottery__intro">
+      <div class="pgy-coupon-lottery__art" aria-hidden="true">
+        {% if block.settings.box_image != blank %}
+          {{
+            block.settings.box_image
+            | image_url: width: 900
+            | image_tag: loading: 'lazy', class: 'pgy-coupon-lottery__art-image', alt: ''
+          }}
+        {% else %}
+          <img
+            class="pgy-coupon-lottery__art-image"
+            src="{{ 'anniversary-box-11.png' | asset_url }}"
+            alt=""
+            width="420"
+            height="560"
+            loading="lazy"
+          >
+        {% endif %}
+      </div>
+
+      <div class="pgy-coupon-lottery__intro-copy">
+        <h2 id="pgy-cl-intro-title-{{ block.id }}" class="pgy-coupon-lottery__intro-title">
+          {{ intro_heading }}
+        </h2>
+        <p class="pgy-coupon-lottery__intro-sub">{{ intro_subheading }}</p>
+
+        <div class="pgy-coupon-lottery__prizes" data-pgy-cl-prizes>
+          <div class="pgy-coupon-lottery__prize">
+            <div class="pgy-coupon-lottery__prize-amount">$1.10</div>
+            <div class="pgy-coupon-lottery__prize-label">COUPON</div>
+          </div>
+          <div class="pgy-coupon-lottery__prize">
+            <div class="pgy-coupon-lottery__prize-amount">$5.50</div>
+            <div class="pgy-coupon-lottery__prize-label">COUPON</div>
+          </div>
+          <div class="pgy-coupon-lottery__prize">
+            <div class="pgy-coupon-lottery__prize-amount">$6.60</div>
+            <div class="pgy-coupon-lottery__prize-label">COUPON</div>
+          </div>
+          <div class="pgy-coupon-lottery__prize">
+            <div class="pgy-coupon-lottery__prize-amount">$11</div>
+            <div class="pgy-coupon-lottery__prize-label">COUPON</div>
+          </div>
+          <div class="pgy-coupon-lottery__prize">
+            <div class="pgy-coupon-lottery__prize-amount">$17</div>
+            <div class="pgy-coupon-lottery__prize-label">COUPON</div>
+          </div>
+        </div>
+
+        <button type="button" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--stage" data-pgy-cl-open>
+          {{ intro_button }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="pgy-coupon-lottery__overlay" data-pgy-cl-overlay hidden>
+    <div
+      class="pgy-coupon-lottery__modal pgy-coupon-lottery__modal--form"
+      data-pgy-cl-step="form"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pgy-cl-form-title-{{ block.id }}"
+      hidden
+    >
+      <button type="button" class="pgy-coupon-lottery__close" data-pgy-cl-close aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h2 id="pgy-cl-form-title-{{ block.id }}" class="pgy-coupon-lottery__form-title">
+        {{ form_heading }}
+      </h2>
+      <p class="pgy-coupon-lottery__form-sub">{{ form_subheading }}</p>
+
+      <form class="pgy-coupon-lottery__form" data-pgy-cl-form novalidate>
+        <label class="pgy-coupon-lottery__label" for="pgy-cl-email-{{ block.id }}">Email address</label>
+        <input
+          id="pgy-cl-email-{{ block.id }}"
+          class="pgy-coupon-lottery__input"
+          type="email"
+          name="email"
+          value="{{ customer_email | escape }}"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+          data-pgy-cl-email
+        >
+        <label class="pgy-coupon-lottery__agree" for="pgy-cl-agree-{{ block.id }}">
+          <input
+            id="pgy-cl-agree-{{ block.id }}"
+            class="pgy-coupon-lottery__agree-input"
+            type="checkbox"
+            name="agreed"
+            checked
+            data-pgy-cl-agree
+          >
+          <span class="pgy-coupon-lottery__agree-box" aria-hidden="true"></span>
+          <span class="pgy-coupon-lottery__agree-text">{{ agree_label }}</span>
+        </label>
+        <button type="submit" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--full" data-pgy-cl-submit>
+          {{ reveal_button }}
+        </button>
+        <p class="pgy-coupon-lottery__message" data-pgy-cl-message hidden></p>
+      </form>
+    </div>
+
+    <div
+      class="pgy-coupon-lottery__modal pgy-coupon-lottery__modal--result"
+      data-pgy-cl-step="result"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pgy-cl-result-title-{{ block.id }}"
+      hidden
+    >
+      <button type="button" class="pgy-coupon-lottery__close" data-pgy-cl-close aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h2 id="pgy-cl-result-title-{{ block.id }}" class="pgy-coupon-lottery__form-title" data-pgy-cl-result-title>
+        Your coupon is ready
+      </h2>
+      <p class="pgy-coupon-lottery__form-sub" data-pgy-cl-result-sub></p>
+      <div class="pgy-coupon-lottery__result-card">
+        <div class="pgy-coupon-lottery__result-amount" data-pgy-cl-result-amount></div>
+        <div class="pgy-coupon-lottery__result-meta" data-pgy-cl-result-meta></div>
+        <div class="pgy-coupon-lottery__result-code" data-pgy-cl-result-code></div>
+      </div>
+      <button type="button" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--full" data-pgy-cl-copy>
+        Copy code
+      </button>
+      <p class="pgy-coupon-lottery__message" data-pgy-cl-copy-message hidden></p>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Coupon Lottery",
+  "target": "section",
+  "stylesheet": "coupon-lottery.css",
+  "javascript": "coupon-lottery.js",
+  "settings": [
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Accent color",
+      "default": "#FF6A00"
+    },
+    {
+      "type": "image_picker",
+      "id": "box_image",
+      "label": "Mystery box image"
+    },
+    {
+      "type": "header",
+      "content": "Stage content"
+    },
+    {
+      "type": "text",
+      "id": "intro_heading",
+      "label": "Heading",
+      "default": "Open Your Anniversary Coupon"
+    },
+    {
+      "type": "text",
+      "id": "intro_subheading",
+      "label": "Subheading",
+      "default": "Every box unlocks a coupon"
+    },
+    {
+      "type": "text",
+      "id": "intro_button",
+      "label": "Open button",
+      "default": "Open My Coupon"
+    },
+    {
+      "type": "header",
+      "content": "Email form"
+    },
+    {
+      "type": "text",
+      "id": "form_heading",
+      "label": "Form heading",
+      "default": "Open Your Anniversary Coupon"
+    },
+    {
+      "type": "textarea",
+      "id": "form_subheading",
+      "label": "Form description",
+      "default": "Subscribe to reveal one guaranteed extra coupon. Your reward will be shown after you open the box."
+    },
+    {
+      "type": "text",
+      "id": "agree_label",
+      "label": "Consent checkbox label",
+      "default": "I agree to receive PGYTECH anniversary news and offers."
+    },
+    {
+      "type": "text",
+      "id": "reveal_button",
+      "label": "Reveal button",
+      "default": "Reveal My Coupon"
+    }
+  ]
+}
+{% endschema %}

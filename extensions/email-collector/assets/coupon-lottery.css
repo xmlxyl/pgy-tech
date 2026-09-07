@@ -1,0 +1,408 @@
+.pgy-coupon-lottery {
+  --pgy-cl-accent: #ff6a00;
+  --pgy-cl-muted: #6b7280;
+  --pgy-cl-border: #111111;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+.pgy-coupon-lottery__stage {
+  width: 100%;
+  background: #000;
+  color: #fff;
+  padding: clamp(2.75rem, 7vw, 5rem) clamp(1.25rem, 5vw, 4rem);
+  box-sizing: border-box;
+}
+
+.pgy-coupon-lottery__intro {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 1.1fr);
+  gap: clamp(1.75rem, 5vw, 4rem);
+  align-items: center;
+  max-width: 1040px;
+  margin-inline: auto;
+}
+
+.pgy-coupon-lottery__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.pgy-coupon-lottery__art-image {
+  width: min(360px, 100%);
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.pgy-coupon-lottery__intro-copy {
+  min-width: 0;
+}
+
+.pgy-coupon-lottery__intro-title {
+  margin: 0;
+  font-size: clamp(1.85rem, 3.6vw, 2.5rem);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.pgy-coupon-lottery__intro-title::after {
+  content: "";
+  display: block;
+  width: 3.5rem;
+  height: 3px;
+  margin-top: 0.9rem;
+  background: var(--pgy-cl-accent);
+}
+
+.pgy-coupon-lottery__intro-sub {
+  margin: 1rem 0 1.25rem;
+  color: #f3f4f6;
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.pgy-coupon-lottery__prizes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1.35rem;
+}
+
+.pgy-coupon-lottery__prize {
+  min-height: 4.5rem;
+  padding: 0.75rem 0.35rem;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 0.3rem;
+  background: #2a2a2a;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pgy-coupon-lottery__prize:nth-child(5) {
+  grid-column: 1 / 2;
+}
+
+.pgy-coupon-lottery__prize-amount {
+  color: var(--pgy-cl-accent);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.pgy-coupon-lottery__prize-label {
+  margin-top: 0.25rem;
+  color: #f3f4f6;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.pgy-coupon-lottery__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.1rem;
+  padding: 0.8rem 1.75rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: var(--pgy-cl-accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.pgy-coupon-lottery__cta:hover {
+  filter: brightness(1.06);
+}
+
+.pgy-coupon-lottery__cta:active {
+  transform: translateY(1px);
+}
+
+.pgy-coupon-lottery__cta:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+.pgy-coupon-lottery__cta--stage {
+  width: 100%;
+  max-width: 100%;
+}
+
+.pgy-coupon-lottery__cta--full {
+  width: 100%;
+}
+
+.pgy-coupon-lottery__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.pgy-coupon-lottery__overlay[hidden] {
+  display: none !important;
+}
+
+.pgy-coupon-lottery__modal {
+  position: relative;
+  width: min(480px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  border-radius: 0.65rem;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+.pgy-coupon-lottery__modal[hidden] {
+  display: none !important;
+}
+
+.pgy-coupon-lottery__modal--form,
+.pgy-coupon-lottery__modal--result {
+  background: #fff;
+  color: #111;
+  padding: 2rem 1.75rem 1.75rem;
+}
+
+.pgy-coupon-lottery__close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.95rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #111;
+  font-size: 1.55rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pgy-coupon-lottery__form-title {
+  margin: 0 2rem 0.85rem 0;
+  font-size: 1.65rem;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.pgy-coupon-lottery__form-sub {
+  margin: 0 0 1.35rem;
+  color: #6b7280;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.pgy-coupon-lottery__label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.pgy-coupon-lottery__input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.9rem;
+  margin-bottom: 1.05rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #111;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #111;
+  font-size: 1rem;
+}
+
+.pgy-coupon-lottery__input::placeholder {
+  color: #9ca3af;
+}
+
+.pgy-coupon-lottery__input:focus {
+  outline: 2px solid color-mix(in srgb, var(--pgy-cl-accent) 40%, white);
+  border-color: var(--pgy-cl-accent);
+}
+
+.pgy-coupon-lottery .pgy-coupon-lottery__agree,
+.pgy-coupon-lottery label.pgy-coupon-lottery__agree {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 1.125rem minmax(0, 1fr) !important;
+  grid-template-rows: auto !important;
+  column-gap: 0.65rem !important;
+  row-gap: 0 !important;
+  align-items: start !important;
+  justify-content: start !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 0 1.25rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  text-align: left !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  color: #374151 !important;
+  cursor: pointer !important;
+}
+
+.pgy-coupon-lottery .pgy-coupon-lottery__agree-input {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  z-index: 2 !important;
+  cursor: pointer !important;
+  float: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+.pgy-coupon-lottery .pgy-coupon-lottery__agree-box {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  box-sizing: border-box !important;
+  display: inline-block !important;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  margin: 0.15rem 0 0 !important;
+  border: 1.5px solid #111 !important;
+  border-radius: 0.2rem !important;
+  background: #fff !important;
+  position: relative !important;
+  float: none !important;
+  flex: none !important;
+}
+
+.pgy-coupon-lottery .pgy-coupon-lottery__agree-input:checked + .pgy-coupon-lottery__agree-box {
+  background: var(--pgy-cl-accent) !important;
+  border-color: var(--pgy-cl-accent) !important;
+}
+
+.pgy-coupon-lottery .pgy-coupon-lottery__agree-input:checked + .pgy-coupon-lottery__agree-box::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0.32rem !important;
+  top: 0.08rem !important;
+  width: 0.28rem !important;
+  height: 0.55rem !important;
+  border: solid #fff !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) !important;
+}
+
+.pgy-coupon-lottery .pgy-coupon-lottery__agree-text,
+.pgy-coupon-lottery .pgy-coupon-lottery__agree-label {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: block !important;
+  float: none !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  font-size: 0.9rem !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  color: #374151 !important;
+  white-space: normal !important;
+}
+
+.pgy-coupon-lottery__message {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+}
+
+.pgy-coupon-lottery__message--error {
+  color: #b91c1c;
+}
+
+.pgy-coupon-lottery__message--success {
+  color: #047857;
+}
+
+.pgy-coupon-lottery__result-card {
+  margin-bottom: 1rem;
+  padding: 1.1rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 0.55rem;
+  background: #fafafa;
+  text-align: center;
+}
+
+.pgy-coupon-lottery__result-amount {
+  color: var(--pgy-cl-accent);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.pgy-coupon-lottery__result-meta {
+  margin-top: 0.35rem;
+  color: var(--pgy-cl-muted);
+  font-size: 0.9rem;
+}
+
+.pgy-coupon-lottery__result-code {
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.4rem;
+  background: #111;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+}
+
+@media (max-width: 860px) {
+  .pgy-coupon-lottery__intro {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .pgy-coupon-lottery__intro-title::after {
+    margin-inline: auto;
+  }
+
+  .pgy-coupon-lottery__prizes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pgy-coupon-lottery__prize:nth-child(5) {
+    grid-column: 1 / -1;
+    max-width: 50%;
+    justify-self: center;
+    width: 100%;
+  }
+
+  .pgy-coupon-lottery__cta--stage {
+    width: 100%;
+  }
+}
