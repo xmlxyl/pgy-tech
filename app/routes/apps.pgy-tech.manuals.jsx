@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import prisma from "../db.server";
 import {
   MANUAL_PRODUCT_SERIES,
@@ -7,6 +9,15 @@ import {
   resolveManualProxyShop,
   serializeManual,
 } from "../lib/manuals.server";
+
+const DEFAULT_PDF_ICON = (() => {
+  try {
+    const bytes = readFileSync(join(process.cwd(), "public/images/pdf-icon.jpg"));
+    return `data:image/jpeg;base64,${bytes.toString("base64")}`;
+  } catch {
+    return "";
+  }
+})();
 
 export const loader = async ({ request }) => {
   const auth = await resolveManualProxyShop(request);
@@ -20,6 +31,7 @@ export const loader = async ({ request }) => {
 
   const url = new URL(request.url);
   const query = url.searchParams.get("q") || "";
+  const pdfIcon = url.searchParams.get("pdfIcon") || DEFAULT_PDF_ICON;
 
   let manuals = [];
   try {
@@ -39,11 +51,12 @@ export const loader = async ({ request }) => {
       query,
       embedded: url.searchParams.get("embedded") === "1",
       path: new URL(request.url).pathname,
+      pdfIcon,
     }),
   );
 };
 
-function renderPage({ manuals, query, embedded, path }) {
+function renderPage({ manuals, query, embedded, path, pdfIcon }) {
   const normalizedQuery = query.trim();
   return `<!doctype html>
 <html lang="en">
@@ -62,64 +75,85 @@ function renderPage({ manuals, query, embedded, path }) {
       .manual-page {
         width: min(100%, 1120px);
         margin: 0 auto;
-        padding: 48px 24px;
+        padding: 48px 24px 64px;
+      }
+      .manual-header {
+        margin-bottom: 28px;
       }
       .manual-title {
-        margin: 0 0 24px;
-        font-size: clamp(34px, 5vw, 56px);
-        line-height: 1;
+        margin: 0;
+        font-size: clamp(34px, 5vw, 52px);
+        line-height: 1.05;
         font-weight: 850;
-        letter-spacing: 0;
+        letter-spacing: -0.02em;
+      }
+      .manual-subtitle {
+        margin: 10px 0 0;
+        color: #6b7280;
+        font-size: 16px;
+        line-height: 1.5;
       }
       .toolbar {
         display: grid;
-        gap: 18px;
+        gap: 20px;
         margin-bottom: 28px;
       }
       .search {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 10px;
+        position: relative;
+      }
+      .search-icon {
+        position: absolute;
+        top: 50%;
+        left: 16px;
+        width: 18px;
+        height: 18px;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        pointer-events: none;
       }
       .search input {
         width: 100%;
-        min-height: 48px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        padding: 0 14px;
+        min-height: 52px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 0 16px 0 46px;
         color: #111827;
         background: #fff;
         font: inherit;
+        font-size: 15px;
+        box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
       }
-      .search button {
-        min-height: 48px;
-        border: 0;
-        border-radius: 8px;
-        padding: 0 22px;
-        color: #fff;
-        background: #111827;
-        font: inherit;
-        font-weight: 750;
-        cursor: pointer;
+      .search input:focus {
+        border-color: #111827;
+        box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
       }
       .categories {
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
+      .categories::-webkit-scrollbar { display: none; }
       .category {
         display: inline-flex;
         align-items: center;
-        min-height: 38px;
-        border: 1px solid #d1d5db;
+        flex: 0 0 auto;
+        min-height: 40px;
+        border: 1px solid #e5e7eb;
         border-radius: 999px;
-        padding: 0 14px;
+        padding: 0 16px;
         color: #374151;
         background: #fff;
         font-size: 14px;
-        font-weight: 720;
+        font-weight: 700;
         text-decoration: none;
         cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
       }
       .category.is-active {
         border-color: #111827;
@@ -128,26 +162,63 @@ function renderPage({ manuals, query, embedded, path }) {
       }
       .manual-list {
         display: grid;
-        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
         margin: 0;
         padding: 0;
         list-style: none;
       }
       .manual-item {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
-        gap: 16px;
-        align-items: center;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        border: 1px solid #e8eaee;
+        border-radius: 16px;
+        padding: 24px 20px 18px;
         background: #fff;
+        box-shadow: 0 1px 2px rgba(17, 24, 39, 0.03);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+      }
+      .manual-item:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+        transform: translateY(-1px);
       }
       .manual-item[hidden] {
         display: none;
       }
+      .manual-icon-wrap {
+        position: relative;
+        display: grid;
+        place-items: center;
+        height: 88px;
+        margin-bottom: 16px;
+      }
+      .manual-icon {
+        width: 64px;
+        height: 80px;
+        display: block;
+        background: ${pdfIcon ? `url("${escapeCssUrl(pdfIcon)}") center / contain no-repeat` : "none"};
+      }
+      .manual-icon-fallback {
+        position: absolute;
+        inset: 0;
+        display: ${pdfIcon ? "none" : "grid"};
+        place-items: center;
+        margin: auto;
+        width: 64px;
+        height: 80px;
+        border: 2px solid #ef4444;
+        border-radius: 6px;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+        background: #fff;
+      }
       .manual-main {
+        flex: 1 1 auto;
         min-width: 0;
+        text-align: center;
       }
       .manual-name {
         display: block;
@@ -160,37 +231,48 @@ function renderPage({ manuals, query, embedded, path }) {
       }
       .manual-sku {
         display: block;
-        margin-top: 6px;
+        margin-top: 8px;
         color: #6b7280;
-        font-size: 14px;
-        line-height: 1.4;
+        font-size: 13px;
+        line-height: 1.45;
         overflow-wrap: anywhere;
       }
-      .manual-series {
-        display: inline-flex;
-        align-items: center;
-        min-height: 32px;
-        border-radius: 999px;
-        padding: 0 12px;
-        color: #1f2937;
-        background: #eef2f7;
-        font-size: 13px;
-        font-weight: 750;
-        white-space: nowrap;
+      .manual-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 20px;
       }
-      .download {
+      .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 38px;
-        border-radius: 8px;
-        padding: 0 14px;
-        color: #fff;
-        background: #2f5bff;
+        min-height: 40px;
+        border-radius: 10px;
+        padding: 0 12px;
         font-size: 14px;
-        font-weight: 800;
+        font-weight: 750;
         text-decoration: none;
         white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      }
+      .btn-preview {
+        border: 1px solid #d1d5db;
+        color: #111827;
+        background: #fff;
+      }
+      .btn-preview:hover {
+        border-color: #111827;
+        background: #f9fafb;
+      }
+      .btn-download {
+        border: 1px solid #111827;
+        color: #fff;
+        background: #111827;
+      }
+      .btn-download:hover {
+        background: #000;
       }
       mark {
         border-radius: 4px;
@@ -200,44 +282,104 @@ function renderPage({ manuals, query, embedded, path }) {
       }
       .empty {
         border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 24px;
+        border-radius: 16px;
+        padding: 28px;
         color: #6b7280;
         background: #fff;
+        text-align: center;
       }
       body.is-embedded {
         background: transparent;
       }
       body.is-embedded .manual-page {
-        padding-top: 32px;
-        padding-bottom: 32px;
+        padding-top: 28px;
+        padding-bottom: 28px;
+      }
+      @media (max-width: 960px) {
+        .manual-list {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
       }
       @media (max-width: 680px) {
         .manual-page {
-          padding: 34px 16px;
+          padding: 28px 16px 40px;
         }
-        .search {
+        .manual-subtitle {
+          font-size: 14px;
+        }
+        .manual-list {
           grid-template-columns: 1fr;
+          gap: 12px;
         }
         .manual-item {
-          grid-template-columns: 1fr;
-          align-items: start;
+          display: grid;
+          grid-template-columns: 56px minmax(0, 1fr);
+          grid-template-areas:
+            "icon main"
+            "actions actions";
+          gap: 12px 14px;
+          align-items: center;
           padding: 16px;
+          border-radius: 14px;
         }
-        .download {
-          width: 100%;
+        .manual-item:hover {
+          transform: none;
+          box-shadow: 0 1px 2px rgba(17, 24, 39, 0.03);
+        }
+        .manual-icon-wrap {
+          grid-area: icon;
+          height: auto;
+          margin: 0;
+        }
+        .manual-icon,
+        .manual-icon-fallback {
+          width: 48px;
+          height: 60px;
+        }
+        .manual-icon-fallback {
+          font-size: 11px;
+        }
+        .manual-main {
+          grid-area: main;
+          text-align: left;
+        }
+        .manual-name {
+          font-size: 16px;
+        }
+        .manual-sku {
+          margin-top: 4px;
+          font-size: 12px;
+        }
+        .manual-actions {
+          grid-area: actions;
+          margin-top: 0;
+        }
+        .btn {
+          min-height: 38px;
+          font-size: 13px;
         }
       }
     </style>
   </head>
   <body class="${embedded ? "is-embedded" : ""}">
     <main class="manual-page">
-      <h1 class="manual-title">User Manuals</h1>
+      <header class="manual-header">
+        <h1 class="manual-title">User Manuals</h1>
+        <p class="manual-subtitle">Find the manual for your PGYTECH product.</p>
+      </header>
       <div class="toolbar">
         <form class="search" method="get" action="${escapeHtml(path)}">
-          <input type="search" name="q" value="${escapeHtml(query)}" placeholder="Search by title, file name, or SKU" aria-label="Search manuals">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
+            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <input type="search" name="q" value="${escapeHtml(query)}" placeholder="Search by product name, model or SKU" aria-label="Search manuals">
           <input type="hidden" name="embedded" value="${embedded ? "1" : "0"}">
-          <button type="submit">Search</button>
+          ${
+            pdfIcon && /^https?:\/\//i.test(pdfIcon)
+              ? `<input type="hidden" name="pdfIcon" value="${escapeHtml(pdfIcon)}">`
+              : ""
+          }
         </form>
         <nav class="categories" aria-label="Manual categories">
           ${renderCategoryButton("All", "")}
@@ -292,15 +434,23 @@ function renderCategoryButton(label, value) {
 
 function renderManualItem(manual, query) {
   const titleHtml = highlightText(manual.title || manual.fileName, query);
-  const skuHtml = `SKU: ${highlightText(orderSkuList(manual.sku, query), query)}`;
+  const skuHtml = `Model: ${highlightText(orderSkuList(manual.sku, query), query)}`;
+  const fileUrl = escapeHtml(manual.fileUrl);
+  const fileName = escapeHtml(manual.fileName || `${manual.title || "manual"}.pdf`);
 
   return `<li class="manual-item" data-manual-category="${escapeHtml(categoryKey(manual.productSeries))}">
+    <div class="manual-icon-wrap">
+      <span class="manual-icon" role="img" aria-label="PDF"></span>
+      <span class="manual-icon-fallback" aria-hidden="true">PDF</span>
+    </div>
     <div class="manual-main">
-      <a class="manual-name" href="${escapeHtml(manual.fileUrl)}" target="_blank" rel="noopener">${titleHtml}</a>
+      <span class="manual-name">${titleHtml}</span>
       <span class="manual-sku">${skuHtml}</span>
     </div>
-    <span class="manual-series">${escapeHtml(manual.productSeries)}</span>
-    <a class="download" href="${escapeHtml(manual.fileUrl)}" target="_blank" rel="noopener">Download</a>
+    <div class="manual-actions">
+      <a class="btn btn-preview" href="${fileUrl}" target="_blank" rel="noopener">Preview</a>
+      <a class="btn btn-download" href="${fileUrl}" download="${fileName}" target="_blank" rel="noopener">Download</a>
+    </div>
   </li>`;
 }
 
@@ -394,4 +544,11 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function escapeCssUrl(value) {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/[\n\r\f]/g, "");
 }
