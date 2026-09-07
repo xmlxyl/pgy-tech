@@ -15,35 +15,6 @@ function run_default(userfunction) {
 // extensions/free-gift-discount/src/index.js
 var FREE_GIFT_ATTRIBUTE_VALUE = "free";
 var THRESHOLD = 99;
-var DEFAULT_COMBO_DISCOUNT_RULES = [
-  {
-    message: "SUMMER15",
-    percentage: 15,
-    required: [
-      { type: "product", id: "8590470447276" },
-      { type: "product", id: "8590468645036" }
-    ],
-    targets: []
-  },
-  {
-    message: "SUMMER15",
-    percentage: 15,
-    required: [
-      { type: "product", id: "8590468743340" },
-      { type: "product", id: "8590471790764" }
-    ],
-    targets: []
-  },
-  {
-    message: "SUMMER15",
-    percentage: 15,
-    required: [
-      { type: "product", id: "8590467956908" },
-      { type: "product", id: "8590467891372" }
-    ],
-    targets: []
-  }
-];
 function cartLinesDiscountsGenerateRun(input) {
   const lines = input.cart.lines;
   const giftContext = {
@@ -63,10 +34,10 @@ function cartLinesDiscountsGenerateRun(input) {
   }
   if (isComboDiscountEnabled(input.cart.comboDiscountEnabled?.value)) {
     candidates.push(
-      ...buildComboDiscountCandidates(lines, [
-        ...DEFAULT_COMBO_DISCOUNT_RULES,
-        ...parseComboDiscountRules(input.cart.comboDiscounts?.value)
-      ])
+      ...buildComboDiscountCandidates(
+        lines,
+        parseComboDiscountRules(input.cart.comboDiscounts?.value)
+      )
     );
   }
   if (candidates.length === 0) {
