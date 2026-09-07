@@ -75,7 +75,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       .manual-page {
         width: min(100%, 1120px);
         margin: 0 auto;
-        padding: 48px 24px 64px;
+        padding: 48px 24px 32px;
       }
       .manual-header {
         margin-bottom: 28px;
@@ -184,7 +184,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       }
       .manual-content {
         position: relative;
-        min-height: 240px;
+        min-height: 120px;
       }
       .content-loading {
         position: absolute;
@@ -227,6 +227,10 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       @keyframes pgy-spin {
         to { transform: rotate(360deg); }
       }
+      .categories-wrap {
+        display: grid;
+        gap: 8px;
+      }
       .categories {
         display: flex;
         flex-wrap: nowrap;
@@ -237,6 +241,9 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         scrollbar-width: none;
       }
       .categories::-webkit-scrollbar { display: none; }
+      .categories-hints {
+        display: none;
+      }
       .category {
         display: inline-flex;
         align-items: center;
@@ -339,7 +346,9 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         color: #6b7280;
         font-size: 13px;
         line-height: 1.45;
-        overflow-wrap: anywhere;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .manual-view {
         display: inline-flex;
@@ -415,6 +424,31 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           width: 14px;
           height: 14px;
         }
+        .categories-hints {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 18px;
+          color: #111827;
+          pointer-events: none;
+          user-select: none;
+        }
+        .categories-hint {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          border-radius: 999px;
+          background: #eef0f3;
+          font-size: 16px;
+          line-height: 1;
+          opacity: 0.22;
+          transition: opacity 0.2s ease;
+        }
+        .categories-hint.is-active {
+          opacity: 0.9;
+        }
         .manual-list {
           grid-template-columns: 1fr;
           gap: 12px;
@@ -447,6 +481,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         }
         .manual-main {
           text-align: left;
+          min-width: 0;
         }
         .manual-name {
           font-size: 16px;
@@ -496,12 +531,18 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
               : ""
           }
         </form>
-        <nav class="categories" aria-label="Manual categories">
-          ${renderCategoryButton("All", "")}
-          ${MANUAL_PRODUCT_SERIES
-            .map((item) => renderCategoryButton(item, categoryKey(item)))
-            .join("")}
-        </nav>
+        <div class="categories-wrap" data-categories-wrap>
+          <nav class="categories" aria-label="Manual categories" data-categories>
+            ${renderCategoryButton("All", "")}
+            ${MANUAL_PRODUCT_SERIES
+              .map((item) => renderCategoryButton(item, categoryKey(item)))
+              .join("")}
+          </nav>
+          <div class="categories-hints" aria-hidden="true">
+            <span class="categories-hint categories-hint--left" data-cat-hint-left>‹</span>
+            <span class="categories-hint categories-hint--right" data-cat-hint-right>›</span>
+          </div>
+        </div>
       </div>
       ${
         manuals.length
@@ -552,6 +593,29 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           form.addEventListener("submit", function () {
             setLoading(true);
           });
+        }
+
+        var categories = document.querySelector("[data-categories]");
+        var hintLeft = document.querySelector("[data-cat-hint-left]");
+        var hintRight = document.querySelector("[data-cat-hint-right]");
+
+        function updateCategoryHints() {
+          if (!categories || !hintLeft || !hintRight) return;
+          var maxScroll = categories.scrollWidth - categories.clientWidth;
+          var canScroll = maxScroll > 4;
+          var atStart = categories.scrollLeft <= 2;
+          var atEnd = categories.scrollLeft >= maxScroll - 2;
+          hintLeft.classList.toggle("is-active", canScroll && !atStart);
+          hintRight.classList.toggle("is-active", canScroll && !atEnd);
+        }
+
+        if (categories) {
+          categories.addEventListener("scroll", updateCategoryHints, { passive: true });
+          window.addEventListener("resize", updateCategoryHints);
+          if (typeof ResizeObserver !== "undefined") {
+            new ResizeObserver(updateCategoryHints).observe(categories);
+          }
+          updateCategoryHints();
         }
 
         var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-category-button]"));
