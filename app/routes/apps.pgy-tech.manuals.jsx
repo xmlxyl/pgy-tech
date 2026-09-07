@@ -190,7 +190,6 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       .manual-icon-wrap {
         position: relative;
         display: grid;
-        place-items: center;
         height: 88px;
         margin-bottom: 16px;
       }
@@ -218,7 +217,6 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       .manual-main {
         flex: 1 1 auto;
         min-width: 0;
-        text-align: center;
       }
       .manual-name {
         display: block;
