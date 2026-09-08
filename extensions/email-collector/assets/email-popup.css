@@ -101,10 +101,16 @@
   padding: 0;
   background: rgba(0, 0, 0, 0.55);
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.28s ease;
 }
 
 .pgy-email-popup__overlay[hidden] {
   display: none;
+}
+
+.pgy-email-popup__overlay.is-open {
+  opacity: 1;
 }
 
 .pgy-email-popup__sheet {
@@ -129,10 +135,13 @@
   background: #000;
   color: var(--pgy-text);
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
-  transform: translateY(110%);
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translate3d(0, 110%, 0);
+  transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  will-change: transform;
+  pointer-events: none;
+  visibility: visible;
 }
 
 .pgy-email-popup__sheet[hidden] {
@@ -143,7 +152,7 @@
 
 .pgy-email-popup__sheet.is-open,
 .pgy-email-popup.is-open .pgy-email-popup__sheet {
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
   pointer-events: auto;
   visibility: visible;
 }
@@ -368,12 +377,12 @@ body.pgy-email-popup-lock {
     width: min(30rem, calc(100vw - 2rem));
     max-height: min(82vh, 34rem);
     border-radius: 1.75rem 1.75rem 0 0;
-    transform: translate(-50%, 110%);
+    transform: translate3d(-50%, 110%, 0);
   }
 
   .pgy-email-popup__sheet.is-open,
   .pgy-email-popup.is-open .pgy-email-popup__sheet {
-    transform: translate(-50%, 0);
+    transform: translate3d(-50%, 0, 0);
   }
 
   .pgy-email-popup__sheet-inner {

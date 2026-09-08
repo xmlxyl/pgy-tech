@@ -147,33 +147,68 @@
 
       if (!openBtn || !overlay || !sheet) return;
 
-      const setOpen = (open) => {
-        root.classList.toggle("is-open", open);
-        overlay.classList.toggle("is-open", open);
-        sheet.classList.toggle("is-open", open);
-        openBtn.setAttribute("aria-expanded", open ? "true" : "false");
-        overlay.hidden = !open;
-        sheet.hidden = !open;
-        document.body.classList.toggle("pgy-email-popup-lock", open);
+      let closeTimer = 0;
+      let closeGeneration = 0;
 
-        // Move overlay/sheet to body so they escape section stacking contexts
-        // and fully cover banner hotspots / fixed theme UI.
+      const setOpen = (open) => {
         if (open) {
+          closeGeneration += 1;
+          if (closeTimer) {
+            window.clearTimeout(closeTimer);
+            closeTimer = 0;
+          }
+
           if (overlay.parentElement !== document.body) {
             document.body.appendChild(overlay);
           }
           if (sheet.parentElement !== document.body) {
             document.body.appendChild(sheet);
           }
-          window.setTimeout(() => emailInput?.focus(), 280);
-        } else {
-          if (overlay.parentElement !== root) {
-            root.appendChild(overlay);
-          }
-          if (sheet.parentElement !== root) {
-            root.appendChild(sheet);
-          }
+
+          overlay.hidden = false;
+          sheet.hidden = false;
+          // Force layout so the closed transform is painted before opening.
+          void sheet.offsetWidth;
+
+          root.classList.add("is-open");
+          overlay.classList.add("is-open");
+          sheet.classList.add("is-open");
+          openBtn.setAttribute("aria-expanded", "true");
+          document.body.classList.add("pgy-email-popup-lock");
+          window.setTimeout(() => emailInput?.focus(), 320);
+          return;
         }
+
+        if (!root.classList.contains("is-open") && !sheet.classList.contains("is-open")) {
+          return;
+        }
+
+        const generation = ++closeGeneration;
+        root.classList.remove("is-open");
+        overlay.classList.remove("is-open");
+        sheet.classList.remove("is-open");
+        openBtn.setAttribute("aria-expanded", "false");
+        document.body.classList.remove("pgy-email-popup-lock");
+
+        const finishClose = () => {
+          if (generation !== closeGeneration) return;
+          closeTimer = 0;
+          sheet.removeEventListener("transitionend", onTransitionEnd);
+          overlay.hidden = true;
+          sheet.hidden = true;
+          if (overlay.parentElement !== root) root.appendChild(overlay);
+          if (sheet.parentElement !== root) root.appendChild(sheet);
+        };
+
+        const onTransitionEnd = (event) => {
+          if (event.target !== sheet || event.propertyName !== "transform") {
+            return;
+          }
+          finishClose();
+        };
+
+        sheet.addEventListener("transitionend", onTransitionEnd);
+        closeTimer = window.setTimeout(finishClose, 400);
       };
 
       openBtn.addEventListener("click", () => setOpen(true));
