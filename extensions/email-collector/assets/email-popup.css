@@ -263,11 +263,26 @@
 
 .pgy-email-popup__input:-webkit-autofill,
 .pgy-email-popup__input:-webkit-autofill:hover,
-.pgy-email-popup__input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #111;
-  caret-color: #111;
-  -webkit-box-shadow: 0 0 0 1000px #fff inset;
-  transition: background-color 9999s ease-in-out 0s;
+.pgy-email-popup__input:-webkit-autofill:focus,
+.pgy-email-popup__input:-webkit-autofill:active,
+.pgy-email-popup__input:autofill,
+.pgy-email-popup__input:autofill:hover,
+.pgy-email-popup__input:autofill:focus {
+  -webkit-text-fill-color: #111111 !important;
+  caret-color: #111111 !important;
+  color: #111111 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(#ffffff, #ffffff) !important;
+  /* Keep the original white pill surface. */
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  filter: none !important;
+  transition:
+    background-color 99999s ease-out 0s,
+    background-image 99999s ease-out 0s !important;
 }
 
 .pgy-email-popup__divider {

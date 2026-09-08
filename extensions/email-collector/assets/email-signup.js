@@ -1,11 +1,27 @@
 (function () {
+  /** @param {HTMLElement} form @param {string} key */
+  function readFormMessage(form, key, fallback) {
+    const fromNode = form
+      .querySelector(`[data-pgy-email-i18n] [data-key="${key}"]`)
+      ?.textContent?.trim();
+    if (fromNode) return fromNode;
+    const attr = form.getAttribute(`data-msg-${key}`);
+    if (attr) return normalizeMessage(attr);
+    return fallback;
+  }
+
   /** @param {string | undefined | null} value */
   function normalizeMessage(value) {
     if (!value) return "";
-    // Liquid `| json` may emit escapes like \u0026#39; — decode those first.
-    let decoded = String(value).replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
-      String.fromCharCode(parseInt(hex, 16)),
-    );
+    let decoded = String(value)
+      .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      )
+      .replace(/&amp;/g, "&")
+      .replace(/&#39;|&apos;|&#x27;/gi, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">");
     if (decoded.indexOf("&") === -1) return decoded;
     const textarea = document.createElement("textarea");
     textarea.innerHTML = decoded;
@@ -63,24 +79,36 @@
       const messageEl = form.querySelector("[data-pgy-email-message]");
       const submitBtn = form.querySelector("[type=submit]");
       const strings = {
-        success: normalizeMessage(form.dataset.msgSuccess) || "Thanks!",
-        already:
-          normalizeMessage(form.dataset.msgAlready) || "Already subscribed.",
-        errorInvalid:
-          normalizeMessage(form.dataset.msgErrorInvalid) || "Invalid email.",
-        errorGeneric:
-          normalizeMessage(form.dataset.msgErrorGeneric) ||
-          "Something went wrong.",
-        errorPreview:
-          normalizeMessage(form.dataset.msgErrorPreview) ||
+        success: readFormMessage(
+          form,
+          "success",
+          "Thanks! You're subscribed.",
+        ),
+        already: readFormMessage(form, "already", "Already subscribed."),
+        errorInvalid: readFormMessage(
+          form,
+          "error-invalid",
+          "Please enter a valid email address.",
+        ),
+        errorGeneric: readFormMessage(
+          form,
+          "error-generic",
+          "Something went wrong. Please try again.",
+        ),
+        errorPreview: readFormMessage(
+          form,
+          "error-preview",
           "请在店铺前台页面测试（打开在线商店），主题编辑器预览不支持提交。",
+        ),
       };
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         if (!proxyUrl) return;
 
-        const emailInput = form.querySelector('input[name="email"]');
+        const emailInput =
+          form.querySelector("[data-pgy-email-field]") ||
+          form.querySelector('input[type="email"]');
         const usernameInput = form.querySelector('input[name="username"]');
         const typeInput =
           form.querySelector('input[name="campaign_type"]') ||
@@ -147,7 +175,9 @@
       const openBtn = root.querySelector("[data-pgy-email-popup-open]");
       const overlay = root.querySelector("[data-pgy-email-popup-close]");
       const sheet = root.querySelector("[data-pgy-email-popup-sheet]");
-      const emailInput = root.querySelector('input[name="email"]');
+      const emailInput =
+        root.querySelector("[data-pgy-email-field]") ||
+        root.querySelector('input[type="email"]');
 
       if (!openBtn || !overlay || !sheet) return;
 

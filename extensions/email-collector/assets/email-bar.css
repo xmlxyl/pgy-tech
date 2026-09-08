@@ -41,15 +41,18 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 8px 28px rgba(0, 0, 0, 0.18);
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .pgy-email-bar__row {
     background: rgba(20, 20, 20, 0.72);
   }
+}
+
+.pgy-email-bar__row:focus-within {
+  border-color: var(--pgy-highlight);
+  box-shadow: 0 0 0 1px var(--pgy-highlight);
 }
 
 .pgy-email-bar__field {
@@ -99,12 +102,23 @@
 
 .pgy-email-bar__input:-webkit-autofill,
 .pgy-email-bar__input:-webkit-autofill:hover,
-.pgy-email-bar__input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--pgy-text);
-  caret-color: var(--pgy-text);
+.pgy-email-bar__input:-webkit-autofill:focus,
+.pgy-email-bar__input:-webkit-autofill:active,
+.pgy-email-bar__input:autofill,
+.pgy-email-bar__input:autofill:hover,
+.pgy-email-bar__input:autofill:focus {
+  -webkit-text-fill-color: var(--pgy-text) !important;
+  caret-color: var(--pgy-text) !important;
+  color: var(--pgy-text) !important;
   border-radius: var(--pgy-pill-radius) 0 0 var(--pgy-pill-radius) !important;
-  -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.45) inset;
-  transition: background-color 9999s ease-in-out 0s;
+  /* No fill — keep showing the original bar surface behind the input. */
+  background-color: transparent !important;
+  background-image: none !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  transition: background-color 99999s ease-in-out 0s !important;
 }
 
 .pgy-email-bar__divider {
@@ -139,11 +153,6 @@
 
 .pgy-email-bar__button:hover:not(:disabled) {
   color: var(--pgy-highlight) !important;
-}
-
-.pgy-email-bar__row:focus-within {
-  border-color: var(--pgy-highlight);
-  box-shadow: 0 0 0 1px var(--pgy-highlight);
 }
 
 .pgy-email-submit__icon,

@@ -116,12 +116,14 @@
         data-pgy-email-form
         data-proxy-url="{{ proxy_url }}"
         data-campaign-type="{{ campaign_type | escape }}"
-        data-msg-success="{{ 'email_signup.success' | t | escape }}"
-        data-msg-already="{{ 'email_signup.already_subscribed' | t | escape }}"
-        data-msg-error-invalid="{{ 'email_signup.error_invalid' | t | escape }}"
-        data-msg-error-generic="{{ 'email_signup.error_generic' | t | escape }}"
-        data-msg-error-preview="{{ 'email_signup.error_preview' | t | escape }}"
       >
+        <div hidden data-pgy-email-i18n aria-hidden="true">
+          <span data-key="success">{{ 'email_signup.success' | t }}</span>
+          <span data-key="already">{{ 'email_signup.already_subscribed' | t }}</span>
+          <span data-key="error-invalid">{{ 'email_signup.error_invalid' | t }}</span>
+          <span data-key="error-generic">{{ 'email_signup.error_generic' | t }}</span>
+          <span data-key="error-preview">{{ 'email_signup.error_preview' | t }}</span>
+        </div>
         <div class="pgy-email-popup__row">
           <div class="pgy-email-popup__field">
             <label class="pgy-email-popup__label" for="pgy-email-popup-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
@@ -129,10 +131,11 @@
               id="pgy-email-popup-{{ block.id }}"
               class="pgy-email-popup__input"
               type="email"
-              name="email"
+              name="email_{{ block.id }}"
+              data-pgy-email-field
               value=""
               placeholder="{{ placeholder | escape }}"
-              autocomplete="email"
+              autocomplete="section-pgy-popup-{{ block.id }} email"
               required
             >
           </div>
