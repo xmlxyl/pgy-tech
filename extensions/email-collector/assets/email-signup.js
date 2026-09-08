@@ -2,9 +2,13 @@
   /** @param {string | undefined | null} value */
   function normalizeMessage(value) {
     if (!value) return "";
-    if (value.indexOf("&") === -1) return value;
+    // Liquid `| json` may emit escapes like \u0026#39; — decode those first.
+    let decoded = String(value).replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    );
+    if (decoded.indexOf("&") === -1) return decoded;
     const textarea = document.createElement("textarea");
-    textarea.innerHTML = value;
+    textarea.innerHTML = decoded;
     return textarea.value;
   }
 

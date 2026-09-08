@@ -58,11 +58,11 @@
     data-pgy-email-form
     data-proxy-url="{{ proxy_url }}"
     data-campaign-type="{{ campaign_type | escape }}"
-    data-msg-success={{ 'email_signup.success' | t | json }}
-    data-msg-already={{ 'email_signup.already_subscribed' | t | json }}
-    data-msg-error-invalid={{ 'email_signup.error_invalid' | t | json }}
-    data-msg-error-generic={{ 'email_signup.error_generic' | t | json }}
-    data-msg-error-preview={{ 'email_signup.error_preview' | t | json }}
+    data-msg-success="{{ 'email_signup.success' | t | escape }}"
+    data-msg-already="{{ 'email_signup.already_subscribed' | t | escape }}"
+    data-msg-error-invalid="{{ 'email_signup.error_invalid' | t | escape }}"
+    data-msg-error-generic="{{ 'email_signup.error_generic' | t | escape }}"
+    data-msg-error-preview="{{ 'email_signup.error_preview' | t | escape }}"
   >
     <div class="pgy-email-signup__row">
       <div class="pgy-email-signup__field">
