@@ -1,0 +1,241 @@
+.pgy-email-bar {
+  --pgy-highlight: #ff4614;
+  --pgy-border: #ffffff;
+  --pgy-text: #ffffff;
+  --pgy-text-muted: rgba(255, 255, 255, 0.78);
+  --pgy-success: #6fcf97;
+  --pgy-error: #ff6b6b;
+  --pgy-pill-radius: 999px;
+  --pgy-pill-height: 3.25rem;
+
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.pgy-email-bar *,
+.pgy-email-bar *::before,
+.pgy-email-bar *::after {
+  box-sizing: border-box;
+}
+
+.pgy-email-bar__form {
+  width: 100%;
+}
+
+.pgy-email-bar__row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: var(--pgy-pill-height);
+  min-height: var(--pgy-pill-height);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  overflow: hidden;
+  isolation: isolate;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 28px rgba(0, 0, 0, 0.18);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pgy-email-bar__row {
+    background: rgba(20, 20, 20, 0.72);
+  }
+}
+
+.pgy-email-bar__field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  border-radius: var(--pgy-pill-radius) 0 0 var(--pgy-pill-radius);
+  overflow: hidden;
+}
+
+.pgy-email-bar__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pgy-email-bar__input {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0 1rem 0 1.5rem;
+  border: 0 !important;
+  border-radius: var(--pgy-pill-radius) 0 0 var(--pgy-pill-radius) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--pgy-text) !important;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.pgy-email-bar__input::placeholder {
+  color: rgba(255, 255, 255, 0.88);
+  opacity: 1;
+}
+
+.pgy-email-bar__input:-webkit-autofill,
+.pgy-email-bar__input:-webkit-autofill:hover,
+.pgy-email-bar__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--pgy-text);
+  caret-color: var(--pgy-text);
+  border-radius: var(--pgy-pill-radius) 0 0 var(--pgy-pill-radius) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.45) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.pgy-email-bar__divider {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: center;
+  height: 1.25rem;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.pgy-email-bar__button.pgy-email-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 auto;
+  width: 3.75rem;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 var(--pgy-pill-radius) var(--pgy-pill-radius) 0 !important;
+  outline: none;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--pgy-text) !important;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.pgy-email-bar__button:hover:not(:disabled) {
+  color: var(--pgy-highlight) !important;
+}
+
+.pgy-email-bar__row:focus-within {
+  border-color: var(--pgy-highlight);
+  box-shadow: 0 0 0 1px var(--pgy-highlight);
+}
+
+.pgy-email-submit__icon,
+.pgy-email-submit__spinner {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.pgy-email-submit__spinner {
+  position: absolute;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.pgy-email-submit.is-loading .pgy-email-submit__icon {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.pgy-email-submit.is-loading .pgy-email-submit__spinner {
+  opacity: 1;
+  visibility: visible;
+  animation: pgy-email-spin 0.75s linear infinite;
+}
+
+.pgy-email-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@keyframes pgy-email-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pgy-email-bar__message {
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--pgy-text);
+}
+
+.pgy-email-bar__message[hidden] {
+  display: none;
+}
+
+.pgy-email-bar__message--success {
+  color: var(--pgy-success);
+}
+
+.pgy-email-bar__message--error {
+  color: var(--pgy-error);
+}
+
+@media (max-width: 749px) {
+  .pgy-email-bar {
+    --pgy-pill-height: 3rem;
+  }
+
+  .pgy-email-bar__input {
+    padding-left: 1.25rem;
+    font-size: 0.9375rem;
+  }
+
+  .pgy-email-bar__button.pgy-email-submit {
+    width: 3.25rem;
+  }
+
+  .pgy-email-submit__icon,
+  .pgy-email-submit__spinner {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (min-width: 750px) {
+  .pgy-email-bar {
+    --pgy-pill-height: 3.5rem;
+    max-width: 36rem;
+  }
+
+  .pgy-email-bar__input {
+    padding-left: 1.75rem;
+    font-size: 1.0625rem;
+  }
+
+  .pgy-email-bar__button.pgy-email-submit {
+    width: 4rem;
+  }
+}

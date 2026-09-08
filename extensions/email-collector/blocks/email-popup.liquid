@@ -1,0 +1,209 @@
+{% liquid
+  assign proxy_url = '/apps/pgy-tech/email'
+  assign trigger_label = block.settings.trigger_label
+  if trigger_label == blank
+    assign trigger_label = 'Get Early-Bird Access'
+  endif
+  assign heading = block.settings.heading
+  if heading == blank
+    assign heading = '<p>Unlock <strong>10% OFF</strong> ZiPod</p>'
+  endif
+  assign subheading = block.settings.subheading
+  if subheading == blank
+    assign subheading = 'Enter your email to secure your Early-Bird discount before Oct. 18.'
+  endif
+  assign placeholder = block.settings.placeholder
+  if placeholder == blank
+    assign placeholder = 'email_signup.email_placeholder' | t
+  endif
+  assign button_label = block.settings.button_label
+  if button_label == blank
+    assign button_label = 'email_signup.button' | t
+  endif
+  assign highlight_color = block.settings.highlight_color | default: '#FF4614'
+  assign campaign_type = block.settings.campaign_type | strip
+  if campaign_type == blank
+    assign campaign_type = block.settings.type | strip
+  endif
+  assign username = ''
+  if customer
+    if customer.name != blank
+      assign username = customer.name
+    elsif customer.first_name != blank
+      assign username = customer.first_name
+      if customer.last_name != blank
+        assign username = username | append: ' ' | append: customer.last_name
+      endif
+    endif
+  endif
+%}
+
+<div
+  class="pgy-email-popup"
+  style="--pgy-highlight: {{ highlight_color }};"
+  data-pgy-email-popup
+  {{ block.shopify_attributes }}
+>
+  <button
+    type="button"
+    class="pgy-email-popup__trigger"
+    data-pgy-email-popup-open
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-controls="pgy-email-popup-dialog-{{ block.id }}"
+  >
+    <span class="pgy-email-popup__trigger-text">{{ trigger_label }}</span>
+    <span class="pgy-email-popup__trigger-divider" aria-hidden="true"></span>
+    <svg
+      class="pgy-email-popup__trigger-icon"
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M17 17L7 7"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M7 17V7h10"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </button>
+
+  <div
+    class="pgy-email-popup__overlay"
+    data-pgy-email-popup-close
+    hidden
+  ></div>
+
+  <div
+    id="pgy-email-popup-dialog-{{ block.id }}"
+    class="pgy-email-popup__sheet"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pgy-email-popup-title-{{ block.id }}"
+    data-pgy-email-popup-sheet
+    hidden
+  >
+    <div class="pgy-email-popup__sheet-inner">
+      <div
+        id="pgy-email-popup-title-{{ block.id }}"
+        class="pgy-email-popup__heading"
+      >
+        {{ heading }}
+      </div>
+
+      {% if subheading != blank %}
+        <p class="pgy-email-popup__subheading">{{ subheading }}</p>
+      {% endif %}
+
+      <form
+        class="pgy-email-popup__form"
+        method="get"
+        action="{{ proxy_url }}"
+        data-pgy-email-form
+        data-proxy-url="{{ proxy_url }}"
+        data-campaign-type="{{ campaign_type | escape }}"
+        data-msg-success={{ 'email_signup.success' | t | json }}
+        data-msg-already={{ 'email_signup.already_subscribed' | t | json }}
+        data-msg-error-invalid={{ 'email_signup.error_invalid' | t | json }}
+        data-msg-error-generic={{ 'email_signup.error_generic' | t | json }}
+        data-msg-error-preview={{ 'email_signup.error_preview' | t | json }}
+      >
+        <div class="pgy-email-popup__row">
+          <div class="pgy-email-popup__field">
+            <label class="pgy-email-popup__label" for="pgy-email-popup-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
+            <input
+              id="pgy-email-popup-{{ block.id }}"
+              class="pgy-email-popup__input"
+              type="email"
+              name="email"
+              value=""
+              placeholder="{{ placeholder | escape }}"
+              autocomplete="email"
+              required
+            >
+          </div>
+          <span class="pgy-email-popup__divider" aria-hidden="true"></span>
+          <input type="hidden" name="username" value="{{ username | escape }}">
+          <input type="hidden" name="campaign_type" value="{{ campaign_type | escape }}">
+          {% render 'email-submit-button', label: button_label, button_class: 'pgy-email-popup__button' %}
+        </div>
+        <p class="pgy-email-popup__message" data-pgy-email-message hidden role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "邮箱订阅弹窗",
+  "target": "section",
+  "stylesheet": "email-popup.css",
+  "javascript": "email-signup.js",
+  "settings": [
+    {
+      "type": "header",
+      "content": "内容"
+    },
+    {
+      "type": "text",
+      "id": "trigger_label",
+      "label": "触发按钮文字",
+      "default": "Get Early-Bird Access"
+    },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "弹窗标题",
+      "info": "将需要高亮的文字设为加粗（Bold），会显示为高亮色",
+      "default": "<p>Unlock <strong>10% OFF</strong> ZiPod</p>"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "弹窗副标题",
+      "default": "Enter your email to secure your Early-Bird discount before Oct. 18."
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "输入框占位符",
+      "default": "Enter your email address"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "提交按钮无障碍标签",
+      "default": "Subscribe"
+    },
+    {
+      "type": "text",
+      "id": "campaign_type",
+      "label": "活动类型 type",
+      "info": "用于标记本次收集来自哪次活动，例如 zipod。默认留空。"
+    },
+    {
+      "type": "header",
+      "content": "样式"
+    },
+    {
+      "type": "color",
+      "id": "highlight_color",
+      "label": "高亮色",
+      "default": "#FF4614"
+    }
+  ]
+}
+{% endschema %}

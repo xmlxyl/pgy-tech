@@ -15,17 +15,18 @@ function escapeCsvField(value) {
   return text;
 }
 
-/** @typedef {{ email: string, username?: string | null, createdAt: Date | string }} EmailExportRow */
+/** @typedef {{ email: string, username?: string | null, type?: string | null, createdAt: Date | string }} EmailExportRow */
 
 /** @param {EmailExportRow[]} rows */
 export function buildEmailCsv(rows) {
-  const header = ["邮箱", "用户名", "提交时间"];
+  const header = ["邮箱", "用户名", "活动类型", "提交时间"];
   const lines = [
     header.join(","),
     ...rows.map((row) =>
       [
         escapeCsvField(row.email),
         escapeCsvField(row.username ?? ""),
+        escapeCsvField(row.type ?? ""),
         escapeCsvField(formatExportDate(row.createdAt)),
       ].join(","),
     ),
@@ -38,6 +39,7 @@ export function buildEmailXlsxBytes(rows) {
   const sheetRows = rows.map((row) => ({
     邮箱: row.email,
     用户名: row.username ?? "",
+    活动类型: row.type ?? "",
     提交时间: formatExportDate(row.createdAt),
   }));
   const worksheet = XLSX.utils.json_to_sheet(sheetRows);

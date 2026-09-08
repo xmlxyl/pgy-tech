@@ -1,11 +1,11 @@
 {
   "email_signup": {
-    "heading_default": "Mid-Year Event: Be the First to Know",
-    "subheading_default": "Get Early Access Before Everyone Else",
+    "heading_default": "Get Exclusive ZiPod Early-Bird Access",
     "email_label": "Email",
-    "email_placeholder": "Enter Email Address",
-    "button": "Unlock My Access",
+    "email_placeholder": "Enter your email address",
+    "button": "Subscribe",
     "success": "Thanks! You're subscribed.",
+    "already_subscribed": "Already subscribed.",
     "error_invalid": "Please enter a valid email address.",
     "error_generic": "Something went wrong. Please try again.",
     "error_preview": "Please test on your live storefront (Online Store), not in the theme editor preview."

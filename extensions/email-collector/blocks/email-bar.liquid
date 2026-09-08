@@ -1,16 +1,8 @@
 {% liquid
-  assign heading = block.settings.heading
-  if heading == blank
-    assign heading = 'email_signup.heading_default' | t
-  endif
-  assign subheading = block.settings.subheading
-  if subheading == blank
-    assign subheading = '<p>Sign up by Oct. 18 and receive <strong>10% OFF</strong> ZiPod at launch.</p>'
-  endif
   assign proxy_url = '/apps/pgy-tech/email'
   assign placeholder = block.settings.placeholder
   if placeholder == blank
-    assign placeholder = 'email_signup.email_placeholder' | t
+    assign placeholder = 'Enter your email to unlock 10% OFF'
   endif
   assign button_label = block.settings.button_label
   if button_label == blank
@@ -18,7 +10,6 @@
   endif
   assign highlight_color = block.settings.highlight_color | default: '#FF4614'
   assign border_color = block.settings.border_color | default: '#FFFFFF'
-  assign background_color = block.settings.background_color | default: '#000000'
   assign campaign_type = block.settings.campaign_type | strip
   if campaign_type == blank
     assign campaign_type = block.settings.type | strip
@@ -37,22 +28,12 @@
 %}
 
 <div
-  class="pgy-email-signup"
-  style="--pgy-highlight: {{ highlight_color }}; --pgy-border: {{ border_color }}; --pgy-bg: {{ background_color }};"
+  class="pgy-email-bar"
+  style="--pgy-highlight: {{ highlight_color }}; --pgy-border: {{ border_color }};"
   {{ block.shopify_attributes }}
 >
-  {% if heading != blank %}
-    <h2 class="pgy-email-signup__heading">
-      <span class="pgy-email-signup__heading-text">{{ heading }}</span>
-    </h2>
-  {% endif %}
-
-  {% if subheading != blank %}
-    <div class="pgy-email-signup__subheading">{{ subheading }}</div>
-  {% endif %}
-
   <form
-    class="pgy-email-signup__form"
+    class="pgy-email-bar__form"
     method="get"
     action="{{ proxy_url }}"
     data-pgy-email-form
@@ -64,12 +45,12 @@
     data-msg-error-generic={{ 'email_signup.error_generic' | t | json }}
     data-msg-error-preview={{ 'email_signup.error_preview' | t | json }}
   >
-    <div class="pgy-email-signup__row">
-      <div class="pgy-email-signup__field">
-        <label class="pgy-email-signup__label" for="pgy-email-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
+    <div class="pgy-email-bar__row">
+      <div class="pgy-email-bar__field">
+        <label class="pgy-email-bar__label" for="pgy-email-bar-{{ block.id }}">{{ 'email_signup.email_label' | t }}</label>
         <input
-          id="pgy-email-{{ block.id }}"
-          class="pgy-email-signup__input"
+          id="pgy-email-bar-{{ block.id }}"
+          class="pgy-email-bar__input"
           type="email"
           name="email"
           value=""
@@ -78,20 +59,20 @@
           required
         >
       </div>
-      <span class="pgy-email-signup__divider" aria-hidden="true"></span>
+      <span class="pgy-email-bar__divider" aria-hidden="true"></span>
       <input type="hidden" name="username" value="{{ username | escape }}">
       <input type="hidden" name="campaign_type" value="{{ campaign_type | escape }}">
-      {% render 'email-submit-button', label: button_label, button_class: 'pgy-email-signup__button' %}
+      {% render 'email-submit-button', label: button_label, button_class: 'pgy-email-bar__button' %}
     </div>
-    <p class="pgy-email-signup__message" data-pgy-email-message hidden role="status" aria-live="polite"></p>
+    <p class="pgy-email-bar__message" data-pgy-email-message hidden role="status" aria-live="polite"></p>
   </form>
 </div>
 
 {% schema %}
 {
-  "name": "邮箱订阅",
+  "name": "邮箱订阅条",
   "target": "section",
-  "stylesheet": "email-signup.css",
+  "stylesheet": "email-bar.css",
   "javascript": "email-signup.js",
   "settings": [
     {
@@ -100,22 +81,9 @@
     },
     {
       "type": "text",
-      "id": "heading",
-      "label": "大标题",
-      "default": "Get Exclusive ZiPod Early-Bird Access"
-    },
-    {
-      "type": "richtext",
-      "id": "subheading",
-      "label": "副标题",
-      "info": "将需要高亮的文字设为加粗（Bold），会显示为高亮色",
-      "default": "<p>Sign up by Oct. 18 and receive <strong>10% OFF</strong> ZiPod at launch.</p>"
-    },
-    {
-      "type": "text",
       "id": "placeholder",
       "label": "输入框占位符",
-      "default": "Enter your email address"
+      "default": "Enter your email to unlock 10% OFF"
     },
     {
       "type": "text",
@@ -127,7 +95,7 @@
       "type": "text",
       "id": "campaign_type",
       "label": "活动类型 type",
-      "info": "用于标记本次收集来自哪次活动，例如 zipod-early-bird。默认留空。"
+      "info": "用于标记本次收集来自哪次活动，例如 zipod。默认留空。"
     },
     {
       "type": "header",
@@ -135,20 +103,14 @@
     },
     {
       "type": "color",
-      "id": "background_color",
-      "label": "背景色",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
       "id": "highlight_color",
-      "label": "高亮色（下划线 / 强调文字）",
+      "label": "高亮色（聚焦）",
       "default": "#FF4614"
     },
     {
       "type": "color",
       "id": "border_color",
-      "label": "输入框边框颜色",
+      "label": "边框颜色",
       "default": "#FFFFFF"
     }
   ]

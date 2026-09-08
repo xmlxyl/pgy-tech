@@ -37,8 +37,10 @@ model SavedEmail {
   email     String
   createdAt DateTime @default(now())
   username  String?
+  type      String?
 
   @@index([shop])
+  @@index([shop, type])
 }
 
 model PriceChangeTask {

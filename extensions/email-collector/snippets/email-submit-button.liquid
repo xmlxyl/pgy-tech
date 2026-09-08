@@ -1,0 +1,50 @@
+<button
+  type="submit"
+  class="pgy-email-submit {{ button_class | default: 'pgy-email-signup__button' }}"
+  aria-label="{{ label | escape }}"
+>
+  <svg
+    class="pgy-email-submit__icon"
+    viewBox="0 0 24 24"
+    width="22"
+    height="22"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path
+      d="M4 6.75h16a1.25 1.25 0 0 1 1.25 1.25v9.5A1.25 1.25 0 0 1 20 18.75H4A1.25 1.25 0 0 1 2.75 17.5v-9.5A1.25 1.25 0 0 1 4 6.75Z"
+      stroke="currentColor"
+      stroke-width="1.4"
+      stroke-linejoin="round"
+    />
+    <path
+      d="m3.5 8 8.5 6.25L20.5 8"
+      stroke="currentColor"
+      stroke-width="1.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  <svg
+    class="pgy-email-submit__spinner"
+    viewBox="0 0 24 24"
+    width="22"
+    height="22"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-dasharray="40 20"
+    />
+  </svg>
+</button>

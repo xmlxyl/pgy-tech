@@ -20,6 +20,7 @@ export const loader = async ({ request }) => {
       id: row.id,
       email: row.email,
       username: row.username,
+      type: row.type,
       createdAt: row.createdAt.toISOString(),
     })),
   };
@@ -173,6 +174,7 @@ export default function EmailPage() {
                 </s-stack>
               </s-table-header>
               <s-table-header>用户名</s-table-header>
+              <s-table-header>活动类型</s-table-header>
               <s-table-header>提交时间</s-table-header>
             </s-table-header-row>
             <s-table-body>
@@ -194,6 +196,7 @@ export default function EmailPage() {
                     </s-stack>
                   </s-table-cell>
                   <s-table-cell>{row.username || "—"}</s-table-cell>
+                  <s-table-cell>{row.type || "—"}</s-table-cell>
                   <s-table-cell>
                     {new Date(row.createdAt).toLocaleString("zh-CN")}
                   </s-table-cell>
