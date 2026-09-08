@@ -5,13 +5,12 @@
   --pgy-text-muted: rgba(255, 255, 255, 0.78);
   --pgy-success: #6fcf97;
   --pgy-error: #ff6b6b;
-  --pgy-pill-radius: 999px;
+  --pgy-pill-radius: 15px;
   --pgy-pill-height: 3.25rem;
 
   width: 100%;
   max-width: 42rem;
   margin-inline: auto;
-  padding: 0.5rem;
   box-sizing: border-box;
 }
 
@@ -33,10 +32,10 @@
   height: var(--pgy-pill-height);
   min-height: var(--pgy-pill-height);
   border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
+  border-radius: var(--pgy-pill-radius);
   overflow: hidden;
   isolation: isolate;
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   box-shadow:

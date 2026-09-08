@@ -149,12 +149,30 @@
 
       const setOpen = (open) => {
         root.classList.toggle("is-open", open);
+        overlay.classList.toggle("is-open", open);
+        sheet.classList.toggle("is-open", open);
         openBtn.setAttribute("aria-expanded", open ? "true" : "false");
         overlay.hidden = !open;
         sheet.hidden = !open;
         document.body.classList.toggle("pgy-email-popup-lock", open);
+
+        // Move overlay/sheet to body so they escape section stacking contexts
+        // and fully cover banner hotspots / fixed theme UI.
         if (open) {
+          if (overlay.parentElement !== document.body) {
+            document.body.appendChild(overlay);
+          }
+          if (sheet.parentElement !== document.body) {
+            document.body.appendChild(sheet);
+          }
           window.setTimeout(() => emailInput?.focus(), 280);
+        } else {
+          if (overlay.parentElement !== root) {
+            root.appendChild(overlay);
+          }
+          if (sheet.parentElement !== root) {
+            root.appendChild(sheet);
+          }
         }
       };
 
