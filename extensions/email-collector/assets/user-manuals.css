@@ -1,12 +1,13 @@
 .pgy-user-manuals {
   width: 100%;
-  background: #f7f8fa;
+  background: transparent;
 }
 
 .pgy-user-manuals__frame {
   display: block;
   width: 100%;
-  min-height: 320px;
+  min-height: 240px;
   border: 0;
-  background: #f7f8fa;
+  background: transparent;
+  vertical-align: top;
 }

@@ -1,7 +1,6 @@
 {% liquid
   assign pdf_icon_url = 'pdf-icon.jpg' | asset_url | url_param_escape
   assign proxy_url = '/apps/pgy-tech/manuals?embedded=1&pdfIcon=' | append: pdf_icon_url
-  assign min_height = block.settings.min_height | default: 400
 %}
 
 <div class="pgy-user-manuals" {{ block.shopify_attributes }}>
@@ -10,7 +9,6 @@
     src="{{ proxy_url }}"
     title="{{ block.settings.iframe_title | default: 'PGYTECH User Manuals' | escape }}"
     loading="lazy"
-    style="min-height: {{ min_height }}px;"
     data-pgy-user-manuals-frame
   ></iframe>
 </div>
@@ -27,16 +25,6 @@
       "id": "iframe_title",
       "label": "无障碍标题",
       "default": "PGYTECH User Manuals"
-    },
-    {
-      "type": "range",
-      "id": "min_height",
-      "label": "初始最小高度",
-      "min": 280,
-      "max": 1000,
-      "step": 20,
-      "unit": "px",
-      "default": 400
     }
   ]
 }

@@ -66,8 +66,12 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
     <title>PGYTECH User Manuals</title>
     <style>
       * { box-sizing: border-box; }
-      body {
+      html, body {
         margin: 0;
+        height: auto;
+        min-height: 0;
+      }
+      body {
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         color: #111827;
         background: #f7f8fa;
@@ -75,7 +79,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       .manual-page {
         width: min(100%, 1120px);
         margin: 0 auto;
-        padding: 48px 24px 32px;
+        padding: 48px 24px 24px;
       }
       .manual-header {
         margin-bottom: 28px;
@@ -184,7 +188,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       }
       .manual-content {
         position: relative;
-        min-height: 120px;
+        min-height: 0;
       }
       .content-loading {
         position: absolute;
@@ -389,7 +393,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
       }
       body.is-embedded .manual-page {
         padding-top: 28px;
-        padding-bottom: 28px;
+        padding-bottom: 16px;
       }
       @media (max-width: 960px) {
         .manual-list {
@@ -572,9 +576,39 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
     <script>
       (function () {
         var form = document.querySelector("[data-manual-search]");
+        var page = document.querySelector(".manual-page");
         var loading = document.querySelector("[data-content-loading]");
         var searchInput = form ? form.querySelector('input[name="q"]') : null;
         var submitButton = form ? form.querySelector(".search-submit") : null;
+        var heightTimer = null;
+
+        function measureHeight() {
+          if (!page) {
+            return Math.max(
+              document.documentElement ? document.documentElement.scrollHeight : 0,
+              document.body ? document.body.scrollHeight : 0,
+            );
+          }
+          var styles = window.getComputedStyle(document.body);
+          var marginBottom = parseFloat(styles.marginBottom) || 0;
+          return Math.ceil(page.offsetTop + page.offsetHeight + marginBottom);
+        }
+
+        function reportHeight() {
+          var height = measureHeight();
+          if (height <= 0) return;
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(
+              { source: "pgy-user-manuals", type: "resize", height: height },
+              "*",
+            );
+          }
+        }
+
+        function scheduleReportHeight() {
+          window.clearTimeout(heightTimer);
+          heightTimer = window.setTimeout(reportHeight, 50);
+        }
 
         function setLoading(isLoading) {
           document.body.classList.toggle("is-loading", isLoading);
@@ -587,6 +621,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
             if (isLoading) searchInput.blur();
           }
           if (submitButton) submitButton.disabled = isLoading;
+          scheduleReportHeight();
         }
 
         if (form) {
@@ -611,17 +646,31 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
 
         if (categories) {
           categories.addEventListener("scroll", updateCategoryHints, { passive: true });
-          window.addEventListener("resize", updateCategoryHints);
+          window.addEventListener("resize", function () {
+            updateCategoryHints();
+            scheduleReportHeight();
+          });
           if (typeof ResizeObserver !== "undefined") {
-            new ResizeObserver(updateCategoryHints).observe(categories);
+            new ResizeObserver(function () {
+              updateCategoryHints();
+              scheduleReportHeight();
+            }).observe(categories);
           }
           updateCategoryHints();
         }
 
+        if (page && typeof ResizeObserver !== "undefined") {
+          new ResizeObserver(scheduleReportHeight).observe(page);
+        }
+
+        reportHeight();
+        window.setTimeout(reportHeight, 100);
+        window.setTimeout(reportHeight, 300);
+
         var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-category-button]"));
         var items = Array.prototype.slice.call(document.querySelectorAll("[data-manual-category]"));
         var empty = document.querySelector("[data-filter-empty]");
-        if (!buttons.length || !items.length) return;
+        if (!buttons.length) return;
 
         buttons.forEach(function (button) {
           button.addEventListener("click", function () {
@@ -639,6 +688,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
             });
 
             if (empty) empty.hidden = visibleCount > 0;
+            scheduleReportHeight();
           });
         });
       })();
