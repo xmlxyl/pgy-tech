@@ -1,6 +1,8 @@
 .pgy-user-manuals {
   width: 100%;
   background: transparent;
+  overflow: hidden;
+  overflow-anchor: none;
 }
 
 .pgy-user-manuals__frame {
@@ -8,6 +10,7 @@
   width: 100%;
   min-height: 240px;
   border: 0;
+  overflow: hidden;
   background: transparent;
   vertical-align: top;
 }

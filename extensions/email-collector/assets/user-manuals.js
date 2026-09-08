@@ -8,8 +8,11 @@
   function applyHeight(frame, height) {
     var next = Math.max(0, Math.ceil(Number(height) || 0));
     if (!next) return;
+    var current = parseInt(frame.style.height, 10) || 0;
+    if (Math.abs(current - next) < 2) return;
     frame.style.height = next + "px";
     frame.style.minHeight = "0";
+    frame.style.overflow = "hidden";
   }
 
   function resizeFromDocument(frame) {
@@ -44,6 +47,7 @@
   });
 
   frames.forEach(function (frame) {
+    frame.style.overflow = "hidden";
     frame.addEventListener("load", function () {
       resizeFromDocument(frame);
       window.setTimeout(function () {

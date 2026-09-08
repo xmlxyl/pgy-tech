@@ -70,6 +70,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         margin: 0;
         height: auto;
         min-height: 0;
+        overflow: hidden;
       }
       body {
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -581,6 +582,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
         var searchInput = form ? form.querySelector('input[name="q"]') : null;
         var submitButton = form ? form.querySelector(".search-submit") : null;
         var heightTimer = null;
+        var lastReportedHeight = 0;
 
         function measureHeight() {
           if (!page) {
@@ -594,9 +596,11 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           return Math.ceil(page.offsetTop + page.offsetHeight + marginBottom);
         }
 
-        function reportHeight() {
+        function reportHeight(force) {
           var height = measureHeight();
           if (height <= 0) return;
+          if (!force && Math.abs(height - lastReportedHeight) < 2) return;
+          lastReportedHeight = height;
           if (window.parent && window.parent !== window) {
             window.parent.postMessage(
               { source: "pgy-user-manuals", type: "resize", height: height },
@@ -607,7 +611,17 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
 
         function scheduleReportHeight() {
           window.clearTimeout(heightTimer);
-          heightTimer = window.setTimeout(reportHeight, 50);
+          heightTimer = window.setTimeout(function () {
+            reportHeight(false);
+          }, 80);
+        }
+
+        function syncReportHeight() {
+          window.clearTimeout(heightTimer);
+          reportHeight(true);
+          window.requestAnimationFrame(function () {
+            reportHeight(true);
+          });
         }
 
         function setLoading(isLoading) {
@@ -651,10 +665,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
             scheduleReportHeight();
           });
           if (typeof ResizeObserver !== "undefined") {
-            new ResizeObserver(function () {
-              updateCategoryHints();
-              scheduleReportHeight();
-            }).observe(categories);
+            new ResizeObserver(updateCategoryHints).observe(categories);
           }
           updateCategoryHints();
         }
@@ -663,9 +674,13 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
           new ResizeObserver(scheduleReportHeight).observe(page);
         }
 
-        reportHeight();
-        window.setTimeout(reportHeight, 100);
-        window.setTimeout(reportHeight, 300);
+        reportHeight(true);
+        window.setTimeout(function () {
+          reportHeight(true);
+        }, 100);
+        window.setTimeout(function () {
+          reportHeight(true);
+        }, 300);
 
         var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-category-button]"));
         var items = Array.prototype.slice.call(document.querySelectorAll("[data-manual-category]"));
@@ -688,7 +703,7 @@ function renderPage({ manuals, query, embedded, path, pdfIcon }) {
             });
 
             if (empty) empty.hidden = visibleCount > 0;
-            scheduleReportHeight();
+            syncReportHeight();
           });
         });
       })();
