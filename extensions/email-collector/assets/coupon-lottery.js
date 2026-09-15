@@ -1,5 +1,6 @@
 (function () {
   var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var STORAGE_KEY = "pgy-coupon-lottery-claim";
 
   function ready(fn) {
     if (document.readyState === "loading") {
@@ -56,18 +57,25 @@
 
     var proxyUrl = root.dataset.proxyUrl || "/apps/pgy-tech/coupon-lottery";
     var overlay = root.querySelector("[data-pgy-cl-overlay]");
-    var prizesEl = root.querySelector("[data-pgy-cl-prizes]");
     var form = root.querySelector("[data-pgy-cl-form]");
     var emailInput = root.querySelector("[data-pgy-cl-email]");
     var agreeInput = root.querySelector("[data-pgy-cl-agree]");
     var messageEl = root.querySelector("[data-pgy-cl-message]");
     var submitBtn = root.querySelector("[data-pgy-cl-submit]");
     var copyMessageEl = root.querySelector("[data-pgy-cl-copy-message]");
+    var claimedEl = root.querySelector("[data-pgy-cl-claimed]");
+    var stageCodeEl = root.querySelector("[data-pgy-cl-stage-code]");
+    var stageMetaEl = root.querySelector("[data-pgy-cl-stage-meta]");
+    var stageCopyMessageEl = root.querySelector(
+      "[data-pgy-cl-stage-copy-message]",
+    );
     var strings = {
       invalid: root.dataset.msgInvalid || "Please enter a valid email address.",
       agree: root.dataset.msgAgree || "Please agree to receive offers.",
       error: root.dataset.msgError || "Something went wrong.",
       preview: root.dataset.msgPreview || "Please test on the live storefront.",
+      copied: root.dataset.msgCopied || "Copied!",
+      copyFail: root.dataset.msgCopyFail || "Copy failed. Please copy manually.",
     };
 
     var state = {
@@ -77,7 +85,7 @@
 
     var openButtons = root.querySelectorAll("[data-pgy-cl-open]");
 
-    loadConfig();
+    restoreStoredClaim();
     checkLoggedInClaim();
 
     openButtons.forEach(function (btn) {
@@ -96,19 +104,11 @@
       });
     }
 
-    var copyBtn = root.querySelector("[data-pgy-cl-copy]");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", function () {
-        if (!state.claim || !state.claim.couponCode) return;
-        copyText(state.claim.couponCode).then(function (ok) {
-          showMessage(
-            copyMessageEl,
-            ok ? "Copied!" : "Copy failed. Please copy manually.",
-            !ok,
-          );
-        });
-      });
-    }
+    bindCopyButton(root.querySelector("[data-pgy-cl-copy]"), copyMessageEl);
+    bindCopyButton(
+      root.querySelector("[data-pgy-cl-stage-copy]"),
+      stageCopyMessageEl,
+    );
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && overlay && !overlay.hidden) {
@@ -154,35 +154,20 @@
             );
             return;
           }
-          showResult(data.claim, Boolean(data.alreadyClaimed));
-          if (data.alreadyClaimed || data.claim) {
-            state.claim = data.claim;
-            state.alreadyClaimed = true;
-            updateStageForClaimed();
+          state.claim = data.claim;
+          state.alreadyClaimed = true;
+          updateStageForClaimed();
+          if (data.alreadyClaimed) {
+            closeOverlay();
+            return;
           }
+          showResult(data.claim, false);
         } catch (error) {
           showMessage(messageEl, strings.preview, true);
         } finally {
           if (submitBtn) submitBtn.disabled = false;
         }
       });
-    }
-
-    async function loadConfig() {
-      try {
-        var configRes = await fetch(
-          withQuery(proxyUrl, { action: "config" }),
-          {
-            method: "GET",
-            headers: { Accept: "application/json" },
-            credentials: "same-origin",
-          },
-        );
-        var config = await readJson(configRes);
-        if (config && config.ok && Array.isArray(config.prizes) && config.prizes.length) {
-          renderPrizes(config.prizes);
-        }
-      } catch (error) {}
     }
 
     async function checkLoggedInClaim() {
@@ -201,21 +186,65 @@
       }
     }
 
+    function restoreStoredClaim() {
+      try {
+        var raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        var claim = JSON.parse(raw);
+        if (!claim || !claim.couponCode) return;
+        state.claim = claim;
+        state.alreadyClaimed = true;
+        updateStageForClaimed();
+      } catch (error) {}
+    }
+
+    function persistClaim() {
+      if (!state.claim || !state.claim.couponCode) return;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.claim));
+      } catch (error) {}
+    }
+
     function updateStageForClaimed() {
+      if (!state.claim || !state.claim.couponCode) return;
+
       openButtons.forEach(function (btn) {
-        btn.textContent = "View My Coupon";
+        btn.hidden = true;
+      });
+
+      if (stageCodeEl) stageCodeEl.textContent = state.claim.couponCode;
+      if (stageMetaEl) {
+        stageMetaEl.textContent =
+          (state.claim.label || formatMoney(state.claim.discountAmount)) +
+          " OFF on orders over " +
+          formatMoney(state.claim.minSpend);
+      }
+      if (claimedEl) claimedEl.hidden = false;
+      persistClaim();
+    }
+
+    function bindCopyButton(button, messageTarget) {
+      if (!button) return;
+      button.addEventListener("click", function () {
+        if (!state.claim || !state.claim.couponCode) return;
+        copyText(state.claim.couponCode).then(function (ok) {
+          showMessage(
+            messageTarget,
+            ok ? strings.copied : strings.copyFail,
+            !ok,
+          );
+        });
       });
     }
 
     async function openForm() {
       showMessage(messageEl, "", false);
       showMessage(copyMessageEl, "", false);
-      if (!overlay) return;
-
       if (state.alreadyClaimed && state.claim) {
-        showResult(state.claim, true);
+        updateStageForClaimed();
         return;
       }
+      if (!overlay) return;
 
       overlay.hidden = false;
       document.documentElement.style.overflow = "hidden";
@@ -228,7 +257,7 @@
           state.claim = existing.claim;
           state.alreadyClaimed = true;
           updateStageForClaimed();
-          showResult(existing.claim, true);
+          closeOverlay();
           return;
         }
       }
@@ -261,29 +290,6 @@
       var fromCustomer = String(root.dataset.customerEmail || "").trim();
       if (EMAIL_PATTERN.test(fromCustomer)) return fromCustomer.toLowerCase();
       return "";
-    }
-
-    function renderPrizes(prizes) {
-      if (!prizesEl) return;
-      prizesEl.innerHTML = "";
-      prizes.forEach(function (prize) {
-        var card = document.createElement("div");
-        card.className = "pgy-coupon-lottery__prize";
-        card.innerHTML =
-          '<div class="pgy-coupon-lottery__prize-amount">' +
-          escapeHtml(prize.label || formatMoney(prize.discountAmount)) +
-          "</div>" +
-          '<div class="pgy-coupon-lottery__prize-label">COUPON</div>';
-        prizesEl.appendChild(card);
-      });
-    }
-
-    function escapeHtml(value) {
-      return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
     }
 
     function showResult(claim, alreadyClaimed) {

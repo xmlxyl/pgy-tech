@@ -137,7 +137,7 @@ export default function CouponLotterySettingsPage() {
 
         <s-section heading="前台接入">
           <s-paragraph>
-            在主题编辑器中添加 App block「Coupon Lottery」。页面会直接展示周年盲盒活动区，点击 Open My Coupon 后弹出邮箱表单领取唯一优惠码。每个邮箱仅可领取一次。
+            在主题编辑器中添加 App block「Coupon Lottery」，并配置三张卡片图片、Shop Offers / Giveaway 的跳转 ID。未领取时显示 Open My Coupon；已领取则直接展示优惠码，可点击复制。每个邮箱仅可领取一次。
           </s-paragraph>
         </s-section>
       </div>
