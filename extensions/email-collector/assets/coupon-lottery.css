@@ -43,6 +43,9 @@
 }
 
 .pgy-coupon-lottery__card--hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-height: clamp(22rem, 42vw, 41.4rem);
 }
 
@@ -68,9 +71,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   gap: clamp(1rem, 2.2vw, 1.75rem);
   max-width: min(34rem, 58%);
-  padding: clamp(1.5rem, 4vw, 3.25rem) clamp(1.25rem, 3.2vw, 3.25rem) 0;
+  padding: clamp(1.5rem, 4vw, 3.25rem) clamp(1.25rem, 3.2vw, 3.25rem);
 }
 
 .pgy-coupon-lottery__hero-title {
