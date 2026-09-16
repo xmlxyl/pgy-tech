@@ -156,3 +156,25 @@ model CouponLotteryClaim {
   @@unique([shop, couponCode])
   @@index([shop, createdAt])
 }
+
+model CreatorStory {
+  id              Int      @id @default(autoincrement())
+  shop            String
+  name            String
+  email           String
+  product         String   @default("")
+  orderNumber     String?
+  country         String   @default("")
+  story           String
+  mediaFileId     String?
+  mediaFileUrl    String?
+  mediaFileName   String?
+  mediaMimeType   String?
+  mediaFiles      Json?
+  allowContentUse Boolean  @default(false)
+  agreeRules      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([shop, createdAt])
+  @@index([shop, email])
+}

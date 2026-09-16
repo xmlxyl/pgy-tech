@@ -1,0 +1,380 @@
+{% liquid
+  assign section_id = block.settings.section_id | strip
+  if section_id == blank
+    assign section_id = 'anniversary-giveaway'
+  endif
+
+  assign heading = block.settings.heading
+  if heading == blank
+    assign heading = 'Creator Story'
+  endif
+  assign subheading = block.settings.subheading
+  if subheading == blank
+    assign subheading = 'Share your real experience with PGYTECH and inspire more creators.'
+  endif
+  assign promo_heading = block.settings.promo_heading
+  if promo_heading == blank
+    assign promo_heading = 'Every Valid Story'
+  endif
+  assign promo_offer = block.settings.promo_offer
+  if promo_offer == blank
+    assign promo_offer = '11% OFF'
+  endif
+  assign promo_note = block.settings.promo_note
+  if promo_note == blank
+    assign promo_note = 'Coupon valid for 30 days after the event.'
+  endif
+  assign prize1_label = block.settings.prize1_label
+  if prize1_label == blank
+    assign prize1_label = '10 Creator Prizes'
+  endif
+  assign prize2_label = block.settings.prize2_label
+  if prize2_label == blank
+    assign prize2_label = '1 Grand Prize'
+  endif
+  assign form_heading = block.settings.form_heading
+  if form_heading == blank
+    assign form_heading = 'Submit Your Story'
+  endif
+  assign submit_label = block.settings.submit_label
+  if submit_label == blank
+    assign submit_label = 'Share My Story'
+  endif
+  assign allow_label = block.settings.allow_label
+  if allow_label == blank
+    assign allow_label = 'I allow PGYTECH to use my submitted content.'
+  endif
+  assign rules_label = block.settings.rules_label
+  if rules_label == blank
+    assign rules_label = 'I agree to the Event Rules & Privacy Policy.'
+  endif
+  assign rules_html = block.settings.rules_html
+  if rules_html == blank
+    assign rules_html = '<ul><li>Buy 2+ Get 15% OFF applies to select items only.</li><li>Curated Bag Collection and Special Picks do not qualify for the Buy 2+ 15% OFF offer or count toward the 2-item minimum.</li><li>Event Period: Sep 18, 2026, 04:00 AM – Sep 30, 2026, 12:00 PM</li></ul>'
+  endif
+
+  if block.settings.prize1_image != blank
+    assign prize1_url = block.settings.prize1_image | image_url: width: 600
+  else
+    assign prize1_url = 'creator-story-prize-1.png' | asset_url
+  endif
+  if block.settings.prize2_image != blank
+    assign prize2_url = block.settings.prize2_image | image_url: width: 600
+  else
+    assign prize2_url = 'creator-story-prize-2.png' | asset_url
+  endif
+
+  assign proxy_url = '/apps/pgy-tech/creator-story'
+  assign customer_name = ''
+  assign customer_email = ''
+  if customer
+    if customer.name != blank
+      assign customer_name = customer.name
+    elsif customer.first_name != blank
+      assign customer_name = customer.first_name
+      if customer.last_name != blank
+        assign customer_name = customer_name | append: ' ' | append: customer.last_name
+      endif
+    endif
+    if customer.email != blank
+      assign customer_email = customer.email
+    endif
+  endif
+%}
+
+<section
+  id="{{ section_id | escape }}"
+  class="pgy-creator-story"
+  data-pgy-creator-story
+  data-proxy-url="{{ proxy_url }}"
+  data-msg-name="Please enter your name."
+  data-msg-email="Please enter a valid email address."
+  data-msg-country="Please enter your country / region."
+  data-msg-story="Please share your experience."
+  data-msg-media="Please upload a photo or a video."
+  data-msg-media-limit="You can upload up to 6 photos or videos."
+  data-msg-media-type="Only image and video files are allowed."
+  data-msg-image-size="Each image must be 5MB or smaller."
+  data-msg-video-size="Each video must be 20MB or smaller."
+  data-msg-agree="Please agree to the content use and event rules."
+  data-msg-error="Something went wrong. Please try again."
+  data-msg-preview="Please test on the live storefront. Theme editor preview does not support App Proxy."
+  data-msg-uploading="Uploading media…"
+  data-msg-submitting="Submitting…"
+  data-msg-success="Thanks! Your story has been submitted."
+  {{ block.shopify_attributes }}
+>
+  <div class="pgy-creator-story__shell">
+    <header class="pgy-creator-story__intro">
+      <h2 class="pgy-creator-story__title">{{ heading }}</h2>
+      <p class="pgy-creator-story__subtitle">{{ subheading }}</p>
+    </header>
+
+    <div class="pgy-creator-story__panel">
+      <div class="pgy-creator-story__promo">
+        <div class="pgy-creator-story__promo-copy">
+          <h3 class="pgy-creator-story__promo-heading">
+            <span>{{ promo_heading }}</span>
+            <span>{{ promo_offer }}</span>
+          </h3>
+          <p class="pgy-creator-story__promo-note">{{ promo_note }}</p>
+        </div>
+
+        <div class="pgy-creator-story__prizes">
+          <figure class="pgy-creator-story__prize">
+            <img
+              class="pgy-creator-story__prize-image pgy-creator-story__prize-image--strap"
+              src="{{ prize1_url }}"
+              alt=""
+              width="252"
+              height="252"
+              loading="lazy"
+            >
+            <figcaption class="pgy-creator-story__prize-label">{{ prize1_label }}</figcaption>
+          </figure>
+
+          <figure class="pgy-creator-story__prize">
+            <img
+              class="pgy-creator-story__prize-image pgy-creator-story__prize-image--case"
+              src="{{ prize2_url }}"
+              alt=""
+              width="252"
+              height="252"
+              loading="lazy"
+            >
+            <figcaption class="pgy-creator-story__prize-label">{{ prize2_label }}</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="pgy-creator-story__form-card">
+        <h3 class="pgy-creator-story__form-title">{{ form_heading }}</h3>
+
+        <form class="pgy-creator-story__form" data-pgy-cs-form novalidate>
+          <div class="pgy-creator-story__grid">
+            <div class="pgy-creator-story__field">
+              <label class="pgy-creator-story__label" for="pgy-cs-name-{{ block.id }}">Name</label>
+              <input
+                id="pgy-cs-name-{{ block.id }}"
+                class="pgy-creator-story__input"
+                type="text"
+                name="name"
+                value="{{ customer_name | escape }}"
+                required
+                autocomplete="name"
+                data-pgy-cs-name
+              >
+            </div>
+            <div class="pgy-creator-story__field">
+              <label class="pgy-creator-story__label" for="pgy-cs-email-{{ block.id }}">Email</label>
+              <input
+                id="pgy-cs-email-{{ block.id }}"
+                class="pgy-creator-story__input"
+                type="email"
+                name="email"
+                value="{{ customer_email | escape }}"
+                required
+                autocomplete="email"
+                data-pgy-cs-email
+              >
+            </div>
+            <div class="pgy-creator-story__field">
+              <label class="pgy-creator-story__label" for="pgy-cs-order-{{ block.id }}">Order Number（Optional）</label>
+              <input
+                id="pgy-cs-order-{{ block.id }}"
+                class="pgy-creator-story__input"
+                type="text"
+                name="orderNumber"
+                autocomplete="off"
+                data-pgy-cs-order
+              >
+            </div>
+            <div class="pgy-creator-story__field">
+              <label class="pgy-creator-story__label" for="pgy-cs-country-{{ block.id }}">Country / Region</label>
+              <input
+                id="pgy-cs-country-{{ block.id }}"
+                class="pgy-creator-story__input"
+                type="text"
+                name="country"
+                required
+                autocomplete="country-name"
+                data-pgy-cs-country
+              >
+            </div>
+          </div>
+
+          <div class="pgy-creator-story__field pgy-creator-story__field--full">
+            <label class="pgy-creator-story__label" for="pgy-cs-story-{{ block.id }}">Your Story</label>
+            <textarea
+              id="pgy-cs-story-{{ block.id }}"
+              class="pgy-creator-story__textarea"
+              name="story"
+              rows="4"
+              required
+              placeholder="Share your experience"
+              data-pgy-cs-story
+            ></textarea>
+          </div>
+
+          <div class="pgy-creator-story__field pgy-creator-story__field--full">
+            <label class="pgy-creator-story__label" for="pgy-cs-media-{{ block.id }}">
+              Photo or Video
+              <span class="pgy-creator-story__hint">Images/videos only · max 6 · images ≤ 5MB · videos ≤ 20MB</span>
+            </label>
+            <label class="pgy-creator-story__upload" for="pgy-cs-media-{{ block.id }}">
+              <span class="pgy-creator-story__upload-text" data-pgy-cs-media-label>Upload photos or videos (max 6)</span>
+              <input
+                id="pgy-cs-media-{{ block.id }}"
+                class="pgy-creator-story__file"
+                type="file"
+                name="media"
+                accept="image/*,video/*"
+                multiple
+                data-pgy-cs-media
+              >
+            </label>
+            <div class="pgy-creator-story__previews" data-pgy-cs-previews hidden></div>
+          </div>
+
+          <div class="pgy-creator-story__checks">
+            <label class="pgy-creator-story__check" for="pgy-cs-allow-{{ block.id }}">
+              <input
+                id="pgy-cs-allow-{{ block.id }}"
+                class="pgy-creator-story__check-input"
+                type="checkbox"
+                name="allowContentUse"
+                checked
+                required
+                data-pgy-cs-allow
+              >
+              <span class="pgy-creator-story__check-box" aria-hidden="true"></span>
+              <span class="pgy-creator-story__check-text">{{ allow_label }}</span>
+            </label>
+            <label class="pgy-creator-story__check" for="pgy-cs-rules-{{ block.id }}">
+              <input
+                id="pgy-cs-rules-{{ block.id }}"
+                class="pgy-creator-story__check-input"
+                type="checkbox"
+                name="agreeRules"
+                checked
+                required
+                data-pgy-cs-rules
+              >
+              <span class="pgy-creator-story__check-box" aria-hidden="true"></span>
+              <span class="pgy-creator-story__check-text">{{ rules_label }}</span>
+            </label>
+          </div>
+
+          <button type="submit" class="pgy-creator-story__submit" data-pgy-cs-submit>
+            {{ submit_label }}
+          </button>
+          <p class="pgy-creator-story__message" data-pgy-cs-message hidden role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
+    {% if rules_html != blank %}
+      <div class="pgy-creator-story__rules">{{ rules_html }}</div>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Creator Story",
+  "target": "section",
+  "stylesheet": "creator-story.css",
+  "javascript": "creator-story.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_id",
+      "label": "区块 ID（锚点）",
+      "default": "anniversary-giveaway",
+      "info": "Coupon Lottery 的 Giveaway 按钮可跳转到 #anniversary-giveaway"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "主标题",
+      "default": "Creator Story"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "副标题",
+      "default": "Share your real experience with PGYTECH and inspire more creators."
+    },
+    {
+      "type": "text",
+      "id": "promo_heading",
+      "label": "左侧宣传标题",
+      "default": "Every Valid Story"
+    },
+    {
+      "type": "text",
+      "id": "promo_offer",
+      "label": "左侧优惠文案",
+      "default": "11% OFF"
+    },
+    {
+      "type": "text",
+      "id": "promo_note",
+      "label": "左侧说明",
+      "default": "Coupon valid for 30 days after the event."
+    },
+    {
+      "type": "image_picker",
+      "id": "prize1_image",
+      "label": "奖品图 1（Creator Prizes）"
+    },
+    {
+      "type": "text",
+      "id": "prize1_label",
+      "label": "奖品标签 1",
+      "default": "10 Creator Prizes"
+    },
+    {
+      "type": "image_picker",
+      "id": "prize2_image",
+      "label": "奖品图 2（Grand Prize）"
+    },
+    {
+      "type": "text",
+      "id": "prize2_label",
+      "label": "奖品标签 2",
+      "default": "1 Grand Prize"
+    },
+    {
+      "type": "text",
+      "id": "form_heading",
+      "label": "表单标题",
+      "default": "Submit Your Story"
+    },
+    {
+      "type": "text",
+      "id": "submit_label",
+      "label": "提交按钮",
+      "default": "Share My Story"
+    },
+    {
+      "type": "text",
+      "id": "allow_label",
+      "label": "内容授权勾选文案",
+      "default": "I allow PGYTECH to use my submitted content."
+    },
+    {
+      "type": "text",
+      "id": "rules_label",
+      "label": "规则勾选文案",
+      "default": "I agree to the Event Rules & Privacy Policy."
+    },
+    {
+      "type": "html",
+      "id": "rules_html",
+      "label": "底部规则说明",
+      "default": "<ul><li>Buy 2+ Get 15% OFF applies to select items only.</li><li>Curated Bag Collection and Special Picks do not qualify for the Buy 2+ 15% OFF offer or count toward the 2-item minimum.</li><li>Event Period: Sep 18, 2026, 04:00 AM – Sep 30, 2026, 12:00 PM</li></ul>"
+    }
+  ]
+}
+{% endschema %}

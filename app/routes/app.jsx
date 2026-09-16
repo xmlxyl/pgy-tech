@@ -20,6 +20,7 @@ export default function App() {
         <s-link href="/app/free-gift">Free Gift</s-link>
         <s-link href="/app/mystery-box">Lucky Box</s-link>
         <s-link href="/app/coupon-lottery">Coupon Lottery</s-link>
+        <s-link href="/app/creator-story">Creator Stories</s-link>
         <s-link href="/app/price-tasks">Price Tasks</s-link>
         <s-link href="/app/faq">FAQ</s-link>
         <s-link href="/app/manuals">User Manuals</s-link>

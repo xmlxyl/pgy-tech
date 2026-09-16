@@ -14,6 +14,7 @@ const requiredScopes = [
   "read_orders",
   "read_order_edits",
   "read_files",
+  "write_files",
   "read_products",
   "write_app_proxy",
   "write_discounts",
