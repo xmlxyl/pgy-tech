@@ -13,7 +13,7 @@
 .pgy-coupon-lottery__stage {
   width: 100%;
   box-sizing: border-box;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
+  padding: 0 clamp(14px, 4.3vw, 17px);
 }
 
 .pgy-coupon-lottery__grid {
@@ -563,7 +563,7 @@
   .pgy-coupon-lottery__card--aside .pgy-coupon-lottery__pill {
     min-height: 2.15rem;
     padding-left: 0.65rem;
-    font-size: 0.75rem;
+    font-size: 1rem;
   }
 
   .pgy-coupon-lottery__card--aside .pgy-coupon-lottery__pill-icon {
