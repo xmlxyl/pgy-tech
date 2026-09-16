@@ -84,6 +84,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #fff;
+  white-space: pre-line;
 }
 
 .pgy-coupon-lottery__hero-sub {
@@ -476,20 +477,97 @@
 }
 
 @media (max-width: 900px) {
-  .pgy-coupon-lottery__grid {
-    grid-template-columns: 1fr;
+  .pgy-coupon-lottery__stage {
+    padding: clamp(0.85rem, 5.3vw, 2.45rem) clamp(0.9rem, 6.5vw, 3rem);
   }
 
-  .pgy-coupon-lottery__card--hero,
+  .pgy-coupon-lottery__grid {
+    grid-template-columns: 1fr;
+    gap: clamp(0.75rem, 2.1vw, 0.95rem);
+  }
+
+  .pgy-coupon-lottery__aside {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: none;
+    gap: inherit;
+  }
+
+  .pgy-coupon-lottery__card {
+    border-radius: clamp(0.5rem, 1.23vw, 0.7rem);
+  }
+
+  .pgy-coupon-lottery__card--hero {
+    min-height: clamp(15.5rem, 50.9vw, 23.5rem);
+  }
+
   .pgy-coupon-lottery__card--aside {
-    min-height: clamp(18rem, 58vw, 26rem);
+    min-height: clamp(12.25rem, 38.2vw, 17.7rem);
+  }
+
+  .pgy-coupon-lottery__card-image {
+    /* object-position: right bottom; */
   }
 
   .pgy-coupon-lottery__hero-copy {
-    max-width: min(28rem, 88%);
+    max-width: min(28rem, 72%);
+    padding: clamp(1.1rem, 5.5vw, 2.15rem) clamp(1rem, 4vw, 1.85rem);
+    gap: clamp(0.55rem, 1.6vw, 0.9rem);
+  }
+
+  .pgy-coupon-lottery__hero-title {
+    font-size: clamp(1.4rem, 4.3vw, 2rem);
+  }
+
+  .pgy-coupon-lottery__hero-sub {
+    margin-top: clamp(0.3rem, 0.8vw, 0.5rem);
+    font-size: clamp(0.88rem, 2.48vw, 1.15rem);
   }
 
   .pgy-coupon-lottery__hero-note {
-    max-width: 90%;
+    left: clamp(1rem, 4vw, 1.85rem);
+    right: clamp(0.75rem, 3vw, 1.5rem);
+    bottom: clamp(0.65rem, 2.1vw, 1.05rem);
+    max-width: min(36rem, 90%);
+    font-size: clamp(0.72rem, 2.16vw, 1rem);
+  }
+
+  .pgy-coupon-lottery__aside-copy {
+    padding: clamp(0.85rem, 3.2vw, 1.25rem) clamp(0.4rem, 1.6vw, 0.75rem)
+      clamp(0.7rem, 2.4vw, 1rem);
+  }
+
+  .pgy-coupon-lottery__aside-title {
+    max-width: 100%;
+    font-size: clamp(0.95rem, 3.1vw, 1.45rem);
+  }
+
+  .pgy-coupon-lottery__pill {
+    width: clamp(11.5rem, 30.3vw, 14.05rem);
+    min-height: clamp(2.25rem, 6vw, 2.8rem);
+    padding: 0.15rem 0.2rem 0.15rem clamp(0.75rem, 1.6vw, 1.1rem);
+    font-size: clamp(0.8rem, 2.29vw, 1.06rem);
+  }
+
+  .pgy-coupon-lottery__card--aside .pgy-coupon-lottery__pill {
+    width: min(100%, 12.75rem);
+    max-width: 92%;
+  }
+
+  .pgy-coupon-lottery__pill-icon {
+    width: clamp(1.75rem, 4.67vw, 2.16rem);
+    height: clamp(1.75rem, 4.67vw, 2.16rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .pgy-coupon-lottery__card--aside .pgy-coupon-lottery__pill {
+    min-height: 2.15rem;
+    padding-left: 0.65rem;
+    font-size: 0.75rem;
+  }
+
+  .pgy-coupon-lottery__card--aside .pgy-coupon-lottery__pill-icon {
+    width: 1.65rem;
+    height: 1.65rem;
   }
 }
