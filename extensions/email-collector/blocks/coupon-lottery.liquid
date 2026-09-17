@@ -1,4 +1,12 @@
 {% liquid
+  assign section_heading = block.settings.section_heading
+  if section_heading == blank
+    assign section_heading = 'Celebrate & Save Big'
+  endif
+  assign section_subheading = block.settings.section_subheading
+  if section_subheading == blank
+    assign section_subheading = 'Save. Share. Celebrate 11 Years Together.'
+  endif
   assign intro_heading = block.settings.intro_heading
   if intro_heading == blank
     assign intro_heading = 'Open Your Anniversary Coupon'
@@ -98,7 +106,14 @@
   data-msg-copy-fail="Copy failed. Please copy manually."
   {{ block.shopify_attributes }}
 >
-  <section id="coupon-lottery" class="pgy-coupon-lottery__stage" aria-labelledby="pgy-cl-intro-title-{{ block.id }}">
+  <section id="coupon-lottery" class="pgy-coupon-lottery__stage" aria-labelledby="pgy-cl-section-title-{{ block.id }}">
+    <header class="pgy-coupon-lottery__intro">
+      <h2 id="pgy-cl-section-title-{{ block.id }}" class="pgy-coupon-lottery__title">
+        {{ section_heading }}
+      </h2>
+      <p class="pgy-coupon-lottery__subtitle">{{ section_subheading }}</p>
+    </header>
+
     <div class="pgy-coupon-lottery__grid">
       <article class="pgy-coupon-lottery__card pgy-coupon-lottery__card--hero">
         <img
@@ -111,9 +126,9 @@
         >
         <div class="pgy-coupon-lottery__hero-copy">
           <div class="pgy-coupon-lottery__hero-text">
-            <h2 id="pgy-cl-intro-title-{{ block.id }}" class="pgy-coupon-lottery__hero-title">
+            <h3 class="pgy-coupon-lottery__hero-title">
               {{ intro_heading }}
-            </h2>
+            </h3>
             <p class="pgy-coupon-lottery__hero-sub">{{ intro_subheading }}</p>
           </div>
 
@@ -282,6 +297,22 @@
   "stylesheet": "coupon-lottery.css",
   "javascript": "coupon-lottery.js",
   "settings": [
+    {
+      "type": "header",
+      "content": "Section heading"
+    },
+    {
+      "type": "text",
+      "id": "section_heading",
+      "label": "Title",
+      "default": "Celebrate & Save Big"
+    },
+    {
+      "type": "text",
+      "id": "section_subheading",
+      "label": "Subtitle",
+      "default": "Save. Share. Celebrate 11 Years Together."
+    },
     {
       "type": "header",
       "content": "Images"
