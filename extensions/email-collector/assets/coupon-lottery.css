@@ -13,7 +13,7 @@
 .pgy-coupon-lottery__stage {
   width: 100%;
   box-sizing: border-box;
-  padding: 0 clamp(14px, 4.3vw, 17px);
+  padding: 0 clamp(18px, 2.1vw, 40px);
 }
 
 .pgy-coupon-lottery__intro {
@@ -497,10 +497,19 @@
   letter-spacing: 0.06em;
   word-break: break-all;
 }
-
+@media (max-width: 767px) {
+  .pgy-coupon-lottery__title {
+    font-size: clamp(24px, 4.73vw, 35px);
+    line-height: 1.2;
+  }
+  .pgy-coupon-lottery__subtitle {
+    font-size: clamp(17px, 1.5vw, 28px);
+    line-height: 1.25;
+  }
+}
 @media (max-width: 900px) {
   .pgy-coupon-lottery__stage {
-    padding: clamp(0.85rem, 5.3vw, 2.45rem) clamp(0.9rem, 6.5vw, 3rem);
+    padding: 0 clamp(14px, 4.3vw, 17px);
   }
 
   .pgy-coupon-lottery__grid {
