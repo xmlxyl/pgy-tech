@@ -85,6 +85,13 @@
   else
     assign giveaway_image_url = 'coupon-lottery-giveaway.png' | asset_url
   endif
+  if block.settings.modal_image != blank
+    assign modal_image_url = block.settings.modal_image | image_url: width: 1400
+  elsif block.settings.hero_image != blank
+    assign modal_image_url = block.settings.hero_image | image_url: width: 1400
+  else
+    assign modal_image_url = 'coupon-lottery-hero.png' | asset_url
+  endif
 
   assign proxy_url = '/apps/pgy-tech/coupon-lottery'
   assign customer_email = ''
@@ -222,44 +229,55 @@
       aria-labelledby="pgy-cl-form-title-{{ block.id }}"
       hidden
     >
-      <button type="button" class="pgy-coupon-lottery__close" data-pgy-cl-close aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <h2 id="pgy-cl-form-title-{{ block.id }}" class="pgy-coupon-lottery__form-title">
-        {{ form_heading }}
-      </h2>
-      <p class="pgy-coupon-lottery__form-sub">{{ form_subheading }}</p>
-
-      <form class="pgy-coupon-lottery__form" data-pgy-cl-form novalidate>
-        <label class="pgy-coupon-lottery__label" for="pgy-cl-email-{{ block.id }}">Email address</label>
-        <input
-          id="pgy-cl-email-{{ block.id }}"
-          class="pgy-coupon-lottery__input"
-          type="email"
-          name="email"
-          value="{{ customer_email | escape }}"
-          placeholder="you@example.com"
-          autocomplete="email"
-          required
-          data-pgy-cl-email
+      <div class="pgy-coupon-lottery__modal-media">
+        <img
+          class="pgy-coupon-lottery__modal-image"
+          src="{{ modal_image_url }}"
+          alt=""
+          width="700"
+          height="640"
         >
-        <label class="pgy-coupon-lottery__agree" for="pgy-cl-agree-{{ block.id }}">
-          <input
-            id="pgy-cl-agree-{{ block.id }}"
-            class="pgy-coupon-lottery__agree-input"
-            type="checkbox"
-            name="agreed"
-            checked
-            data-pgy-cl-agree
-          >
-          <span class="pgy-coupon-lottery__agree-box" aria-hidden="true"></span>
-          <span class="pgy-coupon-lottery__agree-text">{{ agree_label }}</span>
-        </label>
-        <button type="submit" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--full" data-pgy-cl-submit>
-          {{ reveal_button }}
+      </div>
+      <div class="pgy-coupon-lottery__modal-body">
+        <button type="button" class="pgy-coupon-lottery__close" data-pgy-cl-close aria-label="Close">
+          <span aria-hidden="true">&times;</span>
         </button>
-        <p class="pgy-coupon-lottery__message" data-pgy-cl-message hidden></p>
-      </form>
+        <h2 id="pgy-cl-form-title-{{ block.id }}" class="pgy-coupon-lottery__form-title">
+          {{ form_heading }}
+        </h2>
+        <p class="pgy-coupon-lottery__form-sub">{{ form_subheading }}</p>
+
+        <form class="pgy-coupon-lottery__form" data-pgy-cl-form novalidate>
+          <label class="pgy-coupon-lottery__label" for="pgy-cl-email-{{ block.id }}">Email address</label>
+          <input
+            id="pgy-cl-email-{{ block.id }}"
+            class="pgy-coupon-lottery__input"
+            type="email"
+            name="email"
+            value="{{ customer_email | escape }}"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+            data-pgy-cl-email
+          >
+          <label class="pgy-coupon-lottery__agree" for="pgy-cl-agree-{{ block.id }}">
+            <input
+              id="pgy-cl-agree-{{ block.id }}"
+              class="pgy-coupon-lottery__agree-input"
+              type="checkbox"
+              name="agreed"
+              checked
+              data-pgy-cl-agree
+            >
+            <span class="pgy-coupon-lottery__agree-box" aria-hidden="true"></span>
+            <span class="pgy-coupon-lottery__agree-text">{{ agree_label }}</span>
+          </label>
+          <button type="submit" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--full" data-pgy-cl-submit>
+            {{ reveal_button }}
+          </button>
+          <p class="pgy-coupon-lottery__message" data-pgy-cl-message hidden></p>
+        </form>
+      </div>
     </div>
 
     <div
@@ -270,22 +288,33 @@
       aria-labelledby="pgy-cl-result-title-{{ block.id }}"
       hidden
     >
-      <button type="button" class="pgy-coupon-lottery__close" data-pgy-cl-close aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-      <h2 id="pgy-cl-result-title-{{ block.id }}" class="pgy-coupon-lottery__form-title" data-pgy-cl-result-title>
-        Your coupon is ready
-      </h2>
-      <p class="pgy-coupon-lottery__form-sub" data-pgy-cl-result-sub></p>
-      <div class="pgy-coupon-lottery__result-card">
-        <div class="pgy-coupon-lottery__result-amount" data-pgy-cl-result-amount></div>
-        <div class="pgy-coupon-lottery__result-meta" data-pgy-cl-result-meta></div>
-        <div class="pgy-coupon-lottery__result-code" data-pgy-cl-result-code></div>
+      <div class="pgy-coupon-lottery__modal-media">
+        <img
+          class="pgy-coupon-lottery__modal-image"
+          src="{{ modal_image_url }}"
+          alt=""
+          width="700"
+          height="640"
+        >
       </div>
-      <button type="button" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--full" data-pgy-cl-copy>
-        Copy code
-      </button>
-      <p class="pgy-coupon-lottery__message" data-pgy-cl-copy-message hidden></p>
+      <div class="pgy-coupon-lottery__modal-body">
+        <button type="button" class="pgy-coupon-lottery__close" data-pgy-cl-close aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h2 id="pgy-cl-result-title-{{ block.id }}" class="pgy-coupon-lottery__form-title" data-pgy-cl-result-title>
+          Your coupon is ready
+        </h2>
+        <p class="pgy-coupon-lottery__form-sub" data-pgy-cl-result-sub></p>
+        <div class="pgy-coupon-lottery__result-card">
+          <div class="pgy-coupon-lottery__result-amount" data-pgy-cl-result-amount></div>
+          <div class="pgy-coupon-lottery__result-meta" data-pgy-cl-result-meta></div>
+          <div class="pgy-coupon-lottery__result-code" data-pgy-cl-result-code></div>
+        </div>
+        <button type="button" class="pgy-coupon-lottery__cta pgy-coupon-lottery__cta--full" data-pgy-cl-copy>
+          Copy code
+        </button>
+        <p class="pgy-coupon-lottery__message" data-pgy-cl-copy-message hidden></p>
+      </div>
     </div>
   </div>
 </div>
@@ -332,6 +361,12 @@
       "type": "image_picker",
       "id": "giveaway_image",
       "label": "Giveaway image"
+    },
+    {
+      "type": "image_picker",
+      "id": "modal_image",
+      "label": "Popup left image",
+      "info": "Shown on the left of the coupon popup on desktop. Hidden on mobile. Leave empty to reuse the left card image."
     },
     {
       "type": "header",
