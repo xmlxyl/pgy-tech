@@ -333,6 +333,102 @@ async function findVariantsBySku(admin, sku) {
   return { ok: true, variants, error: "" };
 }
 
+export async function listExistingCouponMetafields(admin, cursor) {
+  let pageCursor = cursor || null;
+  let hasNextPage = true;
+  let scanned = 0;
+  const rows = [];
+  const startedAt = Date.now();
+  let pages = 0;
+
+  while (
+    hasNextPage &&
+    pages < DELETE_PAGES_PER_REQUEST &&
+    Date.now() - startedAt < DELETE_TIME_BUDGET_MS
+  ) {
+    const page = await fetchVariantCouponValuesPage(admin, pageCursor);
+    if (!page.ok) {
+      return {
+        ok: false,
+        message: page.message,
+        cursor: pageCursor,
+        hasNextPage: true,
+        scanned,
+        rows,
+      };
+    }
+
+    pages += 1;
+    scanned += page.nodes.length;
+    const requestCursor = pageCursor;
+    hasNextPage = page.hasNextPage;
+    pageCursor = page.cursor;
+
+    if (hasNextPage && (!pageCursor || pageCursor === requestCursor)) {
+      hasNextPage = false;
+    }
+
+    page.nodes.forEach((node) => {
+      rows.push({
+        id: node.id,
+        sku: node.sku || "",
+        title: node.title || "",
+        productTitle: node.productTitle || "",
+        couponCode: node.couponCode || "",
+      });
+    });
+
+    if (page.nodes.length === 0) hasNextPage = false;
+  }
+
+  return {
+    ok: true,
+    message: "",
+    cursor: pageCursor,
+    hasNextPage,
+    scanned,
+    rows,
+  };
+}
+
+async function fetchVariantCouponValuesPage(admin, cursor) {
+  const response = await adminGraphql(
+    admin,
+    `#graphql
+      query CouponVariantValuesPage($cursor: String) {
+        productVariants(first: ${DELETE_PAGE_SIZE}, after: $cursor, sortKey: ID) {
+          pageInfo { hasNextPage endCursor }
+          nodes {
+            id
+            sku
+            title
+            product { title }
+            couponCode: metafield(namespace: "${COUPON_NAMESPACE}", key: "${COUPON_CODE_KEY}") {
+              value
+            }
+          }
+        }
+      }`,
+    { cursor },
+  );
+
+  if (!response.ok) return response;
+
+  const connection = response.json.data?.productVariants;
+  return {
+    ok: true,
+    nodes: (connection?.nodes || []).map((node) => ({
+      id: node.id,
+      sku: node.sku || "",
+      title: node.title || "",
+      productTitle: node.product?.title || "",
+      couponCode: node.couponCode?.value || "",
+    })),
+    hasNextPage: Boolean(connection?.pageInfo?.hasNextPage),
+    cursor: connection?.pageInfo?.endCursor || null,
+  };
+}
+
 async function fetchVariantMetafieldPage(admin, cursor) {
   const response = await adminGraphql(
     admin,

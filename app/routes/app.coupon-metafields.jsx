@@ -7,6 +7,7 @@ import { authenticate } from "../shopify.server";
 import {
   deleteCouponMetafields,
   importCouponCodes,
+  listExistingCouponMetafields,
   matchCouponSkus,
   parseCouponExcel,
 } from "../lib/coupon-metafields.server";
@@ -61,6 +62,13 @@ export const action = async ({ request }) => {
       return { intent, runId, received: items.length, ...imported };
     }
 
+    if (intent === "query") {
+      const cursor = String(formData.get("cursor") || "") || null;
+      const resolvedRunId = runId || String(Date.now());
+      const listed = await listExistingCouponMetafields(admin, cursor);
+      return { intent, runId: resolvedRunId, ...listed };
+    }
+
     if (intent === "delete") {
       const mode = String(formData.get("mode") || "");
       const cursor = String(formData.get("cursor") || "") || null;
@@ -86,11 +94,17 @@ export default function CouponMetafieldsPage() {
   const navigation = useNavigation();
   const deleteFetcher = useFetcher();
   const importFetcher = useFetcher();
+  const queryFetcher = useFetcher();
   const deleteRunId = useRef("");
   const importRunId = useRef("");
+  const queryRunId = useRef("");
   const handledDelete = useRef(null);
   const handledImport = useRef(null);
+  const handledQuery = useRef(null);
   const lastDeleteCursor = useRef(null);
+  const lastQueryCursor = useRef(null);
+  const queryRows = useRef([]);
+  const queryScanned = useRef(0);
   const matchQueue = useRef([]);
   const writeQueue = useRef([]);
 
@@ -103,6 +117,8 @@ export default function CouponMetafieldsPage() {
   const [matchProgress, setMatchProgress] = useState({ done: 0, total: 0 });
   const [importProgress, setImportProgress] = useState(null);
   const [banner, setBanner] = useState(null);
+  const [queryJob, setQueryJob] = useState(null);
+  const [queryPage, setQueryPage] = useState(0);
 
   const deleteBusy = deleteFetcher.state !== "idle" || Boolean(deleteJob?.running);
   const importBusy = ["parsing", "matching", "importing"].includes(phase);
@@ -188,6 +204,74 @@ export default function CouponMetafieldsPage() {
       submitDelete(deleteFetcher, actionData.mode, actionData.cursor, actionData.runId);
     }
   }, [actionData, deleteFetcher]);
+
+  const continueQuery = (data, replace) => {
+    if (!data?.ok) {
+      setQueryJob({
+        running: false,
+        done: false,
+        scanned: queryScanned.current + (data?.scanned || 0),
+        found: queryRows.current.length,
+        rows: queryRows.current,
+        message: data?.message || "导出失败",
+      });
+      return;
+    }
+
+    if (!replace && data.hasNextPage && data.cursor && data.cursor === lastQueryCursor.current) {
+      setQueryJob({
+        running: false,
+        done: true,
+        scanned: queryScanned.current,
+        found: queryRows.current.length,
+        rows: queryRows.current,
+        message: "变体分页没有继续，导出已停止",
+      });
+      downloadCouponExport(queryRows.current);
+      return;
+    }
+
+    queryScanned.current += data.scanned || 0;
+    queryRows.current = replace ? data.rows || [] : queryRows.current.concat(data.rows || []);
+    const done = !data.hasNextPage;
+    if (replace) setQueryPage(0);
+    setQueryJob({
+      running: !done,
+      done,
+      scanned: queryScanned.current,
+      found: queryRows.current.length,
+      rows: queryRows.current,
+      message: "",
+    });
+
+    if (!done && data.cursor) {
+      lastQueryCursor.current = data.cursor;
+      submitQuery(queryFetcher, data.cursor, data.runId);
+      return;
+    }
+
+    if (done && queryRows.current.length > 0) downloadCouponExport(queryRows.current);
+  };
+
+  useEffect(() => {
+    if (!actionData || actionData.intent !== "query") return;
+    if (handledQuery.current === actionData) return;
+    handledQuery.current = actionData;
+    queryRunId.current = String(actionData.runId || "");
+    queryRows.current = [];
+    queryScanned.current = 0;
+    lastQueryCursor.current = null;
+    continueQuery(actionData, true);
+  }, [actionData]);
+
+  useEffect(() => {
+    const data = queryFetcher.data;
+    if (queryFetcher.state !== "idle" || !data || data.intent !== "query") return;
+    if (handledQuery.current === data) return;
+    handledQuery.current = data;
+    if (String(data.runId) !== queryRunId.current) return;
+    continueQuery(data, false);
+  }, [queryFetcher]);
 
   useEffect(() => {
     const data = importFetcher.data;
@@ -381,6 +465,10 @@ export default function CouponMetafieldsPage() {
   const importDone = phase === "done" && importProgress;
   const submittingAction = String(navigation.formData?.get("_action") || "");
   const submittingMode = String(navigation.formData?.get("mode") || "");
+  const queryRunning =
+    queryJob?.running ||
+    queryFetcher.state !== "idle" ||
+    (navigation.state !== "idle" && submittingAction === "query");
 
   return (
     <s-page heading="Coupon 元字段" inlineSize="large">
@@ -389,6 +477,42 @@ export default function CouponMetafieldsPage() {
           custom.coupon_code 是变体上的元字段定义。这里只修改各 SKU
           上的值，同一个 SKU 出现在多个产品中时会全部处理。
         </s-text>
+      </s-section>
+
+      <s-section heading="导出现有 Coupon">
+        <div style={importHeaderStyle}>
+        <p style={cardTextStyle}>
+          列出并导出全部 SKU。没有填写 custom.coupon_code 的行，Coupon Code 为空。
+        </p>
+          <Form method="post">
+            <input type="hidden" name="_action" value="query" />
+            <s-button
+              type="submit"
+              variant="primary"
+              {...(queryRunning ? { loading: true } : {})}
+            >
+              {queryRunning ? "导出中..." : "一键导出现有coupon元字段"}
+            </s-button>
+          </Form>
+        </div>
+        {queryJob ? (
+          <s-banner tone={queryJob.message && !queryJob.done ? "critical" : queryJob.done ? "success" : "info"}>
+            {queryJob.message
+              ? queryJob.message
+              : queryJob.done
+                ? `已列出全部 ${queryJob.found} 个 SKU，并已下载 Excel。`
+                : `正在加载全部 SKU，请保持页面打开。已加载 ${queryJob.found} 个。`}
+          </s-banner>
+        ) : null}
+        {queryJob?.rows?.length ? (
+          <s-box paddingBlockStart="base">
+            <SkuCouponTable
+              rows={queryJob.rows}
+              page={queryPage}
+              onPageChange={setQueryPage}
+            />
+          </s-box>
+        ) : null}
       </s-section>
 
       <s-section heading="批量删除">
@@ -611,6 +735,97 @@ export default function CouponMetafieldsPage() {
       </s-section>
     </s-page>
   );
+}
+
+function SkuCouponTable({ rows, page, onPageChange }) {
+  const pageCount = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleRows = rows.slice(
+    currentPage * TABLE_PAGE_SIZE,
+    currentPage * TABLE_PAGE_SIZE + TABLE_PAGE_SIZE,
+  );
+
+  return (
+    <>
+      <s-table variant="table" paginate={false}>
+        <s-table-header-row>
+          <s-table-header listSlot="primary">SKU</s-table-header>
+          <s-table-header>产品</s-table-header>
+          <s-table-header>变体</s-table-header>
+          <s-table-header>Coupon Code</s-table-header>
+        </s-table-header-row>
+        <s-table-body>
+          {visibleRows.map((row) => (
+            <s-table-row key={row.id}>
+              <s-table-cell>{row.sku || "-"}</s-table-cell>
+              <s-table-cell>{row.productTitle || "-"}</s-table-cell>
+              <s-table-cell>
+                {row.title && row.title !== "Default Title" ? row.title : "-"}
+              </s-table-cell>
+              <s-table-cell>{row.couponCode || "-"}</s-table-cell>
+            </s-table-row>
+          ))}
+        </s-table-body>
+      </s-table>
+      {pageCount > 1 ? (
+        <div style={pagerStyle}>
+          <s-button
+            type="button"
+            variant="secondary"
+            disabled={currentPage === 0 ? true : undefined}
+            onClick={() => onPageChange(currentPage - 1)}
+          >
+            上一页
+          </s-button>
+          <s-text>
+            {currentPage + 1} / {pageCount}
+          </s-text>
+          <s-button
+            type="button"
+            variant="secondary"
+            disabled={currentPage + 1 >= pageCount ? true : undefined}
+            onClick={() => onPageChange(currentPage + 1)}
+          >
+            下一页
+          </s-button>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function submitQuery(fetcher, cursor, runId) {
+  const formData = new FormData();
+  formData.set("_action", "query");
+  formData.set("cursor", cursor || "");
+  formData.set("runId", String(runId || ""));
+  fetcher.submit(formData, { method: "post", action: COUPON_PAGE_PATH });
+}
+
+function downloadCouponExport(rows) {
+  const worksheet = XLSX.utils.json_to_sheet(
+    rows.map((row) => ({
+      SKU: row.sku,
+      产品: row.productTitle,
+      "Coupon Code": row.couponCode,
+    })),
+    { header: ["SKU", "产品", "Coupon Code"] },
+  );
+  worksheet["!cols"] = [{ wch: 24 }, { wch: 36 }, { wch: 24 }];
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Coupon Code");
+  const buffer = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "coupon-code-export.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function submitDelete(fetcher, mode, cursor, runId) {
