@@ -47,11 +47,12 @@
         if (label && !/pre-?order/i.test(label.textContent || "")) label.textContent = "Pre-order now";
         if (button.getAttribute("data-pre-order") !== "true") button.setAttribute("data-pre-order", "true");
       }
-      root.hidden = false;
       var trigger = q(root, "[data-pgy-restock-open]");
       var note = q(root, "[data-pgy-restock-note]");
       if (trigger) trigger.hidden = !on;
       if (note) note.hidden = !on;
+      root.classList.add("is-ready");
+      root.classList.toggle("is-preorder", on);
     });
     syncing = 0;
   }
@@ -124,7 +125,6 @@
     row.insertBefore(addButton, trigger);
     root.classList.add("is-docked");
     root.dataset.pgyRestockDocked = "true";
-    syncNotify();
     return true;
   }
 
@@ -157,6 +157,7 @@
     var timer = setInterval(function () {
       tries += 1;
       dock(root);
+      hookApply();
       syncNotify();
       if (tries > 40) clearInterval(timer);
     }, 250);
@@ -167,16 +168,12 @@
         applyVariant(root, dialog);
         if (overlay) overlay.hidden = false;
         dialog.hidden = false;
-        void dialog.offsetWidth;
       }
       if (overlay) overlay.classList.toggle("is-open", open);
       dialog.classList.toggle("is-open", open);
       trigger.setAttribute("aria-expanded", open ? "true" : "false");
       document.body.classList.toggle("pgy-restock-lock", open);
-      if (open) {
-        setTimeout(function () { if (emailInput) emailInput.focus(); }, 30);
-        return;
-      }
+      if (open) return;
       closeTimer = setTimeout(function () {
         if (dialog.classList.contains("is-open")) return;
         if (overlay) overlay.hidden = true;
@@ -245,13 +242,21 @@
   });
   document.addEventListener("shopify:section:load", init);
   document.addEventListener("shopify:section:unload", function (event) {
-    var sectionId = event.detail && event.detail.sectionId;
-    if (!sectionId) return;
-    document.querySelectorAll("[data-section-id='" + sectionId + "']").forEach(function (node) {
-      if (node.matches(".pgy-restock__dialog, .pgy-restock__overlay")) node.remove();
-    });
-    document.body.classList.remove("pgy-restock-lock");
+    var id = event.detail && event.detail.sectionId;
+    if (!id) return;
+    document.querySelectorAll("[data-section-id='" + id + "']").forEach(function (node) { node.remove(); });
   });
+
+  function hookApply() {
+    var apply = window.pgyApplyPreorderButtons;
+    if (!apply || apply.pgy) return;
+    window.pgyApplyPreorderButtons = function () {
+      apply.apply(null, arguments);
+      syncNotify();
+    };
+    window.pgyApplyPreorderButtons.pgy = 1;
+  }
+  hookApply();
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

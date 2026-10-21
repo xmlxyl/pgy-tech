@@ -18,22 +18,31 @@
   max-width: 100%;
 }
 
-.pdp-action-wrapper:has(> .pgy-restock.is-docked) {
-  display: flex;
-  flex-direction: column;
+.pdp-action-wrapper:has(.pgy-restock.is-docked) {
+  display: flex !important;
+  flex-direction: column !important;
   align-items: stretch;
   gap: 10px;
-}
-
-.pdp-action-wrapper:has(> .pgy-restock.is-docked) > .nm-portal,
-.pdp-action-wrapper:has(> .pgy-restock.is-docked) > [data-preorder-description] {
-  width: 100%;
-  margin: 0;
 }
 
 .pdp-action-wrapper:has(.pgy-restock__trigger:not([hidden])) > .nm-portal,
 .pdp-action-wrapper:has(.pgy-restock__trigger:not([hidden])) > [data-preorder-description] {
   display: block !important;
+  order: -1;
+  width: 100%;
+  margin: 0;
+}
+
+.pdp-action-wrapper:has(.pgy-restock__trigger:not([hidden])) > .nm-portal ~ .nm-portal,
+.pdp-action-wrapper:has(.pgy-restock__trigger:not([hidden])) > [data-preorder-description] ~ [data-preorder-description],
+.pgy-restock .nm-portal,
+.pgy-restock [data-preorder-description] {
+  display: none !important;
+}
+
+.shopify-section:has(.pgy-restock:not(.is-ready)) [data-shopifypayment-button],
+.shopify-section:has(.pgy-restock.is-preorder) [data-shopifypayment-button] {
+  display: none !important;
 }
 
 .pgy-restock__row {
