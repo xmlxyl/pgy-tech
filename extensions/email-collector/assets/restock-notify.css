@@ -1,0 +1,339 @@
+.pgy-restock {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pgy-restock *,
+.pgy-restock *::before,
+.pgy-restock *::after,
+.pgy-restock__dialog *,
+.pgy-restock__dialog *::before,
+.pgy-restock__dialog *::after {
+  box-sizing: border-box;
+}
+
+.pgy-restock.is-docked {
+  width: 100%;
+  max-width: 100%;
+}
+
+.pgy-restock__row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+
+.pgy-restock__row > :not(.pgy-restock__trigger) {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto !important;
+  max-width: none;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+button.pgy-restock__trigger.pgy-restock__trigger {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  max-width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 0 22px;
+  border: 1.5px solid #111111;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.pgy-restock__trigger.pgy-restock__trigger:hover {
+  background: #f7f7f7;
+  color: #111111;
+}
+
+button.pgy-restock__trigger.pgy-restock__trigger:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+.pgy-restock__bell {
+  display: block;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+.pgy-restock__note {
+  margin: 10px 0 0;
+  color: #8a8a8a;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.pgy-restock__unavailable {
+  margin: 0;
+  color: #666666;
+  font-size: 14px;
+}
+
+.pgy-restock__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  margin: 0;
+  background: rgba(17, 17, 17, 0.48);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pgy-restock__overlay.is-open {
+  opacity: 1;
+}
+
+.pgy-restock__dialog {
+  position: fixed;
+  z-index: 10050;
+  left: 50%;
+  top: 50%;
+  width: min(400px, calc(100vw - 32px));
+  max-height: min(640px, calc(100vh - 32px));
+  margin: 0;
+  padding: 28px 24px 22px;
+  overflow: auto;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, -46%);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pgy-restock__dialog.is-open {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.pgy-restock__overlay[hidden],
+.pgy-restock__dialog[hidden],
+.pgy-restock__photo[hidden],
+.pgy-restock__variant-label[hidden],
+.pgy-restock__message[hidden] {
+  display: none !important;
+}
+
+button.pgy-restock__close.pgy-restock__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #f2f2f2;
+  color: #111111;
+  box-shadow: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.pgy-restock__close.pgy-restock__close:hover {
+  background: #e8e8e8;
+  color: #111111;
+}
+
+button.pgy-restock__close.pgy-restock__close:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+.pgy-restock__title {
+  margin: 8px 36px 6px;
+  color: #111111;
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.pgy-restock__product {
+  margin: 0 0 16px;
+  color: #6f6f6f;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.pgy-restock__variant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.pgy-restock__photo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #f6f6f6;
+}
+
+.pgy-restock__variant-label {
+  margin: 0;
+  color: #222222;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.pgy-restock__copy {
+  margin: 0 0 16px;
+  color: #4a4a4a;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.pgy-restock__form {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.pgy-restock__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pgy-restock__input {
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #f2f2f2;
+  color: #111111;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.2;
+  box-shadow: none;
+}
+
+.pgy-restock__input::placeholder {
+  color: #9a9a9a;
+}
+
+.pgy-restock__input:focus {
+  outline: 2px solid #111111;
+  outline-offset: 1px;
+}
+
+button.pgy-restock__submit.pgy-restock__submit {
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #111111;
+  color: #ffffff;
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.pgy-restock__submit.pgy-restock__submit:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+button.pgy-restock__submit.pgy-restock__submit:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
+button.pgy-restock__submit.pgy-restock__submit[aria-busy="true"] {
+  opacity: 0.72;
+  cursor: progress;
+}
+
+.pgy-restock__disclaimer {
+  margin: 0;
+  color: #8d8d8d;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.pgy-restock__message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pgy-restock__message--error {
+  color: #b42318;
+}
+
+.pgy-restock__message--success {
+  color: #067647;
+}
+
+body.pgy-restock-lock {
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  button.pgy-restock__trigger.pgy-restock__trigger {
+    gap: 6px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .pgy-restock__title {
+    font-size: 20px;
+  }
+}

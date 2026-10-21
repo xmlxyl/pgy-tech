@@ -121,9 +121,12 @@ export default function EmailPage() {
           <s-list-item>
             选择应用区块 <strong>邮箱订阅</strong>，保存主题
           </s-list-item>
+          <s-list-item>
+            Zipod Travel Tripod Kit：打开该产品模板，在购买按钮区块里添加应用区块 <strong>到货通知</strong>。按钮会排在预购按钮右侧，弹窗收集的邮箱会记为「Zipod Travel Tripod Kit · 当前规格」。
+          </s-list-item>
         </s-unordered-list>
         <s-paragraph tone="subdued">
-          顾客提交后，邮箱会写入应用数据库（按店铺区分）。
+          顾客提交后，邮箱会写入应用数据库（按店铺区分）。到货通知的活动类型里会带上规格，例如 Zipod Travel Tripod Kit · Midnight Black。
         </s-paragraph>
       </s-section>
 

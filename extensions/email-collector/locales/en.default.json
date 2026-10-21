@@ -9,5 +9,15 @@
     "error_invalid": "Please enter a valid email address.",
     "error_generic": "Something went wrong. Please try again.",
     "error_preview": "Please test on your live storefront (Online Store), not in the theme editor preview."
+  },
+  "restock_notify": {
+    "email_label": "Email address",
+    "close": "Close",
+    "success": "You're on the list. We'll email you when it's back.",
+    "already_subscribed": "You're already on the list for this option.",
+    "error_invalid": "Please enter a valid email address.",
+    "error_generic": "Something went wrong. Please try again.",
+    "error_preview": "Please test on your live storefront (Online Store), not in the theme editor preview.",
+    "unavailable": "Add the Notify Me block to a product page."
   }
 }

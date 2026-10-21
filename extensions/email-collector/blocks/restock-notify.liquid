@@ -1,0 +1,247 @@
+{% liquid
+  assign proxy_url = '/apps/pgy-tech/email'
+  assign trigger_label = block.settings.trigger_label
+  if trigger_label == blank
+    assign trigger_label = 'Notify Me'
+  endif
+  assign heading = block.settings.heading
+  if heading == blank
+    assign heading = "Get notified when it's back"
+  endif
+  assign body_text = block.settings.body
+  if body_text == blank
+    assign body_text = "We'll email you when this option is available."
+  endif
+  assign placeholder = block.settings.placeholder
+  if placeholder == blank
+    assign placeholder = 'you@example.com'
+  endif
+  assign submit_label = block.settings.submit_label
+  if submit_label == blank
+    assign submit_label = 'Notify Me'
+  endif
+  assign disclaimer = block.settings.disclaimer
+  assign helper_text = block.settings.helper_text
+  assign campaign_type = block.settings.campaign_type | strip
+  if campaign_type == blank
+    assign campaign_type = 'Zipod Travel Tripod Kit'
+  endif
+  assign username = ''
+  if customer
+    if customer.name != blank
+      assign username = customer.name
+    elsif customer.first_name != blank
+      assign username = customer.first_name
+      if customer.last_name != blank
+        assign username = username | append: ' ' | append: customer.last_name
+      endif
+    endif
+  endif
+%}
+
+{% if request.page_type != 'product' or product == blank %}
+  <div class="pgy-restock pgy-restock--unavailable" {{ block.shopify_attributes }}>
+    <p class="pgy-restock__unavailable">{{ 'restock_notify.unavailable' | t }}</p>
+  </div>
+{% else %}
+  {% liquid
+    assign current_variant = product.selected_or_first_available_variant
+    assign variant_label = current_variant.title
+    if variant_label == 'Default Title'
+      assign variant_label = ''
+    endif
+    assign current_image_url = ''
+    if current_variant.featured_media != blank and current_variant.featured_media.preview_image != blank
+      assign current_image_url = current_variant.featured_media.preview_image | image_url: width: 320
+    elsif product.featured_image != blank
+      assign current_image_url = product.featured_image | image_url: width: 320
+    endif
+  %}
+  <div
+    class="pgy-restock"
+    data-pgy-restock
+    data-variant-id="{{ current_variant.id }}"
+    data-dialog-id="pgy-restock-dialog-{{ block.id }}"
+    data-section-id="{{ section.id }}"
+    {{ block.shopify_attributes }}
+  >
+    <div class="pgy-restock__row" data-pgy-restock-row>
+      <button
+        type="button"
+        class="pgy-restock__trigger"
+        data-pgy-restock-open
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="pgy-restock-dialog-{{ block.id }}"
+      >
+        <svg class="pgy-restock__bell" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true" focusable="false">
+          <path d="M6.2 16.25h11.6c-.55-1.05-.85-2.15-.85-3.85 0-2.85-1.45-4.45-3.35-5.05V6.7a1.6 1.6 0 0 0-3.2 0v.65c-1.9.6-3.35 2.2-3.35 5.05 0 1.7-.3 2.8-.85 3.85Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M9.6 16.4a2.4 2.4 0 0 0 4.8 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span>{{ trigger_label }}</span>
+      </button>
+    </div>
+
+    {% if helper_text != blank %}
+      <p class="pgy-restock__note" data-pgy-restock-note>{{ helper_text }}</p>
+    {% endif %}
+
+    <script type="application/json" data-pgy-restock-product>
+      {
+        "title": {{ product.title | json }},
+        "variants": [
+          {%- for variant in product.variants -%}
+            {%- liquid
+              assign image_src = ''
+              if variant.featured_media != blank and variant.featured_media.preview_image != blank
+                assign image_src = variant.featured_media.preview_image | image_url: width: 320
+              elsif product.featured_image != blank
+                assign image_src = product.featured_image | image_url: width: 320
+              endif
+            -%}
+            {"id":{{ variant.id | json }},"title":{{ variant.title | json }},"image":{{ image_src | json }}}
+            {%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ]
+      }
+    </script>
+
+    <div class="pgy-restock__overlay" data-pgy-restock-close hidden></div>
+    <div
+      id="pgy-restock-dialog-{{ block.id }}"
+      class="pgy-restock__dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pgy-restock-title-{{ block.id }}"
+      data-pgy-restock-dialog
+      data-section-id="{{ section.id }}"
+      hidden
+    >
+      <button type="button" class="pgy-restock__close" data-pgy-restock-close aria-label="{{ 'restock_notify.close' | t }}">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true" focusable="false">
+          <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <h2 id="pgy-restock-title-{{ block.id }}" class="pgy-restock__title">{{ heading }}</h2>
+      <p class="pgy-restock__product">{{ product.title }}</p>
+      <div class="pgy-restock__variant">
+        {% if current_image_url != blank %}
+          <img
+            class="pgy-restock__photo"
+            data-pgy-restock-image
+            src="{{ current_image_url }}"
+            alt="{{ product.title | escape }}"
+            width="112"
+            height="112"
+          >
+        {% else %}
+          <img class="pgy-restock__photo" data-pgy-restock-image alt="{{ product.title | escape }}" width="112" height="112" hidden>
+        {% endif %}
+        <p class="pgy-restock__variant-label" data-pgy-restock-variant-label {% if variant_label == blank %}hidden{% endif %}>{{ variant_label }}</p>
+      </div>
+      {% if body_text != blank %}
+        <p class="pgy-restock__copy">{{ body_text }}</p>
+      {% endif %}
+      <form
+        class="pgy-restock__form"
+        method="get"
+        action="{{ proxy_url }}"
+        data-pgy-restock-form
+        data-proxy-url="{{ proxy_url }}"
+        novalidate
+      >
+        <div hidden data-pgy-restock-i18n aria-hidden="true">
+          <span data-key="success">{{ 'restock_notify.success' | t }}</span>
+          <span data-key="already">{{ 'restock_notify.already_subscribed' | t }}</span>
+          <span data-key="error-invalid">{{ 'restock_notify.error_invalid' | t }}</span>
+          <span data-key="error-generic">{{ 'restock_notify.error_generic' | t }}</span>
+          <span data-key="error-preview">{{ 'restock_notify.error_preview' | t }}</span>
+        </div>
+        <label class="pgy-restock__label" for="pgy-restock-email-{{ block.id }}">{{ 'restock_notify.email_label' | t }}</label>
+        <input
+          id="pgy-restock-email-{{ block.id }}"
+          class="pgy-restock__input"
+          type="email"
+          name="email_{{ block.id }}"
+          data-pgy-restock-email
+          value=""
+          placeholder="{{ placeholder | escape }}"
+          autocomplete="email"
+          inputmode="email"
+          required
+        >
+        <input type="hidden" name="username" value="{{ username | escape }}">
+        <input type="hidden" name="campaign_type" value="{{ campaign_type | escape }}" data-base-type="{{ campaign_type | escape }}">
+        <button type="submit" class="pgy-restock__submit">{{ submit_label }}</button>
+        {% if disclaimer != blank %}
+          <p class="pgy-restock__disclaimer">{{ disclaimer }}</p>
+        {% endif %}
+        <p class="pgy-restock__message" data-pgy-restock-message hidden role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "到货通知",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "stylesheet": "restock-notify.css",
+  "javascript": "restock-notify.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "trigger_label",
+      "label": "按钮文字",
+      "default": "Notify Me"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "弹窗标题",
+      "default": "Get notified when it's back"
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "弹窗说明",
+      "default": "We'll email you when this option is available."
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "邮箱占位符",
+      "default": "you@example.com"
+    },
+    {
+      "type": "text",
+      "id": "submit_label",
+      "label": "提交按钮文字",
+      "default": "Notify Me"
+    },
+    {
+      "type": "text",
+      "id": "disclaimer",
+      "label": "弹窗底部说明",
+      "default": "One restock email. No marketing subscription."
+    },
+    {
+      "type": "text",
+      "id": "helper_text",
+      "label": "按钮下方说明",
+      "info": "显示在预购按钮和 Notify Me 下方。主题里如果已经有这句话，把这里留空。",
+      "default": "Pre-order now, or get an email when it's back in stock."
+    },
+    {
+      "type": "text",
+      "id": "campaign_type",
+      "label": "活动类型",
+      "info": "写入邮箱记录。提交时会自动加上当前规格，例如 Zipod Travel Tripod Kit · Midnight Black。",
+      "default": "Zipod Travel Tripod Kit"
+    }
+  ]
+}
+{% endschema %}
