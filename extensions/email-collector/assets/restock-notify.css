@@ -18,7 +18,7 @@
   max-width: 100%;
 }
 
-.pdp-action-wrapper:has(.pgy-restock.is-docked) {
+.pdp-action-wrapper:has(.pgy-restock.is-preorder) {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch;
