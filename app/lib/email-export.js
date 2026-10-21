@@ -69,6 +69,37 @@ function triggerDownload(data, filename, mimeType) {
   URL.revokeObjectURL(url);
 }
 
+/** @typedef {{ email: string, productTitle?: string, variantTitle?: string, productId?: string, variantId?: string, createdAt: Date | string }} RestockExportRow */
+
+/** @param {RestockExportRow[]} rows */
+export function buildRestockCsv(rows) {
+  const header = ["邮箱", "产品", "规格", "产品ID", "规格ID", "提交时间"];
+  const lines = [
+    header.join(","),
+    ...rows.map((row) =>
+      [
+        escapeCsvField(row.email),
+        escapeCsvField(row.productTitle ?? ""),
+        escapeCsvField(row.variantTitle ?? ""),
+        escapeCsvField(row.productId ?? ""),
+        escapeCsvField(row.variantId ?? ""),
+        escapeCsvField(formatExportDate(row.createdAt)),
+      ].join(","),
+    ),
+  ];
+  return `\uFEFF${lines.join("\r\n")}`;
+}
+
+/** @param {RestockExportRow[]} rows */
+export function downloadRestockCsv(rows) {
+  const date = new Date().toISOString().slice(0, 10);
+  triggerDownload(
+    buildRestockCsv(rows),
+    `restock-notify-${date}.csv`,
+    "text/csv;charset=utf-8",
+  );
+}
+
 /** @param {EmailExportRow[]} rows @param {"csv" | "xlsx"} format */
 export function downloadEmailExport(rows, format) {
   const filename = emailExportFilename(format);

@@ -171,6 +171,11 @@
           required
         >
         <input type="hidden" name="username" value="{{ username | escape }}">
+        <input type="hidden" name="source" value="restock">
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <input type="hidden" name="product_title" value="{{ product.title | escape }}">
+        <input type="hidden" name="variant_id" value="{{ current_variant.id }}">
+        <input type="hidden" name="variant_title" value="{{ variant_label | escape }}">
         <input type="hidden" name="campaign_type" value="{{ campaign_type | escape }}" data-base-type="{{ campaign_type | escape }}">
         <button type="submit" class="pgy-restock__submit">{{ submit_label }}</button>
         {% if disclaimer != blank %}

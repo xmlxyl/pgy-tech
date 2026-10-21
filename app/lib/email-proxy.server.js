@@ -1,4 +1,5 @@
 import { authenticate } from "../shopify.server";
+import { saveRestockNotify } from "./restock-notify.server";
 import { saveEmailForShop, validateEmail } from "./saved-email.server";
 
 export const EMAIL_PROXY_PATH = "/apps/pgy-tech/email";
@@ -79,8 +80,29 @@ async function resolveShop(request) {
   return { ok: true, shop };
 }
 
-/** @param {string} shop @param {unknown} emailRaw @param {unknown} usernameRaw @param {unknown} typeRaw */
-async function handleSubscribe(shop, emailRaw, usernameRaw, typeRaw) {
+/** @param {URLSearchParams | FormData} source */
+function readRestockFields(source) {
+  const read = (key) => {
+    const value = source.get(key);
+    return value == null ? "" : String(value);
+  };
+  return {
+    source: read("source"),
+    productId: read("product_id"),
+    productTitle: read("product_title"),
+    variantId: read("variant_id"),
+    variantTitle: read("variant_title"),
+  };
+}
+
+/**
+ * @param {string} shop
+ * @param {unknown} emailRaw
+ * @param {unknown} usernameRaw
+ * @param {unknown} typeRaw
+ * @param {ReturnType<typeof readRestockFields> | null} [restockRaw]
+ */
+async function handleSubscribe(shop, emailRaw, usernameRaw, typeRaw, restockRaw) {
   const validation = validateEmail(emailRaw);
   if (!validation.ok) {
     return Response.json(
@@ -90,6 +112,18 @@ async function handleSubscribe(shop, emailRaw, usernameRaw, typeRaw) {
   }
 
   try {
+    if (restockRaw?.source === "restock") {
+      const result = await saveRestockNotify(shop, validation.email, restockRaw);
+      if (!result.ok) {
+        return Response.json({ ok: false, error: result.error }, { status: 400 });
+      }
+      return Response.json({
+        ok: true,
+        error: null,
+        alreadySubscribed: result.alreadySubscribed,
+      });
+    }
+
     const result = await saveEmailForShop(
       shop,
       validation.email,
@@ -134,6 +168,7 @@ export async function handleEmailProxyRequest(request) {
         emailParam,
         usernameParam,
         typeParam,
+        readRestockFields(url.searchParams),
       );
     }
 
@@ -144,19 +179,34 @@ export async function handleEmailProxyRequest(request) {
       let emailRaw;
       let usernameRaw;
       let typeRaw;
+      let restockRaw = null;
       const contentType = request.headers.get("content-type") ?? "";
       if (contentType.includes("application/json")) {
         const body = await request.json();
         emailRaw = body?.email;
         usernameRaw = body?.username;
         typeRaw = body?.campaign_type ?? body?.type;
+        restockRaw = {
+          source: body?.source ?? "",
+          productId: body?.product_id ?? "",
+          productTitle: body?.product_title ?? "",
+          variantId: body?.variant_id ?? "",
+          variantTitle: body?.variant_title ?? "",
+        };
       } else {
         const formData = await request.formData();
         emailRaw = formData.get("email");
         usernameRaw = formData.get("username");
         typeRaw = formData.get("campaign_type") || formData.get("type");
+        restockRaw = readRestockFields(formData);
       }
-      return handleSubscribe(shopResult.shop, emailRaw, usernameRaw, typeRaw);
+      return handleSubscribe(
+        shopResult.shop,
+        emailRaw,
+        usernameRaw,
+        typeRaw,
+        restockRaw,
+      );
     }
 
     return Response.json(

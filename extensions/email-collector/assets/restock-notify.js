@@ -82,13 +82,15 @@
     if (image && variant && variant.image) {
       image.hidden = false;
       image.src = variant.image;
-    } else if (image && !image.getAttribute("src")) {
-      image.hidden = true;
     }
     if (input) {
-      var base = (input.dataset.baseType || "Zipod Travel Tripod Kit").trim() || "Zipod Travel Tripod Kit";
+      var base = (input.dataset.baseType || "").trim() || "Zipod Travel Tripod Kit";
       input.value = title ? base + " · " + title : base;
     }
+    var variantIdInput = q(dialog, "[name='variant_id']");
+    var variantTitleInput = q(dialog, "[name='variant_title']");
+    if (variantIdInput) variantIdInput.value = variant && variant.id != null ? String(variant.id) : "";
+    if (variantTitleInput) variantTitleInput.value = title;
   }
 
   function park(node) {
@@ -102,6 +104,10 @@
 
   function dock(root) {
     if (root.dataset.pgyRestockDocked === "true") return true;
+    if (root.closest(".purchase-actions-row__app")) {
+      root.dataset.pgyRestockDocked = "true";
+      return true;
+    }
     var row = q(root, "[data-pgy-restock-row]");
     var trigger = q(root, "[data-pgy-restock-open]");
     var addButton = addControl(root);
@@ -202,14 +208,8 @@
         submitBtn.setAttribute("aria-busy", "true");
       }
       try {
-        var params = new URLSearchParams({ email: email });
-        var username = ((q(form, "[name='username']") || {}).value || "").trim();
-        var type = ((q(form, "[name='campaign_type']") || {}).value || "").trim();
-        if (username) params.set("username", username);
-        if (type) {
-          params.set("type", type);
-          params.set("campaign_type", type);
-        }
+        var params = new URLSearchParams(new FormData(form));
+        params.set("email", email);
         var response = await fetch(proxyUrl + (proxyUrl.indexOf("?") === -1 ? "?" : "&") + params, {
           headers: { Accept: "application/json" },
           credentials: "same-origin",

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { downloadEmailExport } from "../lib/email-export.js";
+import { downloadEmailExport, downloadRestockCsv } from "../lib/email-export.js";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
@@ -15,6 +15,25 @@ export const loader = async ({ request }) => {
     orderBy: { createdAt: "desc" },
   });
 
+  let restockNotifies = [];
+  try {
+    const rows = await prisma.restockNotify.findMany({
+      where: { shop: session.shop },
+      orderBy: { createdAt: "desc" },
+    });
+    restockNotifies = rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      productId: row.productId,
+      productTitle: row.productTitle,
+      variantId: row.variantId,
+      variantTitle: row.variantTitle,
+      createdAt: row.createdAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error("[email] restock notify query failed", error);
+  }
+
   return {
     emails: emails.map((row) => ({
       id: row.id,
@@ -23,11 +42,12 @@ export const loader = async ({ request }) => {
       type: row.type,
       createdAt: row.createdAt.toISOString(),
     })),
+    restockNotifies,
   };
 };
 
 export default function EmailPage() {
-  const { emails } = useLoaderData();
+  const { emails, restockNotifies } = useLoaderData();
   const shopify = useAppBridge();
   const [selectedIds, setSelectedIds] = useState(/** @type {number[]} */ ([]));
 
@@ -77,6 +97,15 @@ export default function EmailPage() {
     [emails, selectedIds, shopify],
   );
 
+  const handleRestockExport = useCallback(() => {
+    if (restockNotifies.length === 0) {
+      shopify.toast.show("暂无到货通知记录", { isError: true });
+      return;
+    }
+    downloadRestockCsv(restockNotifies);
+    shopify.toast.show(`已导出 ${restockNotifies.length} 条到货通知`);
+  }, [restockNotifies, shopify]);
+
   const exportButtons = useMemo(
     () => (
       <s-stack direction="inline" gap="small">
@@ -122,11 +151,11 @@ export default function EmailPage() {
             选择应用区块 <strong>邮箱订阅</strong>，保存主题
           </s-list-item>
           <s-list-item>
-            Zipod Travel Tripod Kit：打开该产品模板，在购买按钮区块里添加应用区块 <strong>到货通知</strong>。按钮会排在预购按钮右侧，弹窗收集的邮箱会记为「Zipod Travel Tripod Kit · 当前规格」。
+            Zipod Travel Tripod Kit：打开该产品模板，在购买按钮区块里添加应用区块 <strong>到货通知</strong>。登记的邮箱写入下方「到货通知」表，按产品和规格区分。
           </s-list-item>
         </s-unordered-list>
         <s-paragraph tone="subdued">
-          顾客提交后，邮箱会写入应用数据库（按店铺区分）。到货通知的活动类型里会带上规格，例如 Zipod Travel Tripod Kit · Midnight Black。
+          普通订阅仍写入「顾客提交记录」。到货通知单独写入 RestockNotify，同一邮箱对同一规格只保留一条。
         </s-paragraph>
       </s-section>
 
@@ -200,6 +229,48 @@ export default function EmailPage() {
                   </s-table-cell>
                   <s-table-cell>{row.username || "—"}</s-table-cell>
                   <s-table-cell>{row.type || "—"}</s-table-cell>
+                  <s-table-cell>
+                    {new Date(row.createdAt).toLocaleString("zh-CN")}
+                  </s-table-cell>
+                </s-table-row>
+              ))}
+            </s-table-body>
+          </s-table>
+        )}
+      </s-section>
+
+      <s-section heading="到货通知">
+        {restockNotifies.length === 0 ? (
+          <s-paragraph tone="subdued">
+            暂无记录。顾客在产品页点击 Notify Me 并提交邮箱后，会出现在这里。
+          </s-paragraph>
+        ) : (
+          <s-table variant="table" paginate={false}>
+            <s-box slot="filters" padding="small">
+              <s-stack
+                direction="inline"
+                gap="base"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <s-text tone="subdued">共 {restockNotifies.length} 条记录</s-text>
+                <s-button variant="secondary" onClick={handleRestockExport}>
+                  导出 CSV
+                </s-button>
+              </s-stack>
+            </s-box>
+            <s-table-header-row>
+              <s-table-header listSlot="primary">邮箱</s-table-header>
+              <s-table-header>产品</s-table-header>
+              <s-table-header>规格</s-table-header>
+              <s-table-header>提交时间</s-table-header>
+            </s-table-header-row>
+            <s-table-body>
+              {restockNotifies.map((row) => (
+                <s-table-row key={`restock-${row.id}`}>
+                  <s-table-cell>{row.email}</s-table-cell>
+                  <s-table-cell>{row.productTitle}</s-table-cell>
+                  <s-table-cell>{row.variantTitle || "—"}</s-table-cell>
                   <s-table-cell>
                     {new Date(row.createdAt).toLocaleString("zh-CN")}
                   </s-table-cell>
