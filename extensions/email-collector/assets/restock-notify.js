@@ -42,11 +42,12 @@
       var variant = variantOf(root);
       var stockout = !!(variant && variant.available !== false && variant.policy === "continue" && variant.qty <= 0);
       var on = !!(button && !button.disabled && !button.hasAttribute("unavailable") && (stockout || button.getAttribute("data-pre-order") === "true" || /pre-?order/i.test(button.textContent || "")));
-      if (on && stockout && button) {
-        var label = button.querySelector("[data-addtocart-text], [data-submit-button]");
+      if (on) sectionOf(root).querySelectorAll("[data-add-to-cart]").forEach(function (btn) {
+        if (btn.disabled || btn.hasAttribute("unavailable")) return;
+        var label = btn.querySelector("[data-addtocart-text], [data-submit-button]");
         if (label && !/pre-?order/i.test(label.textContent || "")) label.textContent = "Pre-order now";
-        if (button.getAttribute("data-pre-order") !== "true") button.setAttribute("data-pre-order", "true");
-      }
+        if (btn.getAttribute("data-pre-order") !== "true") btn.setAttribute("data-pre-order", "true");
+      });
       var trigger = q(root, "[data-pgy-restock-open]");
       var note = q(root, "[data-pgy-restock-note]");
       if (trigger) trigger.hidden = !on;
@@ -174,12 +175,13 @@
       trigger.setAttribute("aria-expanded", open ? "true" : "false");
       document.body.classList.toggle("pgy-restock-lock", open);
       if (open) return;
+      var active = document.activeElement;
+      if (active && dialog.contains(active)) active.blur();
       closeTimer = setTimeout(function () {
         if (dialog.classList.contains("is-open")) return;
         if (overlay) overlay.hidden = true;
         dialog.hidden = true;
       }, 200);
-      trigger.focus();
     }
 
     trigger.addEventListener("click", function (event) {
@@ -241,11 +243,6 @@
     document.addEventListener(name, sync);
   });
   document.addEventListener("shopify:section:load", init);
-  document.addEventListener("shopify:section:unload", function (event) {
-    var id = event.detail && event.detail.sectionId;
-    if (!id) return;
-    document.querySelectorAll("[data-section-id='" + id + "']").forEach(function (node) { node.remove(); });
-  });
 
   function hookApply() {
     var apply = window.pgyApplyPreorderButtons;
