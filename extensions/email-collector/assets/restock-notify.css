@@ -18,6 +18,19 @@
   max-width: 100%;
 }
 
+.pdp-action-wrapper:has(> .pgy-restock.is-docked) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.pdp-action-wrapper:has(> .pgy-restock.is-docked) > .nm-portal,
+.pdp-action-wrapper:has(> .pgy-restock.is-docked) > [data-preorder-description] {
+  width: 100%;
+  margin: 0;
+}
+
 .pgy-restock__row {
   display: flex;
   align-items: stretch;
