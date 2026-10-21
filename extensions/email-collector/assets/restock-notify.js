@@ -32,16 +32,28 @@
     return root.closest(".shopify-section") || document;
   }
 
+  var syncing = 0;
+
   function syncNotify() {
+    if (syncing) return;
+    syncing = 1;
     document.querySelectorAll("[data-pgy-restock]").forEach(function (root) {
       var button = root.querySelector("[data-add-to-cart], button[name='add']") || addControl(root);
-      var on = !!(button && !button.disabled && !button.hasAttribute("unavailable") && (button.getAttribute("data-pre-order") === "true" || /pre-?order/i.test(button.textContent || "")));
+      var variant = variantOf(root);
+      var stockout = !!(variant && variant.available !== false && variant.policy === "continue" && variant.qty <= 0);
+      var on = !!(button && !button.disabled && !button.hasAttribute("unavailable") && (stockout || button.getAttribute("data-pre-order") === "true" || /pre-?order/i.test(button.textContent || "")));
+      if (on && stockout && button) {
+        var label = button.querySelector("[data-addtocart-text], [data-submit-button]");
+        if (label && !/pre-?order/i.test(label.textContent || "")) label.textContent = "Pre-order now";
+        if (button.getAttribute("data-pre-order") !== "true") button.setAttribute("data-pre-order", "true");
+      }
       root.hidden = false;
       var trigger = q(root, "[data-pgy-restock-open]");
       var note = q(root, "[data-pgy-restock-note]");
       if (trigger) trigger.hidden = !on;
       if (note) note.hidden = !on;
     });
+    syncing = 0;
   }
 
   function addControl(root) {
@@ -128,12 +140,12 @@
     var emailInput = q(form, "[data-pgy-restock-email]");
     var messageEl = q(form, "[data-pgy-restock-message]");
     var submitBtn = q(form, "[type='submit']");
-    var strings = {
-      success: text(form, "success"),
+    var s = {
+      ok: text(form, "success"),
       already: text(form, "already"),
-      errorInvalid: text(form, "error-invalid"),
-      errorGeneric: text(form, "error-generic"),
-      errorPreview: text(form, "error-preview"),
+      bad: text(form, "error-invalid"),
+      fail: text(form, "error-generic"),
+      preview: text(form, "error-preview"),
     };
     var closeTimer = 0;
     var tries = 0;
@@ -142,13 +154,12 @@
     park(overlay);
     park(dialog);
     applyVariant(root, dialog);
-    if (!dock(root)) {
-      var timer = setInterval(function () {
-        tries += 1;
-        if (dock(root) || tries > 20) clearInterval(timer);
-      }, 150);
-    }
-    syncNotify();
+    var timer = setInterval(function () {
+      tries += 1;
+      dock(root);
+      syncNotify();
+      if (tries > 40) clearInterval(timer);
+    }, 250);
 
     function setOpen(open) {
       if (closeTimer) clearTimeout(closeTimer);
@@ -183,16 +194,13 @@
       if (event.target.closest("[data-pgy-restock-close]")) setOpen(false);
     });
     if (overlay) overlay.addEventListener("click", function () { setOpen(false); });
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && dialog.classList.contains("is-open")) setOpen(false);
-    });
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
       applyVariant(root, dialog);
       var email = emailInput ? emailInput.value.trim() : "";
       if (!email || (emailInput && !emailInput.checkValidity())) {
-        show(messageEl, strings.errorInvalid, true);
+        show(messageEl, s.bad, true);
         return;
       }
       var proxyUrl = form.dataset.proxyUrl;
@@ -204,18 +212,15 @@
         var response = await fetch(proxyUrl + (proxyUrl.indexOf("?") === -1 ? "?" : "&") + params, {
           headers: { Accept: "application/json" },
         });
-        var data = null;
-        if ((response.headers.get("content-type") || "").indexOf("json") !== -1) {
-          data = await response.json().catch(function () { return null; });
-        }
+        var data = await response.json().catch(function () { return null; });
         if (response.ok && data && data.ok) {
-          show(messageEl, data.alreadySubscribed ? strings.already : strings.success, false);
+          show(messageEl, data.alreadySubscribed ? s.already : s.ok, false);
           if (!data.alreadySubscribed && emailInput) emailInput.value = "";
         } else {
-          show(messageEl, response.status === 401 ? strings.errorPreview : ((data && data.error) || strings.errorGeneric), true);
+          show(messageEl, response.status === 401 ? s.preview : ((data && data.error) || s.fail), true);
         }
       } catch (error) {
-        show(messageEl, strings.errorPreview, true);
+        show(messageEl, s.preview, true);
       }
       if (submitBtn) submitBtn.disabled = false;
     });

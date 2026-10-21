@@ -100,7 +100,7 @@
                 assign image_src = product.featured_image | image_url: width: 320
               endif
             -%}
-            {"id":{{ variant.id | json }},"title":{{ variant.title | json }},"image":{{ image_src | json }}}
+            {"id":{{ variant.id | json }},"title":{{ variant.title | json }},"image":{{ image_src | json }},"available":{{ variant.available | json }},"qty":{{ variant.inventory_quantity | json }},"policy":{{ variant.inventory_policy | json }}}
             {%- unless forloop.last -%},{%- endunless -%}
           {%- endfor -%}
         ]
