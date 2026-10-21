@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { downloadEmailExport, downloadRestockCsv } from "../lib/email-export.js";
+import { listRestockNotifies } from "../lib/restock-notify.server";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
@@ -17,10 +18,7 @@ export const loader = async ({ request }) => {
 
   let restockNotifies = [];
   try {
-    const rows = await prisma.restockNotify.findMany({
-      where: { shop: session.shop },
-      orderBy: { createdAt: "desc" },
-    });
+    const rows = await listRestockNotifies(session.shop);
     restockNotifies = rows.map((row) => ({
       id: row.id,
       email: row.email,
