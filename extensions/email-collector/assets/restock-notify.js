@@ -36,20 +36,15 @@
     return root.closest(".shopify-section") || document;
   }
 
+  function syncNotify() {
+    if (window.pgySyncRestockNotify) window.pgySyncRestockNotify();
+  }
+
   function addControl(root) {
-    var section = sectionOf(root);
-    var groups = [
-      "button[name='add'], input[type='submit'][name='add']",
-      "form[action*='/cart/add'] button[type='submit']",
-    ];
-    for (var group = 0; group < groups.length; group += 1) {
-      var nodes = section.querySelectorAll(groups[group]);
-      for (var i = 0; i < nodes.length; i += 1) {
-        var control = nodes[i];
-        if (control.closest(".shopify-payment-button, shopify-accelerated-checkout")) continue;
-        if (control.closest("[data-pgy-restock]")) continue;
-        return control;
-      }
+    var nodes = sectionOf(root).querySelectorAll("[data-add-to-cart], button[name='add']");
+    for (var i = 0; i < nodes.length; i += 1) {
+      if (root.contains(nodes[i]) || nodes[i].closest(".shopify-payment-button")) continue;
+      return nodes[i];
     }
     return null;
   }
@@ -106,6 +101,7 @@
     if (root.dataset.pgyRestockDocked === "true") return true;
     if (root.closest(".purchase-actions-row__app")) {
       root.dataset.pgyRestockDocked = "true";
+      syncNotify();
       return true;
     }
     var row = q(root, "[data-pgy-restock-row]");
@@ -116,6 +112,7 @@
     row.insertBefore(addButton, trigger);
     root.classList.add("is-docked");
     root.dataset.pgyRestockDocked = "true";
+    syncNotify();
     return true;
   }
 
@@ -151,6 +148,7 @@
         if (dock(root) || tries > 20) clearInterval(timer);
       }, 150);
     }
+    syncNotify();
 
     function setOpen(open) {
       if (closeTimer) clearTimeout(closeTimer);
@@ -242,6 +240,7 @@
 
   function sync(event) {
     var onlyOpen = event.type === "change";
+    syncNotify();
     document.querySelectorAll("[data-pgy-restock]").forEach(function (root) {
       var dialog = document.getElementById(root.dataset.dialogId);
       if (!dialog || (onlyOpen && !dialog.classList.contains("is-open"))) return;

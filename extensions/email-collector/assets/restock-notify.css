@@ -145,6 +145,17 @@ button.pgy-restock__trigger.pgy-restock__trigger:focus-visible {
   transform: translate(-50%, -50%);
 }
 
+.pgy-restock[hidden],
+button.pgy-restock__trigger[hidden],
+.pgy-restock__note[hidden],
+.purchase-actions-row__app[hidden] {
+  display: none !important;
+}
+
+.purchase-actions-row:has(.purchase-actions-row__app[hidden]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .pgy-restock__overlay[hidden],
 .pgy-restock__dialog[hidden],
 .pgy-restock__photo[hidden],
