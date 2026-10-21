@@ -12,7 +12,7 @@
   box-sizing: border-box;
 }
 
-.pgy-restock.is-docked {
+.pgy-restock.is-preorder {
   grid-column: 1 / -1;
   width: 100%;
   max-width: 100%;
