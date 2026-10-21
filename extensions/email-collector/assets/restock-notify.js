@@ -22,11 +22,7 @@
     var cached = products.get(root);
     if (cached) return cached;
     var product = { variants: [] };
-    try {
-      product = JSON.parse((q(root, "[data-pgy-restock-product]") || {}).textContent || "{}");
-    } catch (error) {
-      product = { variants: [] };
-    }
+    try { product = JSON.parse(q(root, "[data-pgy-restock-product]").textContent); } catch (error) {}
     product.variants = product.variants || [];
     products.set(root, product);
     return product;
@@ -37,7 +33,15 @@
   }
 
   function syncNotify() {
-    if (window.pgySyncRestockNotify) window.pgySyncRestockNotify();
+    document.querySelectorAll("[data-pgy-restock]").forEach(function (root) {
+      var button = root.querySelector("[data-add-to-cart], button[name='add']") || addControl(root);
+      var on = !!(button && !button.disabled && !button.hasAttribute("unavailable") && (button.getAttribute("data-pre-order") === "true" || /pre-?order/i.test(button.textContent || "")));
+      root.hidden = false;
+      var trigger = q(root, "[data-pgy-restock-open]");
+      var note = q(root, "[data-pgy-restock-note]");
+      if (trigger) trigger.hidden = !on;
+      if (note) note.hidden = !on;
+    });
   }
 
   function addControl(root) {
@@ -99,15 +103,11 @@
 
   function dock(root) {
     if (root.dataset.pgyRestockDocked === "true") return true;
-    if (root.closest(".purchase-actions-row__app")) {
-      root.dataset.pgyRestockDocked = "true";
-      syncNotify();
-      return true;
-    }
     var row = q(root, "[data-pgy-restock-row]");
     var trigger = q(root, "[data-pgy-restock-open]");
     var addButton = addControl(root);
     if (!row || !trigger || !addButton || !addButton.parentElement) return false;
+    root.hidden = false;
     addButton.parentElement.insertBefore(root, addButton);
     row.insertBefore(addButton, trigger);
     root.classList.add("is-docked");
@@ -157,19 +157,15 @@
         if (overlay) overlay.hidden = false;
         dialog.hidden = false;
         void dialog.offsetWidth;
-        if (overlay) overlay.classList.add("is-open");
-        dialog.classList.add("is-open");
-        trigger.setAttribute("aria-expanded", "true");
-        document.body.classList.add("pgy-restock-lock");
-        setTimeout(function () {
-          if (emailInput) emailInput.focus();
-        }, 30);
+      }
+      if (overlay) overlay.classList.toggle("is-open", open);
+      dialog.classList.toggle("is-open", open);
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      document.body.classList.toggle("pgy-restock-lock", open);
+      if (open) {
+        setTimeout(function () { if (emailInput) emailInput.focus(); }, 30);
         return;
       }
-      if (overlay) overlay.classList.remove("is-open");
-      dialog.classList.remove("is-open");
-      trigger.setAttribute("aria-expanded", "false");
-      document.body.classList.remove("pgy-restock-lock");
       closeTimer = setTimeout(function () {
         if (dialog.classList.contains("is-open")) return;
         if (overlay) overlay.hidden = true;
@@ -201,16 +197,12 @@
       }
       var proxyUrl = form.dataset.proxyUrl;
       if (!proxyUrl) return;
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.setAttribute("aria-busy", "true");
-      }
+      if (submitBtn) submitBtn.disabled = true;
       try {
         var params = new URLSearchParams(new FormData(form));
         params.set("email", email);
         var response = await fetch(proxyUrl + (proxyUrl.indexOf("?") === -1 ? "?" : "&") + params, {
           headers: { Accept: "application/json" },
-          credentials: "same-origin",
         });
         var data = null;
         if ((response.headers.get("content-type") || "").indexOf("json") !== -1) {
@@ -219,18 +211,13 @@
         if (response.ok && data && data.ok) {
           show(messageEl, data.alreadySubscribed ? strings.already : strings.success, false);
           if (!data.alreadySubscribed && emailInput) emailInput.value = "";
-        } else if (response.status === 401) {
-          show(messageEl, strings.errorPreview, true);
         } else {
-          show(messageEl, (data && data.error) || strings.errorGeneric, true);
+          show(messageEl, response.status === 401 ? strings.errorPreview : ((data && data.error) || strings.errorGeneric), true);
         }
       } catch (error) {
         show(messageEl, strings.errorPreview, true);
       }
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.setAttribute("aria-busy", "false");
-      }
+      if (submitBtn) submitBtn.disabled = false;
     });
   }
 
