@@ -41,8 +41,15 @@
 }
 
 .shopify-section:has(.pgy-restock:not(.is-ready)) [data-shopifypayment-button],
-.shopify-section:has(.pgy-restock.is-preorder) [data-shopifypayment-button] {
+.shopify-section:has(.pgy-restock.is-preorder) [data-shopifypayment-button],
+.shopify-section:has(.pgy-restock.is-preorder) [data-sticky-buy-now] {
   display: none !important;
+}
+
+.shopify-section:has(.pgy-restock.is-preorder) [data-pgy-restock-sticky-open] {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 .pgy-restock__row {
