@@ -39,7 +39,9 @@
   endif
 %}
 
-{% if request.page_type != 'product' or product == blank %}
+{% if product.handle != 'zipod-travel-tripod-kit' and product.title != 'Zipod Travel Tripod Kit' %}
+  <div {{ block.shopify_attributes }} hidden></div>
+{% elsif request.page_type != 'product' or product == blank %}
   <div class="pgy-restock pgy-restock--unavailable" {{ block.shopify_attributes }}>
     <p class="pgy-restock__unavailable">{{ 'restock_notify.unavailable' | t }}</p>
   </div>

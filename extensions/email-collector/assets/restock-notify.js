@@ -54,7 +54,7 @@
       if (trigger) trigger.hidden = !on;
       if (note) note.hidden = !on;
       var sticky = sectionOf(root).querySelector("[data-pgy-restock-sticky-open]");
-      if (sticky) sticky.hidden = !on;
+      if (sticky) sticky.classList.toggle("is-on", !!on);
       root.classList.add("is-ready");
       root.classList.toggle("is-preorder", on);
     });
