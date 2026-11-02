@@ -41,7 +41,8 @@
       var button = root.querySelector("[data-add-to-cart], button[name='add']") || addControl(root);
       var variant = variantOf(root);
       var stockout = !!(variant && variant.available !== false && variant.policy === "continue" && variant.qty <= 0);
-      var on = !!(button && !button.disabled && !button.hasAttribute("unavailable") && (stockout || button.getAttribute("data-pre-order") === "true" || /pre-?order/i.test(button.textContent || "")));
+      var dead = !button || button.disabled || button.hasAttribute("unavailable") || /unavailable|sold out/i.test(button.textContent || "");
+      var on = !dead && (stockout || button.getAttribute("data-pre-order") === "true" || /pre-?order/i.test(button.textContent || ""));
       if (on) sectionOf(root).querySelectorAll("[data-add-to-cart]").forEach(function (btn) {
         if (btn.disabled || btn.hasAttribute("unavailable")) return;
         var label = btn.querySelector("[data-addtocart-text], [data-submit-button]");
@@ -52,6 +53,8 @@
       var note = q(root, "[data-pgy-restock-note]");
       if (trigger) trigger.hidden = !on;
       if (note) note.hidden = !on;
+      var sticky = sectionOf(root).querySelector("[data-pgy-restock-sticky-open]");
+      if (sticky) sticky.hidden = !on;
       root.classList.add("is-ready");
       root.classList.toggle("is-preorder", on);
     });
@@ -74,7 +77,7 @@
     for (var i = 0; i < variants.length; i += 1) {
       if (String(variants[i].id) === String(id)) return variants[i];
     }
-    return variants[0] || null;
+    return null;
   }
 
   function optionTitle(variant) {
@@ -151,7 +154,6 @@
     var closeTimer = 0;
     var tries = 0;
 
-    if (overlay) overlay.dataset.sectionId = dialog.dataset.sectionId || "";
     park(overlay);
     park(dialog);
     applyVariant(root, dialog);
@@ -175,8 +177,6 @@
       trigger.setAttribute("aria-expanded", open ? "true" : "false");
       document.body.classList.toggle("pgy-restock-lock", open);
       if (open) return;
-      var active = document.activeElement;
-      if (active && dialog.contains(active)) active.blur();
       closeTimer = setTimeout(function () {
         if (dialog.classList.contains("is-open")) return;
         if (overlay) overlay.hidden = true;
@@ -232,6 +232,7 @@
   function sync(event) {
     var onlyOpen = event.type === "change";
     syncNotify();
+    if (onlyOpen) setTimeout(syncNotify, 0);
     document.querySelectorAll("[data-pgy-restock]").forEach(function (root) {
       var dialog = document.getElementById(root.dataset.dialogId);
       if (!dialog || (onlyOpen && !dialog.classList.contains("is-open"))) return;
