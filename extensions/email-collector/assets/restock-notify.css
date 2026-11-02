@@ -46,6 +46,10 @@
   display: none !important;
 }
 
+[data-pgy-restock-sticky-open] {
+  display: none !important;
+}
+
 .shopify-section:has(.pgy-restock.is-preorder) [data-pgy-restock-sticky-open] {
   display: inline-flex !important;
   align-items: center;

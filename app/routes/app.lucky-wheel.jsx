@@ -139,10 +139,10 @@ export default function LuckyWheelSettingsPage() {
 
         <s-section heading="前台接入">
           <s-paragraph>
-            在主题编辑器里添加 App block「Lucky Wheel」。左边上传转盘图，点击图片打开抽奖弹框。每个邮箱只能抽一次，中奖后会创建仅该客户可用、限用 1 次的百分比折扣码。
+            部署应用后，在主题编辑器打开页面模板，点「添加分区」，在「应用」里选择 Lucky Wheel。左边上传转盘图，点击图片打开抽奖弹框。每个邮箱只能抽一次，中奖后会创建仅该客户可用、限用 1 次的百分比折扣码。
           </s-paragraph>
           <s-paragraph>
-            全站右下角圆点需要另外打开 App embed「Lucky Wheel Reminder」。顾客抽过之后，再次进站会看到圆点，点击可查看自己的优惠码。没开这个 embed 时，圆点只出现在放了 Lucky Wheel block 的页面。
+            顾客抽过之后，这个页面右下角会显示圆点，点击可查看优惠码。
           </s-paragraph>
         </s-section>
 
