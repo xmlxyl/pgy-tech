@@ -1,0 +1,317 @@
+{% liquid
+  assign heading = block.settings.heading
+  if heading == blank
+    assign heading = 'Lucky Wheel — 100% Win Rate!'
+  endif
+  assign how_heading = block.settings.how_heading
+  if how_heading == blank
+    assign how_heading = 'How It Works:'
+  endif
+  assign step_1 = block.settings.step_1
+  if step_1 == blank
+    assign step_1 = 'Click the “Play” button on the wheel.'
+  endif
+  assign step_2 = block.settings.step_2
+  if step_2 == blank
+    assign step_2 = 'Enter your email to unlock your spin.'
+  endif
+  assign step_3 = block.settings.step_3
+  if step_3 == blank
+    assign step_3 = 'Spin the wheel to reveal your prizes.'
+  endif
+  assign step_4 = block.settings.step_4
+  if step_4 == blank
+    assign step_4 = 'Discounts start November 18 and can be combined with Black Friday deals!'
+  endif
+  assign modal_title = block.settings.modal_title
+  if modal_title == blank
+    assign modal_title = 'Lucky Wheel — 100% Win Rate!'
+  endif
+  assign modal_sub = block.settings.modal_sub
+  if modal_sub == blank
+    assign modal_sub = 'Enter your email to unlock your spin.'
+  endif
+  assign spin_label = block.settings.spin_label
+  if spin_label == blank
+    assign spin_label = 'SPIN TO WIN'
+  endif
+  assign agree_label = block.settings.agree_label
+  if agree_label == blank
+    assign agree_label = 'I agree to receive news, product updates, and special offers via email.'
+  endif
+  assign footnote = block.settings.footnote
+  if footnote == blank
+    assign footnote = 'Discounts start November 18 and can be combined with Black Friday deals!'
+  endif
+  assign prize_1 = block.settings.prize_1_label
+  if prize_1 == blank
+    assign prize_1 = 'Extra 2% OFF'
+  endif
+  assign prize_2 = block.settings.prize_2_label
+  if prize_2 == blank
+    assign prize_2 = 'Extra 3% OFF'
+  endif
+  assign prize_3 = block.settings.prize_3_label
+  if prize_3 == blank
+    assign prize_3 = 'Extra 5% OFF'
+  endif
+  assign play_label = block.settings.play_label
+  if play_label == blank
+    assign play_label = 'Play'
+  endif
+  assign customer_email = ''
+  if customer and customer.email != blank
+    assign customer_email = customer.email
+  endif
+  assign proxy_url = '/apps/pgy-tech/lucky-wheel'
+%}
+
+<div
+  class="pgy-lw"
+  data-pgy-lw
+  data-mode="block"
+  data-proxy-url="{{ proxy_url }}"
+  data-customer-email="{{ customer_email | escape }}"
+  data-footnote="{{ footnote | escape }}"
+  data-won-title="You won"
+  data-saved-title="Your coupon"
+  data-spin-label="{{ spin_label | escape }}"
+  data-spinning-label="SPINNING..."
+  data-msg-invalid="Please enter a valid email address."
+  data-msg-phone="Enter a valid phone number or leave it blank."
+  data-msg-agree="Please agree to receive emails to spin."
+  data-msg-error="Something went wrong. Please try again."
+  data-msg-preview="Please test on the live storefront. Theme editor preview does not support App Proxy."
+  data-msg-copied="Copied!"
+  data-msg-copy-fail="Copy failed. Please copy the code manually."
+  {% if request.design_mode %}data-design-mode="true"{% endif %}
+  style="--pgy-lw-dot-bottom: {{ block.settings.dot_bottom | default: 24 }}px"
+  {{ block.shopify_attributes }}
+>
+  <section class="pgy-lw__banner" aria-labelledby="pgy-lw-title-{{ block.id }}">
+    <div class="pgy-lw__banner-grid">
+      <button type="button" class="pgy-lw__play" data-pgy-lw-open aria-label="{{ play_label | escape }}">
+        {% if block.settings.image != blank %}
+          <img
+            src="{{ block.settings.image | image_url: width: 1400 }}"
+            alt=""
+            width="700"
+            height="700"
+            loading="lazy"
+          >
+        {% else %}
+          {% render 'lucky-wheel-disc', mode: 'banner', hub: play_label, label_1: prize_1, label_2: prize_2, label_3: prize_3 %}
+        {% endif %}
+      </button>
+
+      <div class="pgy-lw__copy">
+        <h2 id="pgy-lw-title-{{ block.id }}" class="pgy-lw__title">{{ heading }}</h2>
+        <div class="pgy-lw__how">
+          <h3 class="pgy-lw__how-title">{{ how_heading }}</h3>
+          <ol class="pgy-lw__steps">
+            <li>{{ step_1 }}</li>
+            <li>{{ step_2 }}</li>
+            <li>{{ step_3 }}</li>
+            <li>{{ step_4 }}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="pgy-lw__overlay" data-pgy-lw-overlay hidden>
+    <div class="pgy-lw__modal" role="dialog" aria-modal="true" aria-label="{{ modal_title | escape }}">
+      <button type="button" class="pgy-lw__close" data-pgy-lw-close aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <div class="pgy-lw__modal-wheel">
+        {% render 'lucky-wheel-disc', mode: 'modal', hub: '', label_1: prize_1, label_2: prize_2, label_3: prize_3 %}
+      </div>
+      <div class="pgy-lw__modal-copy">
+        <div class="pgy-lw__panel" data-pgy-lw-panel="form">
+          <h2 class="pgy-lw__modal-title">{{ modal_title }}</h2>
+          <p class="pgy-lw__modal-sub">{{ modal_sub }}</p>
+          <form class="pgy-lw__form" data-pgy-lw-form novalidate>
+            <label class="pgy-lw__sr" for="pgy-lw-email-{{ block.id }}">Email</label>
+            <input
+              id="pgy-lw-email-{{ block.id }}"
+              class="pgy-lw__input"
+              type="email"
+              name="email"
+              value="{{ customer_email | escape }}"
+              placeholder="Enter your email*"
+              autocomplete="email"
+              inputmode="email"
+              required
+              data-pgy-lw-email
+            >
+            <label class="pgy-lw__sr" for="pgy-lw-phone-{{ block.id }}">Phone</label>
+            <div class="pgy-lw__phone">
+              <span class="pgy-lw__phone-prefix" aria-hidden="true">
+                <svg class="pgy-lw__flag" viewBox="0 0 16 10" focusable="false">
+                  <rect width="16" height="10" fill="#b22234"></rect>
+                  <path d="M0 1.15h16M0 3.45h16M0 5.75h16M0 8.05h16" stroke="#fff" stroke-width="1"></path>
+                  <rect width="7" height="5.4" fill="#3c3b6e"></rect>
+                </svg>
+                <span>+1</span>
+              </span>
+              <input
+                id="pgy-lw-phone-{{ block.id }}"
+                type="tel"
+                name="phone"
+                placeholder="Phone (Optional)"
+                autocomplete="tel"
+                inputmode="tel"
+                data-pgy-lw-phone
+              >
+            </div>
+            <label class="pgy-lw__agree">
+              <input id="pgy-lw-agree-{{ block.id }}" type="checkbox" name="agreed" data-pgy-lw-agree>
+              <span class="pgy-lw__agree-box" aria-hidden="true"></span>
+              <span class="pgy-lw__agree-text">{{ agree_label }}</span>
+            </label>
+            <button type="submit" class="pgy-lw__submit" data-pgy-lw-submit>{{ spin_label }}</button>
+            <p class="pgy-lw__message" data-pgy-lw-message hidden></p>
+            <p class="pgy-lw__fine">{{ footnote }}</p>
+          </form>
+        </div>
+        {% render 'lucky-wheel-result', footnote: footnote, copy_label: 'COPY CODE', once_label: 'Each email can spin once. Use the same email at checkout.' %}
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="pgy-lw__dot" data-pgy-lw-dot hidden aria-label="View your coupon">
+    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">
+      <rect x="3" y="11" width="18" height="10" rx="1.6" fill="#fff"></rect>
+      <rect x="2" y="8" width="20" height="4.2" rx="1.2" fill="#fff6d8"></rect>
+      <rect x="10.4" y="8" width="3.2" height="13" fill="#f0a11a"></rect>
+      <path d="M12 8.2c-1.8 0-3.2-1.6-2.3-3 .7-1.1 2.3.2 2.3 3 0-2.8 1.6-4.1 2.3-3 .9 1.4-.5 3-2.3 3z" fill="#fff"></path>
+    </svg>
+  </button>
+</div>
+
+{% schema %}
+{
+  "name": "Lucky Wheel",
+  "target": "section",
+  "stylesheet": "lucky-wheel.css",
+  "javascript": "lucky-wheel.js",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Wheel image",
+      "info": "Shown on the left. Clicking it opens the spin popup. Leave empty to use the built-in wheel."
+    },
+    {
+      "type": "text",
+      "id": "play_label",
+      "label": "Play label",
+      "default": "Play"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Lucky Wheel — 100% Win Rate!"
+    },
+    {
+      "type": "text",
+      "id": "how_heading",
+      "label": "How it works heading",
+      "default": "How It Works:"
+    },
+    {
+      "type": "text",
+      "id": "step_1",
+      "label": "Step 1",
+      "default": "Click the “Play” button on the wheel."
+    },
+    {
+      "type": "text",
+      "id": "step_2",
+      "label": "Step 2",
+      "default": "Enter your email to unlock your spin."
+    },
+    {
+      "type": "text",
+      "id": "step_3",
+      "label": "Step 3",
+      "default": "Spin the wheel to reveal your prizes."
+    },
+    {
+      "type": "textarea",
+      "id": "step_4",
+      "label": "Step 4",
+      "default": "Discounts start November 18 and can be combined with Black Friday deals!"
+    },
+    {
+      "type": "header",
+      "content": "Popup"
+    },
+    {
+      "type": "text",
+      "id": "modal_title",
+      "label": "Popup title",
+      "default": "Lucky Wheel — 100% Win Rate!"
+    },
+    {
+      "type": "text",
+      "id": "modal_sub",
+      "label": "Popup description",
+      "default": "Enter your email to unlock your spin."
+    },
+    {
+      "type": "text",
+      "id": "spin_label",
+      "label": "Spin button",
+      "default": "SPIN TO WIN"
+    },
+    {
+      "type": "textarea",
+      "id": "agree_label",
+      "label": "Consent checkbox",
+      "default": "I agree to receive news, product updates, and special offers via email."
+    },
+    {
+      "type": "textarea",
+      "id": "footnote",
+      "label": "Footnote",
+      "default": "Discounts start November 18 and can be combined with Black Friday deals!"
+    },
+    {
+      "type": "header",
+      "content": "Wheel labels"
+    },
+    {
+      "type": "text",
+      "id": "prize_1_label",
+      "label": "Prize 1 label",
+      "default": "Extra 2% OFF",
+      "info": "Shown twice on the wheel. Odds and the real discount are set in the app admin."
+    },
+    {
+      "type": "text",
+      "id": "prize_2_label",
+      "label": "Prize 2 label",
+      "default": "Extra 3% OFF"
+    },
+    {
+      "type": "text",
+      "id": "prize_3_label",
+      "label": "Prize 3 label",
+      "default": "Extra 5% OFF"
+    },
+    {
+      "type": "range",
+      "id": "dot_bottom",
+      "min": 16,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "label": "Coupon dot distance from bottom",
+      "default": 24
+    }
+  ]
+}
+{% endschema %}

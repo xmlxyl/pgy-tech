@@ -1,0 +1,14 @@
+{%- liquid
+  assign result_copy = copy_label | default: 'COPY CODE'
+  assign result_once = once_label | default: 'Each email can spin once.'
+  assign result_note = footnote | default: ''
+-%}
+<div class="pgy-lw__panel" data-pgy-lw-panel="result" hidden>
+  <h2 class="pgy-lw__modal-title" data-pgy-lw-result-title>You won</h2>
+  <p class="pgy-lw__amount" data-pgy-lw-amount></p>
+  <p class="pgy-lw__code" data-pgy-lw-code></p>
+  <button type="button" class="pgy-lw__submit" data-pgy-lw-copy>{{ result_copy }}</button>
+  <p class="pgy-lw__message" data-pgy-lw-copy-message hidden></p>
+  <p class="pgy-lw__fine" data-pgy-lw-note>{{ result_note }}</p>
+  <p class="pgy-lw__once">{{ result_once }}</p>
+</div>

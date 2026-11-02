@@ -193,3 +193,33 @@ model CreatorStory {
   @@index([shop, createdAt])
   @@index([shop, email])
 }
+
+model LuckyWheelSetting {
+  id           Int      @id @default(autoincrement())
+  shop         String   @unique
+  enabled      Boolean  @default(true)
+  codePrefix   String   @default("LW-")
+  codeStartsAt DateTime
+  codeEndsAt   DateTime
+  prizes       Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LuckyWheelClaim {
+  id                Int      @id @default(autoincrement())
+  shop              String
+  email             String
+  phone             String?
+  couponCode        String
+  percentOff        Decimal  @db.Decimal(5, 2)
+  label             String
+  sectorIndex       Int
+  shopifyDiscountId String?
+  agreedMarketing   Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  @@unique([shop, email])
+  @@unique([shop, couponCode])
+  @@index([shop, createdAt])
+}
