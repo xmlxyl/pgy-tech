@@ -67,6 +67,7 @@
   assign disc_image = 'lucky-wheel-disc.png' | asset_url
   assign play_image = 'lucky-wheel-play.png' | asset_url
   assign pointer_image = 'lucky-wheel-pointer.png' | asset_url
+  assign banner_image = 'lucky-wheel-banner-bg.png' | asset_url
 %}
 
 <div
@@ -91,12 +92,20 @@
   style="--pgy-lw-dot-bottom: {{ block.settings.dot_bottom | default: 24 }}px"
   {{ block.shopify_attributes }}
 >
-  <section class="pgy-lw__banner" aria-labelledby="pgy-lw-title-{{ block.id }}">
+  <div class="pgy-lw__shell">
+    <div class="pgy-lw__lead">
+      <p class="pgy-lw__lead-title">SPIN TO WIN</p>
+      <p class="pgy-lw__lead-sub">Sign up, Spin to win, and unlock your exclusive 24-hour head start on Black Friday.</p>
+    </div>
+    <section class="pgy-lw__banner section-in-view" aria-labelledby="pgy-lw-title-{{ block.id }}">
+    <img
+      class="pgy-lw__banner-bg"
+      src="{{ banner_image }}"
+      alt=""
+      width="3218"
+      height="1178"
+    >
     <div class="pgy-lw__banner-grid">
-      <div class="pgy-lw__lead">
-        <p class="pgy-lw__lead-title">SPIN TO WIN</p>
-        <p class="pgy-lw__lead-sub">Sign up, Spin to win, and unlock your exclusive 24-hour head start on Black Friday.</p>
-      </div>
       <button type="button" class="pgy-lw__play" data-pgy-lw-open aria-label="{{ play_label | escape }}">
         <img
           src="{{ hero_image }}"
@@ -112,7 +121,7 @@
         <div class="pgy-lw__how">
           <h3 class="pgy-lw__how-title">{{ how_heading }}</h3>
           <ol class="pgy-lw__steps">
-            <li>1.{{ step_1 }}</li>
+            <li class="test">1.{{ step_1 }}</li>
             <li>2.{{ step_2 }}</li>
             <li>3.{{ step_3 }}</li>
             <li>4.{{ step_4 }}</li>
@@ -124,7 +133,8 @@
         </button>
       </div>
     </div>
-  </section>
+    </section>
+  </div>
 
   <div class="pgy-lw__overlay" data-pgy-lw-overlay hidden>
     <div class="pgy-lw__modal" role="dialog" aria-modal="true" aria-label="{{ modal_title | escape }}">

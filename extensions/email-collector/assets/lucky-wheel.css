@@ -2,11 +2,21 @@
   --lw-ink: #fff;
   --lw-text: #f4efe6;
   --lw-gold: #e0b15a;
+  box-sizing: border-box;
   width: 100%;
-  max-width: 100%;
+  max-width: 1920px;
+  margin-inline: auto;
+  padding: clamp(28px, 4vw, 64px) 16px;
+  background: #000;
   color: var(--lw-text);
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   line-height: 1.45;
+}
+
+.pgy-lw__shell {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
 }
 
 .pgy-lw *,
@@ -20,20 +30,43 @@
   font-family: inherit;
 }
 
-.pgy-lw__banner {
-  border-radius: 28px;
-  padding: clamp(22px, 3vw, 48px) clamp(18px, 3vw, 56px);
-  background:
-    radial-gradient(ellipse at 82% 78%, rgba(214, 164, 72, 0.55), transparent 36%),
-    linear-gradient(100deg, #140f0b 0%, #2a1c10 42%, #6d4a22 100%);
+.pgy-lw__banner.section-in-view {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  border-radius: clamp(18px, 3vw, 28px);
+  padding: 0;
+  background-color: #140f0b;
   box-shadow: inset 0 0 0 1px rgba(255, 214, 140, 0.08);
 }
 
+.pgy-lw .pgy-lw__banner-bg {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: auto;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+  user-select: none;
+}
+
 .pgy-lw__banner-grid {
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: minmax(260px, 0.92fr) minmax(280px, 1.08fr);
-  gap: clamp(16px, 3vw, 42px);
+  grid-template-columns: minmax(220px, 360px) max-content;
+  gap: clamp(28px, 4vw, 64px);
   align-items: center;
+  justify-content: center;
+  width: min(100%, 1120px);
+  margin-inline: auto;
+  padding: clamp(36px, 4.2vw, 64px) clamp(28px, 5vw, 72px);
 }
 
 .pgy-lw__play {
@@ -51,14 +84,16 @@
 
 .pgy-lw__play img {
   display: block;
-  width: min(100%, 520px);
+  width: min(100%, 360px);
   height: auto;
   object-fit: contain;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), filter 0.45s ease;
 }
 
 .pgy-lw__play:hover img,
 .pgy-lw__play:focus-visible img {
-  transform: scale(1.02);
+  transform: scale(1.045);
+  filter: drop-shadow(0 16px 28px rgba(224, 177, 90, 0.32));
 }
 
 .pgy-lw__play:focus-visible {
@@ -68,7 +103,10 @@
 }
 
 .pgy-lw__lead {
-  display: none;
+  display: block;
+  margin: 0 auto 28px;
+  text-align: center;
+  animation: pgy-lw-rise 0.7s ease both;
 }
 
 .pgy-lw__lead-title,
@@ -79,6 +117,7 @@
 }
 
 .pgy-lw__lead-title {
+  font-size: clamp(32px, 3.05vw, 55px);
   font-weight: 800;
   letter-spacing: 0.04em;
   line-height: 1.1;
@@ -87,16 +126,17 @@
 
 .pgy-lw__lead-sub {
   margin-top: 10px;
+  font-size: clamp(15px, 1.55vw, 28px);
   line-height: 1.35;
 }
 
 .pgy-lw__title {
   margin: 0 0 16px;
   color: var(--lw-ink);
-  font-size: clamp(28px, 3vw, 40px);
+  font-size: clamp(23px, 3vw, 40px);
   font-weight: 800;
   line-height: 1.15;
-  text-wrap: balance;
+  white-space: nowrap;
 }
 
 .pgy-lw__how {
@@ -107,16 +147,16 @@
 .pgy-lw__how-title {
   margin: 0 0 12px;
   color: #fff;
-  font-size: 22px;
+  font-size: clamp(15px, 3vw, 28px);
   font-weight: 800;
 }
 
 .pgy-lw__steps {
   margin: 0;
   display: grid;
-  gap: 6px;
+  gap: clamp(6px, 3vw, 8px);
   color: #f7f1e8;
-  font-size: 16px;
+  font-size: clamp(12px, 3vw, 16px);
 }
 
 .pgy-lw__steps li::marker {
@@ -137,10 +177,21 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+}
+
+.pgy-lw__terms-btn span {
+  display: inline-block;
+  transition: transform 0.22s ease;
 }
 
 .pgy-lw__terms-btn:hover {
   background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.pgy-lw__terms-btn:hover span {
+  transform: translateX(4px);
 }
 
 .pgy-lw__stage {
@@ -201,6 +252,11 @@
   box-shadow: none;
   transform: translate(-50%, -50%);
   cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.pgy-lw__hub:hover {
+  transform: translate(-50%, -50%) scale(1.06);
 }
 
 .pgy-lw__hub img {
@@ -214,11 +270,19 @@
   width: min(760px, calc(100vw - 32px));
   max-height: min(82vh, 720px);
   overflow: auto;
-  padding: 42px 36px 28px;
+  padding: clamp(28px, 3vw, 42px) clamp(24px, 3vw, 36px) clamp(22px, 3vw, 28px);
   border-radius: 22px;
   background: #12110f;
   color: #f3e7cf;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease;
+}
+
+.pgy-lw__overlay.is-open .pgy-lw__terms {
+  opacity: 1;
+  transform: none;
 }
 
 .pgy-lw__terms-body h3 {
@@ -231,7 +295,7 @@
 .pgy-lw__terms-body p {
   margin: 0 0 18px;
   color: #e7dcc6;
-  font-size: 15px;
+  font-size: clamp(12px, 3vw, 15px);
   line-height: 1.45;
 }
 
@@ -247,6 +311,16 @@
   place-items: center;
   padding: 18px;
   background: rgba(8, 6, 4, 0.72);
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+.pgy-lw__overlay.is-open {
+  opacity: 1;
+}
+
+.pgy-lw__overlay.is-closing {
+  pointer-events: none;
 }
 
 .pgy-lw__overlay[hidden],
@@ -291,6 +365,14 @@
     linear-gradient(100deg, #140f0b 0%, #2a1c10 46%, #6d4a22 100%);
   color: #f6efe2;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translateY(22px) scale(0.98);
+  transition: transform 0.46s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.34s ease;
+}
+
+.pgy-lw__overlay.is-open .pgy-lw__modal {
+  opacity: 1;
+  transform: none;
 }
 
 .pgy-lw__modal--coupon {
@@ -331,10 +413,12 @@
   font-size: 30px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .pgy-lw__close:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  transform: rotate(90deg);
 }
 
 .pgy-lw__modal-title {
@@ -477,10 +561,12 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.pgy-lw__submit:hover {
+.pgy-lw__submit:hover:not(:disabled) {
   background: #ffe7c2;
+  transform: translateY(-1px);
 }
 
 .pgy-lw__submit:disabled {
@@ -533,6 +619,10 @@
   word-break: break-all;
 }
 
+.pgy-lw__code.is-copied {
+  animation: pgy-lw-pop 0.35s ease;
+}
+
 .pgy-lw__panel[data-pgy-lw-panel="result"] {
   display: grid;
   gap: 8px;
@@ -553,6 +643,7 @@
   box-shadow: 0 10px 24px rgba(160, 80, 0, 0.35);
   cursor: pointer;
   animation: pgy-lw-pulse 2.2s ease-in-out infinite;
+  transition: transform 0.22s ease;
 }
 
 html.pgy-lw-lock .pgy-lw__dot {
@@ -560,7 +651,7 @@ html.pgy-lw-lock .pgy-lw__dot {
 }
 
 .pgy-lw__dot:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.04);
 }
 
 .pgy-lw__dot:focus-visible {
@@ -607,17 +698,23 @@ html.pgy-lw-lock body {
     grid-template-columns: 1fr;
   }
 
+  .pgy-lw__banner-grid {
+    width: 100%;
+    justify-items: center;
+  }
+
+  .pgy-lw__copy {
+    justify-self: start;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pgy-lw__title {
+    font-size: clamp(16px, 4.6vw, 28px);
+  }
+
   .pgy-lw__lead {
-    display: block;
-    margin-bottom: 12px;
-  }
-
-  .pgy-lw__lead-title {
-    font-size: clamp(32px, 3.05vw, 55px);
-  }
-
-  .pgy-lw__lead-sub {
-    font-size: clamp(15px, 1.55vw, 28px);
+    margin-bottom: 16px;
   }
 
   .pgy-lw__modal-wheel {
@@ -660,12 +757,63 @@ html.pgy-lw-lock body {
   }
 }
 
+@keyframes pgy-lw-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pgy-lw-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pgy-lw-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.035);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pgy-lw__disc,
   .pgy-lw__rotor,
-  .pgy-lw__dot {
+  .pgy-lw__dot,
+  .pgy-lw__lead,
+  .pgy-lw__banner,
+  .pgy-lw__play img,
+  .pgy-lw__hub,
+  .pgy-lw__terms-btn,
+  .pgy-lw__terms-btn span,
+  .pgy-lw__submit,
+  .pgy-lw__close,
+  .pgy-lw__overlay,
+  .pgy-lw__modal,
+  .pgy-lw__terms,
+  .pgy-lw__code {
     transition: none;
     animation: none;
+  }
+
+  .pgy-lw__overlay,
+  .pgy-lw__modal,
+  .pgy-lw__terms {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -790,3 +938,8 @@ html.pgy-lw-lock body {
   line-height: 1.35;
   text-align: center;
 }
+ @media (max-width: 768px) {
+  .pgy-lw__banner.section-in-view {
+    padding: clamp(22px, 3vw, 48px) clamp(18px, 3vw, 56px);
+  }
+ }

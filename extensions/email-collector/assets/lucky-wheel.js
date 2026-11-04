@@ -271,25 +271,73 @@
     if (!anyOverlayOpen()) document.documentElement.classList.remove("pgy-lw-lock");
   }
 
+  function motionReduced() {
+    return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  function openOverlay(overlay) {
+    if (!overlay) return;
+    overlay.dataset.closing = "";
+    overlay.classList.remove("is-closing");
+    overlay.hidden = false;
+    if (motionReduced()) {
+      overlay.classList.add("is-open");
+      return;
+    }
+    overlay.classList.remove("is-open");
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        overlay.classList.add("is-open");
+      });
+    });
+  }
+
+  function closeOverlay(overlay, done) {
+    if (!overlay || overlay.hidden) {
+      if (done) done();
+      return;
+    }
+    if (overlay.dataset.closing === "true") return;
+    function finish() {
+      overlay.dataset.closing = "";
+      overlay.classList.remove("is-open", "is-closing");
+      overlay.hidden = true;
+      if (done) done();
+    }
+    if (motionReduced() || !overlay.classList.contains("is-open")) {
+      finish();
+      return;
+    }
+    overlay.dataset.closing = "true";
+    overlay.classList.remove("is-open");
+    overlay.classList.add("is-closing");
+    var finished = false;
+    function end(event) {
+      if (event && event.target !== overlay) return;
+      if (finished) return;
+      finished = true;
+      overlay.removeEventListener("transitionend", end);
+      finish();
+    }
+    overlay.addEventListener("transitionend", end);
+    window.setTimeout(end, 480);
+  }
+
   function closeModal(root) {
-    var overlay = root.querySelector("[data-pgy-lw-overlay]");
-    if (overlay) overlay.hidden = true;
-    releaseLock();
+    closeOverlay(root.querySelector("[data-pgy-lw-overlay]"), releaseLock);
   }
 
   function openTerms(root) {
     var overlay = root.querySelector("[data-pgy-lw-terms-overlay]");
     if (!overlay) return;
-    overlay.hidden = false;
+    openOverlay(overlay);
     document.documentElement.classList.add("pgy-lw-lock");
     var close = overlay.querySelector("[data-pgy-lw-terms-close]");
     if (close) window.setTimeout(function () { close.focus(); }, 30);
   }
 
   function closeTerms(root) {
-    var overlay = root.querySelector("[data-pgy-lw-terms-overlay]");
-    if (overlay) overlay.hidden = true;
-    releaseLock();
+    closeOverlay(root.querySelector("[data-pgy-lw-terms-overlay]"), releaseLock);
   }
 
   function setPlayedState(root, claimed) {
@@ -325,7 +373,7 @@
     var claimed = Boolean(state.claim && state.claim.couponCode);
     if (claimed) showClaimedForm(root, state.claim);
     else showFormPanel(root);
-    overlay.hidden = false;
+    openOverlay(overlay);
     document.documentElement.classList.add("pgy-lw-lock");
     var focusTarget = claimed
       ? root.querySelector("[data-pgy-lw-copy]")
@@ -338,6 +386,12 @@
     var strings = stringsFrom(root);
     function done(ok) {
       showMessage(message, ok ? strings.copied : strings.copyFail, !ok);
+      var codeEl = root.querySelector("[data-pgy-lw-code]");
+      if (ok && codeEl) {
+        codeEl.classList.remove("is-copied");
+        if (codeEl.getBoundingClientRect) codeEl.getBoundingClientRect();
+        codeEl.classList.add("is-copied");
+      }
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(code).then(function () { done(true); }).catch(function () {
@@ -587,19 +641,12 @@
     });
 
     var stored = readStoredClaim();
-    var loggedIn = Boolean(customerEmail);
-    var storedMatches =
-      stored &&
-      stored.couponCode &&
-      (!loggedIn ||
-        (stored.email && stored.email.toLowerCase() === customerEmail.toLowerCase()));
-
-    if (storedMatches) {
+    if (stored && stored.couponCode) {
       setClaim(stored);
       return;
     }
 
-    if (!loggedIn || designMode) return;
+    if (!customerEmail || designMode) return;
 
     window.fetch(withQuery(proxyUrl, { action: "status", email: customerEmail }), {
       headers: { Accept: "application/json" },
