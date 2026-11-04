@@ -4,12 +4,12 @@
   --lw-gold: #e0b15a;
   box-sizing: border-box;
   width: 100%;
-  max-width: 1920px;
+  /* max-width: 1920px; */
   margin-inline: auto;
   padding: clamp(28px, 4vw, 64px) 16px;
   background: #000;
   color: var(--lw-text);
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: Almarai,sans-serif !important;
   line-height: 1.45;
 }
 
@@ -112,7 +112,7 @@
 .pgy-lw__lead-title,
 .pgy-lw__lead-sub {
   margin: 0;
-  color: #e6c56a;
+  color: #ffe8b0;
   text-align: center;
 }
 
