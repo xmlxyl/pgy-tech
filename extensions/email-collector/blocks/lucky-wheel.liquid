@@ -24,20 +24,16 @@
     assign step_4 = 'Discounts start November 18 and can be combined with Black Friday deals!'
   endif
   assign modal_title = block.settings.modal_title
-  if modal_title == blank
-    assign modal_title = 'Lucky Wheel — 100% Win Rate!'
+  if modal_title == blank or modal_title == 'Lucky Wheel — 100% Win Rate!'
+    assign modal_title = 'One Spin Per Person · Everyone Wins'
   endif
   assign modal_sub = block.settings.modal_sub
-  if modal_sub == blank
-    assign modal_sub = 'Enter your email to unlock your spin.'
+  if modal_sub == blank or modal_sub == 'Enter your email to unlock your spin.'
+    assign modal_sub = 'Sign up and spin to get your early-access link by email on November 18, and shop Black Friday deals 24 hours early.'
   endif
   assign spin_label = block.settings.spin_label
   if spin_label == blank
     assign spin_label = 'SPIN TO WIN'
-  endif
-  assign agree_label = block.settings.agree_label
-  if agree_label == blank
-    assign agree_label = 'I agree to receive news, product updates, and special offers via email.'
   endif
   assign footnote = block.settings.footnote
   if footnote == blank
@@ -64,6 +60,13 @@
     assign customer_email = customer.email
   endif
   assign proxy_url = '/apps/pgy-tech/lucky-wheel'
+  assign hero_image = 'lucky-wheel-hero.png' | asset_url
+  if block.settings.image != blank
+    assign hero_image = block.settings.image | image_url: width: 1400
+  endif
+  assign disc_image = 'lucky-wheel-disc.png' | asset_url
+  assign play_image = 'lucky-wheel-play.png' | asset_url
+  assign pointer_image = 'lucky-wheel-pointer.png' | asset_url
 %}
 
 <div
@@ -91,17 +94,13 @@
   <section class="pgy-lw__banner" aria-labelledby="pgy-lw-title-{{ block.id }}">
     <div class="pgy-lw__banner-grid">
       <button type="button" class="pgy-lw__play" data-pgy-lw-open aria-label="{{ play_label | escape }}">
-        {% if block.settings.image != blank %}
-          <img
-            src="{{ block.settings.image | image_url: width: 1400 }}"
-            alt=""
-            width="700"
-            height="700"
-            loading="lazy"
-          >
-        {% else %}
-          {% render 'lucky-wheel-disc', mode: 'banner', hub: play_label, label_1: prize_1, label_2: prize_2, label_3: prize_3 %}
-        {% endif %}
+        <img
+          src="{{ hero_image }}"
+          alt=""
+          width="760"
+          height="760"
+          loading="lazy"
+        >
       </button>
 
       <div class="pgy-lw__copy">
@@ -115,6 +114,10 @@
             <li>{{ step_4 }}</li>
           </ol>
         </div>
+        <button type="button" class="pgy-lw__terms-btn" data-pgy-lw-terms>
+          Terms &amp; Conditions
+          <span aria-hidden="true">&gt;</span>
+        </button>
       </div>
     </div>
   </section>
@@ -125,13 +128,25 @@
         <span aria-hidden="true">&times;</span>
       </button>
       <div class="pgy-lw__modal-wheel">
-        {% render 'lucky-wheel-disc', mode: 'modal', hub: '', label_1: prize_1, label_2: prize_2, label_3: prize_3 %}
+        <div class="pgy-lw__stage">
+          <img class="pgy-lw__pointer-img" src="{{ pointer_image }}" alt="" width="120" height="90">
+          <div class="pgy-lw__rotor" data-pgy-lw-rotor>
+            <img src="{{ disc_image }}" alt="" width="760" height="760">
+          </div>
+          <button type="button" class="pgy-lw__hub" data-pgy-lw-hub aria-label="{{ play_label | escape }}">
+            <img src="{{ play_image }}" alt="">
+          </button>
+        </div>
       </div>
       <div class="pgy-lw__modal-copy">
         <div class="pgy-lw__panel" data-pgy-lw-panel="form">
           <h2 class="pgy-lw__modal-title">{{ modal_title }}</h2>
           <p class="pgy-lw__modal-sub">{{ modal_sub }}</p>
           <form class="pgy-lw__form" data-pgy-lw-form novalidate>
+            <p class="pgy-lw__played" data-pgy-lw-played hidden>
+              <span class="pgy-lw__played-title">You've Already Participated!</span>
+              <span data-pgy-lw-reward>Your reward is 2% OFF</span>
+            </p>
             <label class="pgy-lw__sr" for="pgy-lw-email-{{ block.id }}">Email</label>
             <input
               id="pgy-lw-email-{{ block.id }}"
@@ -145,37 +160,35 @@
               required
               data-pgy-lw-email
             >
-            <label class="pgy-lw__sr" for="pgy-lw-phone-{{ block.id }}">Phone</label>
-            <div class="pgy-lw__phone">
-              <span class="pgy-lw__phone-prefix" aria-hidden="true">
-                <svg class="pgy-lw__flag" viewBox="0 0 16 10" focusable="false">
-                  <rect width="16" height="10" fill="#b22234"></rect>
-                  <path d="M0 1.15h16M0 3.45h16M0 5.75h16M0 8.05h16" stroke="#fff" stroke-width="1"></path>
-                  <rect width="7" height="5.4" fill="#3c3b6e"></rect>
-                </svg>
-                <span>+1</span>
-              </span>
-              <input
-                id="pgy-lw-phone-{{ block.id }}"
-                type="tel"
-                name="phone"
-                placeholder="Phone (Optional)"
-                autocomplete="tel"
-                inputmode="tel"
-                data-pgy-lw-phone
-              >
-            </div>
-            <label class="pgy-lw__agree">
-              <input id="pgy-lw-agree-{{ block.id }}" type="checkbox" name="agreed" data-pgy-lw-agree>
-              <span class="pgy-lw__agree-box" aria-hidden="true"></span>
-              <span class="pgy-lw__agree-text">{{ agree_label }}</span>
-            </label>
+            <p class="pgy-lw__code" data-pgy-lw-code hidden></p>
             <button type="submit" class="pgy-lw__submit" data-pgy-lw-submit>{{ spin_label }}</button>
-            <p class="pgy-lw__message" data-pgy-lw-message hidden></p>
-            <p class="pgy-lw__fine">{{ footnote }}</p>
+            <button type="button" class="pgy-lw__submit" data-pgy-lw-copy hidden>COPY</button>
+            <p class="pgy-lw__message" data-pgy-lw-message data-pgy-lw-copy-message hidden></p>
           </form>
         </div>
-        {% render 'lucky-wheel-result', footnote: footnote, copy_label: 'COPY CODE', once_label: 'Each email can spin once. Use the same email at checkout.' %}
+      </div>
+    </div>
+  </div>
+
+  <div class="pgy-lw__overlay pgy-lw__overlay--terms" data-pgy-lw-terms-overlay hidden>
+    <div class="pgy-lw__terms" role="dialog" aria-modal="true" aria-labelledby="pgy-lw-terms-title-{{ block.id }}">
+      <button type="button" class="pgy-lw__close" data-pgy-lw-terms-close aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h2 id="pgy-lw-terms-title-{{ block.id }}" class="pgy-lw__sr">Terms &amp; Conditions</h2>
+      <div class="pgy-lw__terms-body">
+        <h3>1. Guaranteed Reward</h3>
+        <p>Every eligible participant will win a reward from the Lucky Wheel. Rewards are assigned randomly.</p>
+        <h3>2. Minimum Spend</h3>
+        <p>Some rewards may require a minimum order value. Please check the conditions shown with your reward before placing your order.</p>
+        <h3>3. One Spin per Participant</h3>
+        <p>Each eligible customer may spin the wheel once during the promotion period. One reward is available per email address.</p>
+        <h3>4. Reward Validity &amp; Use</h3>
+        <p>All Lucky Wheel rewards are valid for redemption during the Black Friday sale starting November 19, 2026. Each reward is subject to its specific terms and cannot be combined with other spin rewards unless otherwise stated.</p>
+        <h3>5. Returns &amp; Order Changes</h3>
+        <p>If a return, cancellation, or order adjustment causes the order to fall below the required minimum spend, the reward may no longer apply. Any refund adjustment will be handled in accordance with the applicable refund policy.</p>
+        <h3>6. General Conditions</h3>
+        <p>PGYTECH reserves the right to amend or end this promotion where necessary due to misuse, technical problems, or other exceptional circumstances. All participants are subject to PGYTECH’s applicable promotional terms and conditions.</p>
       </div>
     </div>
   </div>
@@ -253,25 +266,19 @@
       "type": "text",
       "id": "modal_title",
       "label": "Popup title",
-      "default": "Lucky Wheel — 100% Win Rate!"
+      "default": "One Spin Per Person · Everyone Wins"
     },
     {
-      "type": "text",
+      "type": "textarea",
       "id": "modal_sub",
       "label": "Popup description",
-      "default": "Enter your email to unlock your spin."
+      "default": "Sign up and spin to get your early-access link by email on November 18, and shop Black Friday deals 24 hours early."
     },
     {
       "type": "text",
       "id": "spin_label",
       "label": "Spin button",
       "default": "SPIN TO WIN"
-    },
-    {
-      "type": "textarea",
-      "id": "agree_label",
-      "label": "Consent checkbox",
-      "default": "I agree to receive news, product updates, and special offers via email."
     },
     {
       "type": "textarea",

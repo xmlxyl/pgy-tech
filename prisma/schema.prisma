@@ -220,6 +220,6 @@ model LuckyWheelClaim {
   createdAt         DateTime @default(now())
 
   @@unique([shop, email])
-  @@unique([shop, couponCode])
+  @@index([shop, couponCode])
   @@index([shop, createdAt])
 }

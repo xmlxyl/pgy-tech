@@ -1,9 +1,7 @@
 import prisma from "../db.server";
-import { authenticate, unauthenticated } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import { saveEmailForShop, validateEmail } from "./saved-email.server";
 
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const CODE_SUFFIX_LENGTH = 8;
 const PDT_OFFSET_MINUTES = -7 * 60;
 const PRIZE_COUNT = 3;
 const SECTOR_COUNT = 6;
@@ -18,9 +16,9 @@ export function defaultLuckyWheelValidity() {
 
 export function defaultLuckyWheelPrizes() {
   return [
-    { percentOff: 2, probability: 60, label: "Extra 2% OFF" },
-    { percentOff: 3, probability: 30, label: "Extra 3% OFF" },
-    { percentOff: 5, probability: 10, label: "Extra 5% OFF" },
+    { percentOff: 2, probability: 60, label: "Extra 2% OFF", couponCode: "BFEXTRA2" },
+    { percentOff: 3, probability: 30, label: "Extra 3% OFF", couponCode: "BFEXTRA3" },
+    { percentOff: 5, probability: 10, label: "Extra 5% OFF", couponCode: "BFEXTRA5" },
   ];
 }
 
@@ -107,6 +105,7 @@ export async function saveLuckyWheelSetting(shop, formData) {
       percentOff: Number(formData.get(`percentOff${index}`)),
       probability: Number(formData.get(`probability${index}`)),
       label: String(formData.get(`label${index}`) || "").trim(),
+      couponCode: String(formData.get(`couponCode${index}`) || "").trim(),
     });
   }
 
@@ -124,8 +123,8 @@ export async function saveLuckyWheelSetting(shop, formData) {
     return { ok: false, message: "折扣百分比需要大于 0，且不超过 100。" };
   }
 
-  if (!codePrefix) {
-    return { ok: false, message: "优惠码前缀不能为空。" };
+  if (normalized.some((prize) => !prize.couponCode)) {
+    return { ok: false, message: "每个奖励都要填写优惠码。" };
   }
 
   if (Number.isNaN(codeStartsAt.getTime()) || Number.isNaN(codeEndsAt.getTime())) {
@@ -278,13 +277,6 @@ async function spinWheel(request) {
     });
   }
 
-  if (!agreed) {
-    return Response.json(
-      { ok: false, error: "Please agree to receive emails to spin." },
-      { status: 400 },
-    );
-  }
-
   const setting = await getLuckyWheelSetting(auth.shop);
   if (setting.setupError || !setting.enabled) {
     return Response.json(
@@ -301,71 +293,10 @@ async function spinWheel(request) {
     );
   }
 
-  let admin;
-  try {
-    admin = await getAdminForShop(auth.shop);
-  } catch (error) {
-    console.error("[lucky-wheel-admin]", error);
-    return Response.json(
-      { ok: false, error: "Could not reach the store. Please try again." },
-      { status: 500 },
-    );
-  }
-
-  const customer = await findOrCreateCustomerByEmail(admin, email, {
-    subscribeMarketing: agreed,
-  });
-  if (!customer?.id) {
-    return Response.json(
-      {
-        ok: false,
-        error: customer?.error || "Could not save this email. Please try again.",
-      },
-      { status: 500 },
-    );
-  }
-
-  if (phoneResult.phone) {
-    const phoneUpdate = await updateCustomerPhone(admin, customer.id, phoneResult.phone);
-    if (!phoneUpdate.ok) {
-      console.error("[lucky-wheel-phone]", phoneUpdate.error);
-    }
-  }
-
-  let couponCode;
-  let shopifyDiscountId = null;
-  const startsAt = parsePdtDateInput(setting.codeStartsAt).toISOString();
-  const endsAt = parsePdtDateInput(setting.codeEndsAt).toISOString();
-
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const candidate = await generateUniqueCouponCode(auth.shop, setting.codePrefix);
-    const created = await createShopifyPercentDiscount(admin, {
-      code: candidate,
-      percentOff: drawn.prize.percentOff,
-      email,
-      customerId: customer.id,
-      startsAt,
-      endsAt,
-    });
-
-    if (created.ok) {
-      couponCode = candidate;
-      shopifyDiscountId = created.discountId;
-      break;
-    }
-
-    if (created.duplicate) continue;
-
-    console.error("[lucky-wheel-discount]", created.error);
-    return Response.json(
-      { ok: false, error: created.error || "Could not create the discount. Please try again." },
-      { status: 500 },
-    );
-  }
-
+  const couponCode = drawn.prize.couponCode;
   if (!couponCode) {
     return Response.json(
-      { ok: false, error: "Could not create a unique code. Please try again." },
+      { ok: false, error: "This prize is not available right now." },
       { status: 500 },
     );
   }
@@ -380,17 +311,15 @@ async function spinWheel(request) {
         percentOff: drawn.prize.percentOff,
         label: drawn.prize.label,
         sectorIndex: drawn.sectorIndex,
-        shopifyDiscountId,
+        shopifyDiscountId: null,
         agreedMarketing: agreed,
       },
     });
 
-    if (agreed) {
-      try {
-        await saveEmailForShop(auth.shop, email, null, "lucky-wheel");
-      } catch (error) {
-        console.error("[lucky-wheel-save-email]", error);
-      }
+    try {
+      await saveEmailForShop(auth.shop, email, null, "lucky-wheel");
+    } catch (error) {
+      console.error("[lucky-wheel-save-email]", error);
     }
 
     return Response.json({
@@ -418,7 +347,8 @@ async function spinWheel(request) {
 }
 
 /**
- * Three prizes are repeated across six sectors: 0/3, 1/4, 2/5.
+ * Wheel art, clockwise from the left pointer:
+ * 3% / 2% / 5% / 3% / 2% / 5%.
  * Probability is per prize, then one of the two matching sectors is chosen.
  * @param {Array<{ percentOff: number, probability: number, label: string }>} prizes
  */
@@ -428,7 +358,8 @@ export function drawSector(prizes) {
   if (!prize) return null;
   const prizeIndex = normalized.indexOf(prize);
   if (prizeIndex < 0) return null;
-  const sectorIndex = prizeIndex + (Math.random() < 0.5 ? 0 : PRIZE_COUNT);
+  const sectorBase = [1, 0, 2][prizeIndex] ?? 0;
+  const sectorIndex = sectorBase + (Math.random() < 0.5 ? 0 : PRIZE_COUNT);
   return {
     prize,
     sectorIndex: sectorIndex % SECTOR_COUNT,
@@ -488,315 +419,6 @@ function serializeClaimAdmin(claim) {
   };
 }
 
-/** @param {string} shop @param {string} prefix */
-async function generateUniqueCouponCode(shop, prefix) {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const code = `${normalizePrefix(prefix)}${randomSuffix(CODE_SUFFIX_LENGTH)}`;
-    const existing = await prisma.luckyWheelClaim.findUnique({
-      where: { shop_couponCode: { shop, couponCode: code } },
-    });
-    if (!existing) return code;
-  }
-  throw new Error("Unable to generate unique coupon code");
-}
-
-/** @param {number} length */
-function randomSuffix(length) {
-  let result = "";
-  for (let i = 0; i < length; i += 1) {
-    result += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  }
-  return result;
-}
-
-/**
- * @param {any} admin
- * @param {{
- *   code: string,
- *   percentOff: number,
- *   email: string,
- *   customerId: string,
- *   startsAt: string,
- *   endsAt: string,
- * }} input
- */
-async function createShopifyPercentDiscount(admin, input) {
-  const response = await admin.graphql(
-    `#graphql
-      mutation LuckyWheelDiscountCreate($basicCodeDiscount: DiscountCodeBasicInput!) {
-        discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
-          codeDiscountNode {
-            id
-          }
-          userErrors {
-            field
-            code
-            message
-          }
-        }
-      }`,
-    {
-      variables: {
-        basicCodeDiscount: {
-          title: `Lucky Wheel ${input.percentOff}% ${input.email}`.slice(0, 255),
-          code: input.code,
-          startsAt: input.startsAt,
-          endsAt: input.endsAt,
-          usageLimit: 1,
-          appliesOncePerCustomer: true,
-          context: {
-            customers: {
-              add: [input.customerId],
-            },
-          },
-          customerGets: {
-            value: {
-              percentage: toShopifyPercentage(input.percentOff),
-            },
-            items: { all: true },
-          },
-          combinesWith: {
-            orderDiscounts: true,
-            productDiscounts: true,
-            shippingDiscounts: true,
-          },
-        },
-      },
-    },
-  );
-
-  const json = await response.json();
-  const payload = json.data?.discountCodeBasicCreate;
-  const userError = payload?.userErrors?.[0];
-  const graphqlError = json.errors?.[0]?.message;
-
-  if (userError || graphqlError) {
-    const message = userError?.message || graphqlError || "Discount create failed";
-    const duplicate =
-      /taken|already|exists|duplicate/i.test(message) || userError?.code === "TAKEN";
-    return { ok: false, duplicate, error: message };
-  }
-
-  return {
-    ok: true,
-    discountId: payload?.codeDiscountNode?.id || null,
-  };
-}
-
-/**
- * @param {any} admin
- * @param {string} email
- * @param {{ subscribeMarketing?: boolean }} [options]
- */
-async function findOrCreateCustomerByEmail(admin, email, options = {}) {
-  const normalized = String(email || "").trim().toLowerCase();
-  const subscribeMarketing = Boolean(options.subscribeMarketing);
-  if (!normalized) return { id: null, error: "Enter a valid email address." };
-
-  try {
-    let customer = null;
-    const existing = await findCustomerByEmail(admin, normalized);
-    if (existing?.id) {
-      customer = { id: existing.id, email: existing.email || normalized };
-    } else {
-      const json = await adminGraphqlJson(
-        admin,
-        "lucky-wheel-customer-set",
-        `#graphql
-          mutation LuckyWheelCustomerSet($identifier: CustomerSetIdentifiers, $input: CustomerSetInput!) {
-            customerSet(identifier: $identifier, input: $input) {
-              customer {
-                id
-                defaultEmailAddress { emailAddress }
-              }
-              userErrors { field message code }
-            }
-          }`,
-        {
-          variables: {
-            identifier: { email: normalized },
-            input: { email: normalized },
-          },
-        },
-      );
-
-      const payload = json.data?.customerSet;
-      const userError = payload?.userErrors?.[0];
-      const graphqlMessage = firstGraphqlErrorMessage(json.errors);
-
-      if (payload?.customer?.id) {
-        customer = {
-          id: payload.customer.id,
-          email: payload.customer.defaultEmailAddress?.emailAddress || normalized,
-        };
-      } else if (
-        userError &&
-        /taken|already|exists|email|duplicate/i.test(
-          `${userError.message || ""} ${userError.code || ""}`,
-        )
-      ) {
-        const again = await findCustomerByEmail(admin, normalized);
-        if (again?.id) customer = { id: again.id, email: again.email || normalized };
-      }
-
-      if (!customer?.id) {
-        const message = userError?.message || graphqlMessage || "Could not create the customer.";
-        if (/access denied|write_customers|protected customer/i.test(message)) {
-          return {
-            id: null,
-            error: "Missing customer permission. Reopen the app and approve write_customers.",
-          };
-        }
-        return { id: null, error: message };
-      }
-    }
-
-    if (subscribeMarketing && customer?.id) {
-      const marketing = await subscribeCustomerEmailMarketing(admin, customer.id);
-      if (!marketing.ok) console.error("[lucky-wheel-marketing]", marketing.error);
-    }
-
-    return customer;
-  } catch (error) {
-    const message = firstGraphqlErrorMessage(extractGraphqlError(error)) || String(error?.message || error);
-    if (/access denied|write_customers|protected customer/i.test(message)) {
-      return {
-        id: null,
-        error: "Missing customer permission. Reopen the app and approve write_customers.",
-      };
-    }
-    return { id: null, error: message || "Could not save this email." };
-  }
-}
-
-/** @param {any} admin @param {string} customerId @param {string} phone */
-async function updateCustomerPhone(admin, customerId, phone) {
-  const json = await adminGraphqlJson(
-    admin,
-    "lucky-wheel-customer-phone",
-    `#graphql
-      mutation LuckyWheelCustomerPhone($input: CustomerInput!) {
-        customerUpdate(input: $input) {
-          customer { id }
-          userErrors { field message }
-        }
-      }`,
-    {
-      variables: {
-        input: { id: customerId, phone },
-      },
-    },
-  );
-
-  const payload = json.data?.customerUpdate;
-  const userError = payload?.userErrors?.[0]?.message;
-  const graphqlMessage = firstGraphqlErrorMessage(json.errors);
-  if (payload?.customer?.id && !userError && !graphqlMessage) return { ok: true };
-  return { ok: false, error: userError || graphqlMessage || "Could not save the phone number." };
-}
-
-/** @param {any} admin @param {string} customerId */
-async function subscribeCustomerEmailMarketing(admin, customerId) {
-  const json = await adminGraphqlJson(
-    admin,
-    "lucky-wheel-email-marketing",
-    `#graphql
-      mutation LuckyWheelEmailMarketingConsent($input: CustomerEmailMarketingConsentUpdateInput!) {
-        customerEmailMarketingConsentUpdate(input: $input) {
-          customer { id }
-          userErrors { field message code }
-        }
-      }`,
-    {
-      variables: {
-        input: {
-          customerId,
-          emailMarketingConsent: {
-            marketingState: "SUBSCRIBED",
-            marketingOptInLevel: "SINGLE_OPT_IN",
-            consentUpdatedAt: new Date().toISOString(),
-          },
-        },
-      },
-    },
-  );
-
-  const payload = json.data?.customerEmailMarketingConsentUpdate;
-  const userError = payload?.userErrors?.[0]?.message;
-  const graphqlMessage = firstGraphqlErrorMessage(json.errors);
-  if (payload?.customer?.id && !userError && !graphqlMessage) return { ok: true };
-  return { ok: false, error: userError || graphqlMessage || "Could not subscribe the email." };
-}
-
-/** @param {any} admin @param {string} email */
-async function findCustomerByEmail(admin, email) {
-  const json = await adminGraphqlJson(
-    admin,
-    "lucky-wheel-customer-lookup",
-    `#graphql
-      query LuckyWheelCustomerByEmail($query: String!) {
-        customers(first: 1, query: $query) {
-          nodes {
-            id
-            defaultEmailAddress { emailAddress }
-          }
-        }
-      }`,
-    { variables: { query: `email:${email}` } },
-  );
-
-  const node = json.data?.customers?.nodes?.[0];
-  if (!node?.id) return null;
-  return {
-    id: node.id,
-    email: node.defaultEmailAddress?.emailAddress || email,
-  };
-}
-
-/**
- * @param {any} admin
- * @param {string} label
- * @param {string} query
- * @param {{ variables?: Record<string, unknown> }} [options]
- */
-async function adminGraphqlJson(admin, label, query, options) {
-  try {
-    const response = await admin.graphql(query, options);
-    const json = await response.json();
-    if (json?.errors) console.error(`[${label}]`, JSON.stringify(json.errors, null, 2));
-    return json;
-  } catch (error) {
-    const extracted = extractGraphqlError(error);
-    console.error(`[${label}]`, JSON.stringify(extracted, null, 2));
-    return { data: null, errors: extracted };
-  }
-}
-
-/** @param {unknown} error */
-function extractGraphqlError(error) {
-  return (
-    error?.body?.errors?.graphQLErrors ||
-    error?.body?.errors ||
-    error?.errors?.graphQLErrors ||
-    error?.errors ||
-    error?.message ||
-    String(error)
-  );
-}
-
-/** @param {unknown} errors */
-function firstGraphqlErrorMessage(errors) {
-  if (!errors) return "";
-  if (typeof errors === "string") return errors;
-  if (Array.isArray(errors)) {
-    const first = errors[0];
-    if (typeof first === "string") return first;
-    return String(first?.message || first?.extensions?.code || "");
-  }
-  if (typeof errors === "object" && errors.message) return String(errors.message);
-  return "";
-}
-
 /** @param {Request} request */
 async function resolveProxyShop(request) {
   try {
@@ -816,12 +438,6 @@ async function resolveProxyShop(request) {
   }
 }
 
-/** @param {string} shop */
-async function getAdminForShop(shop) {
-  const { admin } = await unauthenticated.admin(shop);
-  return admin;
-}
-
 /** @param {unknown} raw */
 function normalizePhone(raw) {
   const trimmed = String(raw ?? "").trim();
@@ -834,6 +450,15 @@ function normalizePhone(raw) {
   if (digits.length === 10) return { ok: true, phone: `+1${digits}` };
   if (digits.length === 11 && digits.startsWith("1")) return { ok: true, phone: `+${digits}` };
   return { ok: true, phone: `+${digits}` };
+}
+
+/** @param {unknown} raw */
+function normalizeCouponCode(raw) {
+  return String(raw ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .slice(0, 40);
 }
 
 /** @param {unknown} raw */
@@ -853,7 +478,8 @@ function normalizePrizes(raw) {
     const percentOff = clampNumber(item.percentOff, fallback.percentOff, 0, 100);
     const probability = clampNumber(item.probability, fallback.probability, 0, 100);
     const label = String(item.label || "").trim() || `Extra ${formatPercent(percentOff)}% OFF`;
-    return { percentOff, probability, label };
+    const couponCode = normalizeCouponCode(item.couponCode) || fallback.couponCode;
+    return { percentOff, probability, label, couponCode };
   });
 }
 
@@ -862,11 +488,6 @@ function clampNumber(value, fallback, min, max) {
   const num = Number(value);
   if (!Number.isFinite(num)) return fallback;
   return Math.min(max, Math.max(min, num));
-}
-
-/** @param {number} percentOff */
-function toShopifyPercentage(percentOff) {
-  return Number((Number(percentOff) / 100).toFixed(4));
 }
 
 /** @param {number} value */

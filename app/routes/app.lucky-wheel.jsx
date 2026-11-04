@@ -33,7 +33,7 @@ export default function LuckyWheelSettingsPage() {
     setting.codeStartsAt,
     setting.codeEndsAt,
     setting.prizes
-      .map((prize) => `${prize.label}:${prize.percentOff}:${prize.probability}`)
+      .map((prize) => `${prize.label}:${prize.percentOff}:${prize.probability}:${prize.couponCode}`)
       .join("|"),
   ].join("~");
 
@@ -64,12 +64,6 @@ export default function LuckyWheelSettingsPage() {
                 defaultChecked={setting.enabled}
               />
               <s-text-field
-                label="优惠码前缀"
-                name="codePrefix"
-                defaultValue={setting.codePrefix}
-                helpText="默认 LW-，后面再接 8 位不重复的英文和数字"
-              />
-              <s-text-field
                 label="优惠码开始时间 (PDT)"
                 name="codeStartsAt"
                 type="datetime-local"
@@ -82,7 +76,7 @@ export default function LuckyWheelSettingsPage() {
                 type="datetime-local"
                 step={1}
                 defaultValue={setting.codeEndsAt}
-                helpText="默认 2026-11-18 00:00:00 到 2026-12-31 23:59:59（PDT），覆盖黑五和网一"
+                helpText="这里只作记录。转盘使用已经建好的优惠码，不会再创建新折扣。"
               />
             </s-stack>
           </s-section>
@@ -91,7 +85,12 @@ export default function LuckyWheelSettingsPage() {
             <s-stack gap="base">
               {setting.prizes.map((prize, index) => (
                 <div key={`prize-${index}`} style={RULE_ROW_STYLE}>
-                  <s-grid gridTemplateColumns="1.4fr 1fr 1fr" gap="base">
+                  <s-grid gridTemplateColumns="1.2fr 1fr 0.8fr 0.8fr" gap="base">
+                    <s-text-field
+                      label="优惠码"
+                      name={`couponCode${index}`}
+                      defaultValue={prize.couponCode}
+                    />
                     <s-text-field
                       label="转盘文案"
                       name={`label${index}`}
@@ -121,7 +120,7 @@ export default function LuckyWheelSettingsPage() {
                 </div>
               ))}
               <s-text tone="subdued">
-                转盘固定 6 个扇区，3 个奖励各出现两次。概率按奖励计算，不按扇区平分。默认 Extra 2% OFF 60%、Extra 3% OFF 30%、Extra 5% OFF 10%。折扣码可与商品折扣、订单折扣和运费折扣叠加，对方活动也要允许叠加。
+                转盘固定 6 个扇区，3 个奖励各出现两次。概率按奖励计算。默认 BFEXTRA2 60%、BFEXTRA3 30%、BFEXTRA5 10%。这些码所有顾客都能用，每个邮箱只能抽一次，抽奖时不会新建折扣。
               </s-text>
             </s-stack>
           </s-section>
@@ -139,7 +138,7 @@ export default function LuckyWheelSettingsPage() {
 
         <s-section heading="前台接入">
           <s-paragraph>
-            部署应用后，在主题编辑器打开页面模板，点「添加分区」，在「应用」里选择 Lucky Wheel。左边上传转盘图，点击图片打开抽奖弹框。每个邮箱只能抽一次，中奖后会创建仅该客户可用、限用 1 次的百分比折扣码。
+            部署应用后，在主题编辑器打开页面模板，点「添加分区」，在「应用」里选择 Lucky Wheel。每个邮箱只能抽一次。中奖后展示对应的固定优惠码，所有顾客都能在结账时使用。
           </s-paragraph>
           <s-paragraph>
             顾客抽过之后，这个页面右下角会显示圆点，点击可查看优惠码。
@@ -161,7 +160,7 @@ export default function LuckyWheelSettingsPage() {
                 </thead>
                 <tbody>
                   {claims.map((claim) => (
-                    <tr key={claim.couponCode}>
+                    <tr key={`${claim.email}-${claim.createdAt}`}>
                       <td style={TD_STYLE}>{claim.email}</td>
                       <td style={TD_STYLE}>{claim.phone}</td>
                       <td style={TD_STYLE}>{claim.couponCode}</td>

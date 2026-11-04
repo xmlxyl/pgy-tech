@@ -152,16 +152,18 @@
     });
   }
 
+  function rewardPercent(claim) {
+    var number = Number(claim && claim.percentOff);
+    if (!Number.isFinite(number)) return "";
+    var rounded = Math.round(number * 100) / 100;
+    return String(rounded).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+  }
+
   function fillResult(root, claim) {
-    var amount = root.querySelector("[data-pgy-lw-amount]");
     var code = root.querySelector("[data-pgy-lw-code]");
-    var note = root.querySelector("[data-pgy-lw-note]");
-    if (amount) {
-      amount.textContent =
-        claim.label || "Extra " + (claim.percentOff || "") + "% OFF";
-    }
+    var reward = root.querySelector("[data-pgy-lw-reward]");
     if (code) code.textContent = claim.couponCode || "";
-    if (note && root.dataset.footnote) note.textContent = root.dataset.footnote;
+    if (reward) reward.textContent = "Your reward is " + rewardPercent(claim) + "% OFF";
   }
 
   function updateRoot(root) {
@@ -196,48 +198,69 @@
   }
 
   function anyOverlayOpen() {
-    return Boolean(document.querySelector("[data-pgy-lw-overlay]:not([hidden])"));
+    return Boolean(document.querySelector("[data-pgy-lw-overlay]:not([hidden]), [data-pgy-lw-terms-overlay]:not([hidden])"));
+  }
+
+  function releaseLock() {
+    if (!anyOverlayOpen()) document.documentElement.classList.remove("pgy-lw-lock");
   }
 
   function closeModal(root) {
     var overlay = root.querySelector("[data-pgy-lw-overlay]");
     if (overlay) overlay.hidden = true;
-    if (!anyOverlayOpen()) document.documentElement.classList.remove("pgy-lw-lock");
+    releaseLock();
   }
 
-  function showResultPanel(root, claim, fresh) {
+  function openTerms(root) {
+    var overlay = root.querySelector("[data-pgy-lw-terms-overlay]");
+    if (!overlay) return;
+    overlay.hidden = false;
+    document.documentElement.classList.add("pgy-lw-lock");
+    var close = overlay.querySelector("[data-pgy-lw-terms-close]");
+    if (close) window.setTimeout(function () { close.focus(); }, 30);
+  }
+
+  function closeTerms(root) {
+    var overlay = root.querySelector("[data-pgy-lw-terms-overlay]");
+    if (overlay) overlay.hidden = true;
+    releaseLock();
+  }
+
+  function setPlayedState(root, claimed) {
+    var played = root.querySelector("[data-pgy-lw-played]");
+    var email = root.querySelector("[data-pgy-lw-email]");
+    var code = root.querySelector("[data-pgy-lw-code]");
+    var submit = root.querySelector("[data-pgy-lw-submit]");
+    var copy = root.querySelector("[data-pgy-lw-copy]");
+    if (played) played.hidden = !claimed;
+    if (email) email.hidden = claimed;
+    if (code) code.hidden = !claimed;
+    if (submit) submit.hidden = claimed;
+    if (copy) copy.hidden = !claimed;
+    if (claimed) root.dataset.played = "true";
+    else delete root.dataset.played;
+  }
+
+  function showClaimedForm(root, claim) {
     fillResult(root, claim);
-    var title = root.querySelector("[data-pgy-lw-result-title]");
-    if (title) {
-      title.textContent = fresh
-        ? root.dataset.wonTitle || "You won"
-        : root.dataset.savedTitle || "Your coupon";
-    }
-    var form = root.querySelector('[data-pgy-lw-panel="form"]');
-    var result = root.querySelector('[data-pgy-lw-panel="result"]');
-    if (form) form.hidden = true;
-    if (result) result.hidden = false;
-  }
-
-  function showFormPanel(root) {
-    var form = root.querySelector('[data-pgy-lw-panel="form"]');
-    var result = root.querySelector('[data-pgy-lw-panel="result"]');
-    if (form) form.hidden = false;
-    if (result) result.hidden = true;
+    setPlayedState(root, true);
     showMessage(root.querySelector("[data-pgy-lw-message]"), "", false);
   }
 
-  function openModal(root, mode) {
+  function showFormPanel(root) {
+    setPlayedState(root, false);
+    showMessage(root.querySelector("[data-pgy-lw-message]"), "", false);
+  }
+
+  function openModal(root) {
     var overlay = root.querySelector("[data-pgy-lw-overlay]");
     if (!overlay) return;
     var claimed = Boolean(state.claim && state.claim.couponCode);
-    var asResult = mode === "result" || (mode !== "form" && claimed) || !root.querySelector("[data-pgy-lw-form]");
-    if (mode === "form" && !claimed) asResult = false;
-    if (asResult && claimed) showResultPanel(root, state.claim, false);
+    if (claimed) showClaimedForm(root, state.claim);
     else showFormPanel(root);
     overlay.hidden = false;
     document.documentElement.classList.add("pgy-lw-lock");
-    var focusTarget = asResult
+    var focusTarget = claimed
       ? root.querySelector("[data-pgy-lw-copy]")
       : root.querySelector("[data-pgy-lw-email]");
     if (focusTarget) window.setTimeout(function () { focusTarget.focus(); }, 30);
@@ -321,13 +344,13 @@
 
     root.querySelectorAll("[data-pgy-lw-open]").forEach(function (button) {
       button.addEventListener("click", function () {
-        openModal(root, state.claim && state.claim.couponCode ? "result" : "form");
+        openModal(root);
       });
     });
 
     root.querySelectorAll("[data-pgy-lw-dot]").forEach(function (button) {
       button.addEventListener("click", function () {
-        openModal(root, "result");
+        openModal(root);
       });
     });
 
@@ -337,10 +360,40 @@
       });
     });
 
+    root.querySelectorAll("[data-pgy-lw-terms]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        openTerms(root);
+      });
+    });
+
+    root.querySelectorAll("[data-pgy-lw-terms-close]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        closeTerms(root);
+      });
+    });
+
     var overlay = root.querySelector("[data-pgy-lw-overlay]");
     if (overlay) {
       overlay.addEventListener("click", function (event) {
         if (event.target === overlay) closeModal(root);
+      });
+    }
+
+    var termsOverlay = root.querySelector("[data-pgy-lw-terms-overlay]");
+    if (termsOverlay) {
+      termsOverlay.addEventListener("click", function (event) {
+        if (event.target === termsOverlay) closeTerms(root);
+      });
+    }
+
+    var hub = root.querySelector("[data-pgy-lw-hub]");
+    if (hub) {
+      hub.addEventListener("click", function () {
+        if (root.dataset.played === "true") return;
+        var spinForm = root.querySelector("[data-pgy-lw-form]");
+        if (!spinForm || spinForm.hidden) return;
+        if (typeof spinForm.requestSubmit === "function") spinForm.requestSubmit();
+        else spinForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
       });
     }
 
@@ -365,27 +418,15 @@
   }
 
   function submitSpin(root, strings) {
-    if (root.dataset.spinning === "true") return;
+    if (root.dataset.played === "true" || root.dataset.spinning === "true") return;
     var message = root.querySelector("[data-pgy-lw-message]");
     var emailInput = root.querySelector("[data-pgy-lw-email]");
-    var phoneInput = root.querySelector("[data-pgy-lw-phone]");
-    var agreeInput = root.querySelector("[data-pgy-lw-agree]");
     var submit = root.querySelector("[data-pgy-lw-submit]");
     var email = emailInput ? emailInput.value.trim() : "";
-    var phone = phoneInput ? phoneInput.value.trim() : "";
 
     if (!EMAIL_PATTERN.test(email)) {
       showMessage(message, strings.invalid, true);
       if (emailInput) emailInput.focus();
-      return;
-    }
-    if (!phoneLooksValid(phone)) {
-      showMessage(message, strings.phone, true);
-      if (phoneInput) phoneInput.focus();
-      return;
-    }
-    if (agreeInput && !agreeInput.checked) {
-      showMessage(message, strings.agree, true);
       return;
     }
     if (root.dataset.designMode === "true") {
@@ -409,8 +450,6 @@
       },
       body: JSON.stringify({
         email: email,
-        phone: phone,
-        agreed: true,
       }),
     })
       .then(function (response) {
@@ -428,14 +467,14 @@
         if (data.alreadyClaimed) {
           root.dataset.spinning = "false";
           setClaim(data.claim);
-          if (overlay && !overlay.hidden) showResultPanel(root, data.claim, false);
+          if (overlay && !overlay.hidden) showClaimedForm(root, data.claim);
           return null;
         }
         return animateWheel(rotor, Number(data.claim.sectorIndex) || 0).then(function () {
           root.dataset.spinning = "false";
           root.dataset.wheelCode = data.claim.couponCode;
           setClaim(data.claim);
-          if (overlay && !overlay.hidden) showResultPanel(root, data.claim, true);
+          if (overlay && !overlay.hidden) showClaimedForm(root, data.claim);
         });
       })
       .catch(function (error) {
@@ -443,6 +482,7 @@
         showMessage(message, error && error.message ? error.message : strings.error, true);
       })
       .then(function () {
+        if (root.dataset.played === "true") return;
         if (submit) {
           submit.disabled = false;
           submit.textContent = strings.spin;
@@ -525,6 +565,11 @@
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
     document.querySelectorAll("[data-pgy-lw]").forEach(function (root) {
+      var terms = root.querySelector("[data-pgy-lw-terms-overlay]");
+      if (terms && !terms.hidden) {
+        closeTerms(root);
+        return;
+      }
       var overlay = root.querySelector("[data-pgy-lw-overlay]");
       if (overlay && !overlay.hidden) closeModal(root);
     });
