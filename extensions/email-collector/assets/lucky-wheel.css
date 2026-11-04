@@ -15,7 +15,7 @@
 
 .pgy-lw__shell {
   width: 100%;
-  max-width: 1600px;
+  max-width: 1200px;
   margin-inline: auto;
 }
 
@@ -268,7 +268,7 @@
 
 .pgy-lw__terms {
   position: relative;
-  width: min(760px, calc(100vw - 32px));
+  width: min(760px, 100%);
   max-height: min(82vh, 720px);
   overflow: auto;
   padding: clamp(28px, 3vw, 42px) clamp(24px, 3vw, 36px) clamp(22px, 3vw, 28px);
@@ -357,7 +357,7 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(280px, 440px) minmax(280px, 1fr);
-  width: min(980px, calc(100vw - 32px));
+  width: min(980px, 100%);
   max-height: calc(100vh - 32px);
   overflow: hidden;
   border-radius: 28px;
@@ -378,7 +378,7 @@
 
 .pgy-lw__modal--coupon {
   grid-template-columns: 1fr;
-  width: min(460px, calc(100vw - 32px));
+  width: min(460px, 100%);
 }
 
 .pgy-lw__modal-wheel {
@@ -632,8 +632,8 @@
 .pgy-lw__dot {
   position: fixed;
   z-index: 99990;
-  right: 22px;
-  bottom: 100px;
+  right: 16px;
+  bottom: 150px;
   display: grid;
   place-items: center;
   width: 40px;
@@ -678,9 +678,14 @@ html.pgy-lw-lock .pgy-lw__dot {
   overflow: visible;
 }
 
-html.pgy-lw-lock,
-html.pgy-lw-lock body {
+html.pgy-lw-lock {
   overflow: hidden;
+}
+
+html.pgy-lw-lock body {
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-right: var(--pgy-lw-scrollbar, 0px);
 }
 
 @keyframes pgy-lw-pulse {

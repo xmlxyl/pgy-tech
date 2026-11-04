@@ -267,8 +267,20 @@
     return Boolean(document.querySelector("[data-pgy-lw-overlay]:not([hidden]), [data-pgy-lw-terms-overlay]:not([hidden])"));
   }
 
+  function lockPage() {
+    var root = document.documentElement;
+    if (!root.classList.contains("pgy-lw-lock")) {
+      var gap = Math.max(0, window.innerWidth - root.clientWidth);
+      if (gap > 0) root.style.setProperty("--pgy-lw-scrollbar", gap + "px");
+    }
+    root.classList.add("pgy-lw-lock");
+  }
+
   function releaseLock() {
-    if (!anyOverlayOpen()) document.documentElement.classList.remove("pgy-lw-lock");
+    if (anyOverlayOpen()) return;
+    var root = document.documentElement;
+    root.classList.remove("pgy-lw-lock");
+    root.style.removeProperty("--pgy-lw-scrollbar");
   }
 
   function motionReduced() {
@@ -331,7 +343,7 @@
     var overlay = root.querySelector("[data-pgy-lw-terms-overlay]");
     if (!overlay) return;
     openOverlay(overlay);
-    document.documentElement.classList.add("pgy-lw-lock");
+    lockPage();
     var close = overlay.querySelector("[data-pgy-lw-terms-close]");
     if (close) window.setTimeout(function () { close.focus(); }, 30);
   }
@@ -378,7 +390,7 @@
     if (claimed) showClaimedForm(root, state.claim, true);
     else showFormPanel(root);
     openOverlay(overlay);
-    document.documentElement.classList.add("pgy-lw-lock");
+    lockPage();
     var focusTarget = claimed
       ? root.querySelector("[data-pgy-lw-copy]")
       : root.querySelector("[data-pgy-lw-email]");
