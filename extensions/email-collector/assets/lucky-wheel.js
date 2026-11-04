@@ -340,14 +340,18 @@
     closeOverlay(root.querySelector("[data-pgy-lw-terms-overlay]"), releaseLock);
   }
 
-  function setPlayedState(root, claimed) {
+  function setPlayedState(root, claimed, showPlayedCopy) {
     var played = root.querySelector("[data-pgy-lw-played]");
     var email = root.querySelector("[data-pgy-lw-email]");
     var code = root.querySelector("[data-pgy-lw-code]");
     var submit = root.querySelector("[data-pgy-lw-submit]");
     var copy = root.querySelector("[data-pgy-lw-copy]");
-    if (played) played.hidden = !claimed;
-    if (email) email.hidden = claimed;
+    if (played) played.hidden = !(claimed && showPlayedCopy);
+    if (email) {
+      email.hidden = claimed;
+      email.disabled = claimed;
+      email.readOnly = claimed;
+    }
     if (code) code.hidden = !claimed;
     if (submit) submit.hidden = claimed;
     if (copy) copy.hidden = !claimed;
@@ -355,9 +359,9 @@
     else delete root.dataset.played;
   }
 
-  function showClaimedForm(root, claim) {
+  function showClaimedForm(root, claim, showPlayedCopy) {
     fillResult(root, claim);
-    setPlayedState(root, true);
+    setPlayedState(root, true, Boolean(showPlayedCopy));
     if (root.dataset.spinning !== "true") alignWheel(root, claim, false);
     showMessage(root.querySelector("[data-pgy-lw-message]"), "", false);
   }
@@ -371,7 +375,7 @@
     var overlay = root.querySelector("[data-pgy-lw-overlay]");
     if (!overlay) return;
     var claimed = Boolean(state.claim && state.claim.couponCode);
-    if (claimed) showClaimedForm(root, state.claim);
+    if (claimed) showClaimedForm(root, state.claim, true);
     else showFormPanel(root);
     openOverlay(overlay);
     document.documentElement.classList.add("pgy-lw-lock");
@@ -593,7 +597,7 @@
           root.dataset.spinning = "false";
           root.dataset.wheelCode = fixedCouponCode(data.claim);
           setClaim(data.claim);
-          if (overlay && !overlay.hidden) showClaimedForm(root, data.claim);
+          if (overlay && !overlay.hidden) showClaimedForm(root, data.claim, false);
         });
       })
       .catch(function (error) {

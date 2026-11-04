@@ -128,6 +128,7 @@
   margin-top: 10px;
   font-size: clamp(15px, 1.55vw, 28px);
   line-height: 1.35;
+  font-weight: 400;
 }
 
 .pgy-lw__title {
@@ -632,11 +633,11 @@
   position: fixed;
   z-index: 99990;
   right: 22px;
-  bottom: var(--pgy-lw-dot-bottom, 24px);
+  bottom: 100px;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 40px;
+  height: 40px;
   border: 3px solid #fff;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffc44d, #f08c00 62%, #d87400);
@@ -742,8 +743,6 @@ html.pgy-lw-lock body {
   }
 
   .pgy-lw__dot {
-    width: 56px;
-    height: 56px;
     right: 14px;
   }
 }
