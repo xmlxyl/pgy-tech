@@ -93,6 +93,10 @@
 >
   <section class="pgy-lw__banner" aria-labelledby="pgy-lw-title-{{ block.id }}">
     <div class="pgy-lw__banner-grid">
+      <div class="pgy-lw__lead">
+        <p class="pgy-lw__lead-title">SPIN TO WIN</p>
+        <p class="pgy-lw__lead-sub">Sign up, Spin to win, and unlock your exclusive 24-hour head start on Black Friday.</p>
+      </div>
       <button type="button" class="pgy-lw__play" data-pgy-lw-open aria-label="{{ play_label | escape }}">
         <img
           src="{{ hero_image }}"
@@ -108,10 +112,10 @@
         <div class="pgy-lw__how">
           <h3 class="pgy-lw__how-title">{{ how_heading }}</h3>
           <ol class="pgy-lw__steps">
-            <li>{{ step_1 }}</li>
-            <li>{{ step_2 }}</li>
-            <li>{{ step_3 }}</li>
-            <li>{{ step_4 }}</li>
+            <li>1.{{ step_1 }}</li>
+            <li>2.{{ step_2 }}</li>
+            <li>3.{{ step_3 }}</li>
+            <li>4.{{ step_4 }}</li>
           </ol>
         </div>
         <button type="button" class="pgy-lw__terms-btn" data-pgy-lw-terms>

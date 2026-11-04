@@ -5,6 +5,11 @@ import { saveEmailForShop, validateEmail } from "./saved-email.server";
 const PDT_OFFSET_MINUTES = -7 * 60;
 const PRIZE_COUNT = 3;
 const SECTOR_COUNT = 6;
+const FIXED_COUPON_CODES = {
+  2: "BFEXTRA2",
+  3: "BFEXTRA3",
+  5: "BFEXTRA5",
+};
 
 /** Default window: Nov 18 00:00:00 through Dec 31 23:59:59 (PDT). */
 export function defaultLuckyWheelValidity() {
@@ -285,7 +290,7 @@ async function spinWheel(request) {
     );
   }
 
-  const drawn = drawSector(setting.prizes);
+  const drawn = drawFixedPrize(setting.prizes);
   if (!drawn) {
     return Response.json(
       { ok: false, error: "Prize setup is invalid. Please contact the store." },
@@ -293,7 +298,7 @@ async function spinWheel(request) {
     );
   }
 
-  const couponCode = drawn.prize.couponCode;
+  const couponCode = couponCodeForPercent(drawn.prize.percentOff) || drawn.prize.couponCode;
   if (!couponCode) {
     return Response.json(
       { ok: false, error: "This prize is not available right now." },
@@ -352,6 +357,23 @@ async function spinWheel(request) {
  * Probability is per prize, then one of the two matching sectors is chosen.
  * @param {Array<{ percentOff: number, probability: number, label: string }>} prizes
  */
+export function drawFixedPrize(prizes) {
+  const fixed = defaultLuckyWheelPrizes();
+  const configured = normalizePrizes(prizes);
+  const pool = fixed.map((item, index) => ({
+    percentOff: item.percentOff,
+    couponCode: item.couponCode,
+    label: item.label,
+    probability: configured[index]?.probability ?? item.probability,
+  }));
+  const prize = drawPrize(pool);
+  if (!prize) return null;
+  const prizeIndex = pool.indexOf(prize);
+  const sectorBase = [1, 0, 2][prizeIndex] ?? 0;
+  const sectorIndex = (sectorBase + (Math.random() < 0.5 ? 0 : PRIZE_COUNT)) % SECTOR_COUNT;
+  return { prize, sectorIndex };
+}
+
 export function drawSector(prizes) {
   const normalized = normalizePrizes(prizes);
   const prize = drawPrize(normalized);
@@ -397,13 +419,27 @@ async function findClaimByEmail(shop, email) {
 }
 
 /** @param {unknown} claim */
+function couponCodeForPercent(percentOff) {
+  const key = Math.round(Number(percentOff));
+  return FIXED_COUPON_CODES[key] || "";
+}
+
+function sectorForPercent(percentOff) {
+  const key = Math.round(Number(percentOff));
+  if (key === 2) return 1;
+  if (key === 3) return 0;
+  if (key === 5) return 2;
+  return 0;
+}
+
 function serializeClaim(claim) {
+  const percentOff = Number(claim.percentOff);
   return {
     email: claim.email,
-    couponCode: claim.couponCode,
-    percentOff: Number(claim.percentOff),
+    couponCode: couponCodeForPercent(percentOff) || claim.couponCode,
+    percentOff,
     label: claim.label,
-    sectorIndex: Number(claim.sectorIndex) || 0,
+    sectorIndex: sectorForPercent(percentOff),
     createdAt: claim.createdAt?.toISOString?.() || null,
   };
 }

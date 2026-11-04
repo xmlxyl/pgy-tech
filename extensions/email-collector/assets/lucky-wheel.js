@@ -18,12 +18,33 @@
     return "pgy-lucky-wheel:" + shop;
   }
 
+  function rewardPercentNumber(claim) {
+    return Math.round(Number(claim && claim.percentOff));
+  }
+
+  function fixedCouponCode(claim) {
+    var percent = rewardPercentNumber(claim);
+    if (percent === 2) return "BFEXTRA2";
+    if (percent === 3) return "BFEXTRA3";
+    if (percent === 5) return "BFEXTRA5";
+    return (claim && claim.couponCode) || "";
+  }
+
+  function sectorForReward(claim) {
+    var percent = rewardPercentNumber(claim);
+    if (percent === 2) return 1;
+    if (percent === 3) return 0;
+    if (percent === 5) return 2;
+    return 0;
+  }
+
   function readStoredClaim() {
     try {
       var raw = window.localStorage.getItem(storageKey());
       if (!raw) return null;
       var data = JSON.parse(raw);
       if (!data || !data.couponCode) return null;
+      data.couponCode = fixedCouponCode(data);
       return data;
     } catch (error) {
       return null;
@@ -36,10 +57,10 @@
         storageKey(),
         JSON.stringify({
           email: claim.email || "",
-          couponCode: claim.couponCode,
+          couponCode: fixedCouponCode(claim),
           percentOff: claim.percentOff,
           label: claim.label,
-          sectorIndex: Number(claim.sectorIndex) || 0,
+          sectorIndex: sectorForReward(claim),
         }),
       );
     } catch (error) {
@@ -112,17 +133,55 @@
     return Number.isFinite(value) ? value : 0;
   }
 
+  function prizeAngle(sectorIndex) {
+    return -Number(sectorIndex || 0) * 60;
+  }
+
   function placeWheel(rotor, sectorIndex, animate) {
-    var next = animate ? spinAngle(currentAngle(rotor), sectorIndex) : -sectorIndex * 60;
+    var landed = prizeAngle(sectorIndex);
+    var next = landed;
     if (animate) {
+      var current = currentAngle(rotor);
+      next = current - 360 * 5;
+      var extra = normalizeDeg(normalizeDeg(next) - normalizeDeg(landed));
+      next -= extra;
       rotor.style.transition = "transform 4.6s cubic-bezier(0.12, 0.72, 0.08, 1)";
       if (rotor.getBoundingClientRect) rotor.getBoundingClientRect();
     } else {
       rotor.style.transition = "none";
     }
     rotor.dataset.angle = String(next);
+    rotor.dataset.sector = String(sectorIndex);
     rotor.style.transform = "rotate(" + next + "deg)";
     return next;
+  }
+
+  function readRotation(rotor) {
+    var transform = window.getComputedStyle(rotor).transform;
+    if (!transform || transform === "none") return currentAngle(rotor);
+    var values = transform.match(/matrix\(([^)]+)\)/);
+    if (!values) return currentAngle(rotor);
+    var parts = values[1].split(",");
+    var radians = Math.atan2(parseFloat(parts[1]), parseFloat(parts[0]));
+    if (!Number.isFinite(radians)) return currentAngle(rotor);
+    return (radians * 180) / Math.PI;
+  }
+
+  function startIdleSpin(rotor) {
+    if (!rotor) return;
+    rotor.classList.add("is-spinning");
+  }
+
+  function stopIdleSpin(rotor) {
+    if (!rotor) return;
+    var angle = readRotation(rotor);
+    rotor.classList.remove("is-spinning");
+    rotor.style.animation = "none";
+    rotor.style.transition = "none";
+    rotor.style.transform = "rotate(" + angle + "deg)";
+    rotor.dataset.angle = String(angle);
+    if (rotor.getBoundingClientRect) rotor.getBoundingClientRect();
+    rotor.style.animation = "";
   }
 
   function animateWheel(rotor, sectorIndex) {
@@ -162,7 +221,7 @@
   function fillResult(root, claim) {
     var code = root.querySelector("[data-pgy-lw-code]");
     var reward = root.querySelector("[data-pgy-lw-reward]");
-    if (code) code.textContent = claim.couponCode || "";
+    if (code) code.textContent = fixedCouponCode(claim);
     if (reward) reward.textContent = "Your reward is " + rewardPercent(claim) + "% OFF";
   }
 
@@ -175,11 +234,18 @@
     if (!claim || !claim.couponCode) return;
     fillResult(root, claim);
     if (root.dataset.spinning === "true") return;
+    alignWheel(root, claim, false);
+  }
+
+  function alignWheel(root, claim, animate) {
     var rotor = root.querySelector("[data-pgy-lw-rotor]");
-    if (rotor && root.dataset.wheelCode !== claim.couponCode) {
-      placeWheel(rotor, Number(claim.sectorIndex) || 0, false);
-      root.dataset.wheelCode = claim.couponCode;
+    if (!rotor || !claim) return;
+    var sector = sectorForReward(claim);
+    if (!animate && rotor.dataset.sector === String(sector) && root.dataset.spinning !== "true") {
+      return;
     }
+    placeWheel(rotor, sector, animate);
+    root.dataset.wheelCode = fixedCouponCode(claim);
   }
 
   function setClaim(claim) {
@@ -244,6 +310,7 @@
   function showClaimedForm(root, claim) {
     fillResult(root, claim);
     setPlayedState(root, true);
+    if (root.dataset.spinning !== "true") alignWheel(root, claim, false);
     showMessage(root.querySelector("[data-pgy-lw-message]"), "", false);
   }
 
@@ -440,6 +507,8 @@
       submit.textContent = strings.spinning;
     }
     showMessage(message, "", false);
+    var rotor = root.querySelector("[data-pgy-lw-rotor]");
+    startIdleSpin(rotor);
 
     var proxyUrl = root.dataset.proxyUrl || "/apps/pgy-tech/lucky-wheel";
     window.fetch(proxyUrl, {
@@ -462,23 +531,20 @@
         if (!data || !data.ok || !data.claim) {
           throw new Error((data && data.error) || strings.error);
         }
-        var rotor = root.querySelector("[data-pgy-lw-rotor]");
         var overlay = root.querySelector("[data-pgy-lw-overlay]");
-        if (data.alreadyClaimed) {
+        stopIdleSpin(rotor);
+        var sector = sectorForReward(data.claim);
+        return animateWheel(rotor, sector).then(function () {
+          placeWheel(rotor, sector, false);
           root.dataset.spinning = "false";
-          setClaim(data.claim);
-          if (overlay && !overlay.hidden) showClaimedForm(root, data.claim);
-          return null;
-        }
-        return animateWheel(rotor, Number(data.claim.sectorIndex) || 0).then(function () {
-          root.dataset.spinning = "false";
-          root.dataset.wheelCode = data.claim.couponCode;
+          root.dataset.wheelCode = fixedCouponCode(data.claim);
           setClaim(data.claim);
           if (overlay && !overlay.hidden) showClaimedForm(root, data.claim);
         });
       })
       .catch(function (error) {
         root.dataset.spinning = "false";
+        stopIdleSpin(rotor);
         showMessage(message, error && error.message ? error.message : strings.error, true);
       })
       .then(function () {
@@ -521,34 +587,27 @@
     });
 
     var stored = readStoredClaim();
-    var initial = stored;
-    if (customerEmail) {
-      initial =
-        stored &&
-        stored.email &&
-        stored.email.toLowerCase() === customerEmail.toLowerCase()
-          ? stored
-          : null;
+    var loggedIn = Boolean(customerEmail);
+    var storedMatches =
+      stored &&
+      stored.couponCode &&
+      (!loggedIn ||
+        (stored.email && stored.email.toLowerCase() === customerEmail.toLowerCase()));
+
+    if (storedMatches) {
+      setClaim(stored);
+      return;
     }
-    if (initial) setClaim(initial);
-    if (designMode) return;
 
-    var emailForStatus = customerEmail || (stored && stored.email) || "";
-    if (!emailForStatus) return;
+    if (!loggedIn || designMode) return;
 
-    window.fetch(withQuery(proxyUrl, { action: "status", email: emailForStatus }), {
+    window.fetch(withQuery(proxyUrl, { action: "status", email: customerEmail }), {
       headers: { Accept: "application/json" },
     })
       .then(readJson)
       .then(function (data) {
         if (!data || !data.ok) return;
-        if (data.claimed && data.claim) {
-          setClaim(data.claim);
-          return;
-        }
-        var asked = emailForStatus.toLowerCase();
-        var storedEmail = stored && stored.email ? stored.email.toLowerCase() : "";
-        if (!storedEmail || storedEmail === asked) clearClaim();
+        if (data.claimed && data.claim) setClaim(data.claim);
       })
       .catch(function () {});
   }

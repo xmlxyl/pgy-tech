@@ -67,6 +67,29 @@
   border-radius: 24px;
 }
 
+.pgy-lw__lead {
+  display: none;
+}
+
+.pgy-lw__lead-title,
+.pgy-lw__lead-sub {
+  margin: 0;
+  color: #e6c56a;
+  text-align: center;
+}
+
+.pgy-lw__lead-title {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.pgy-lw__lead-sub {
+  margin-top: 10px;
+  line-height: 1.35;
+}
+
 .pgy-lw__title {
   margin: 0 0 16px;
   color: var(--lw-ink);
@@ -90,7 +113,6 @@
 
 .pgy-lw__steps {
   margin: 0;
-  padding-left: 1.25em;
   display: grid;
   gap: 6px;
   color: #f7f1e8;
@@ -141,6 +163,10 @@
 
 .pgy-lw__rotor::before {
   content: none;
+}
+
+.pgy-lw__rotor.is-spinning {
+  animation: pgy-lw-spin 0.7s linear infinite;
 }
 
 .pgy-lw__rotor img {
@@ -581,6 +607,19 @@ html.pgy-lw-lock body {
     grid-template-columns: 1fr;
   }
 
+  .pgy-lw__lead {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .pgy-lw__lead-title {
+    font-size: clamp(32px, 3.05vw, 55px);
+  }
+
+  .pgy-lw__lead-sub {
+    font-size: clamp(15px, 1.55vw, 28px);
+  }
+
   .pgy-lw__modal-wheel {
     padding: 28px 16px 8px;
   }
@@ -609,6 +648,15 @@ html.pgy-lw-lock body {
     width: 56px;
     height: 56px;
     right: 14px;
+  }
+}
+
+@keyframes pgy-lw-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
   }
 }
 
