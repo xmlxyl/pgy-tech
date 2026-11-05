@@ -1,59 +1,47 @@
 {% liquid
-  assign heading = block.settings.heading
-  if heading == blank
-    assign heading = 'Lucky Wheel — 100% Win Rate!'
+  assign heading = 'lucky_wheel.heading' | t
+  if block.settings.heading != blank and block.settings.heading != 'Lucky Wheel — 100% Win Rate!'
+    assign heading = block.settings.heading
   endif
-  assign how_heading = block.settings.how_heading
-  if how_heading == blank
-    assign how_heading = 'How It Works:'
+  assign how_heading = 'lucky_wheel.how_heading' | t
+  if block.settings.how_heading != blank and block.settings.how_heading != 'How It Works:'
+    assign how_heading = block.settings.how_heading
   endif
-  assign step_1 = block.settings.step_1
-  if step_1 == blank
-    assign step_1 = 'Click the “Play” button on the wheel.'
+  assign step_1 = 'lucky_wheel.step_1' | t
+  if block.settings.step_1 != blank and block.settings.step_1 != 'Click the “Play” button on the wheel.'
+    assign step_1 = block.settings.step_1
   endif
-  assign step_2 = block.settings.step_2
-  if step_2 == blank
-    assign step_2 = 'Enter your email to unlock your spin.'
+  assign step_2 = 'lucky_wheel.step_2' | t
+  if block.settings.step_2 != blank and block.settings.step_2 != 'Enter your email to unlock your spin.'
+    assign step_2 = block.settings.step_2
   endif
-  assign step_3 = block.settings.step_3
-  if step_3 == blank
-    assign step_3 = 'Spin the wheel to reveal your prizes.'
+  assign step_3 = 'lucky_wheel.step_3' | t
+  if block.settings.step_3 != blank and block.settings.step_3 != 'Spin the wheel to reveal your prizes.'
+    assign step_3 = block.settings.step_3
   endif
-  assign step_4 = block.settings.step_4
-  if step_4 == blank
-    assign step_4 = 'Discounts start November 18 and can be combined with Black Friday deals!'
+  assign step_4 = 'lucky_wheel.step_4' | t
+  if block.settings.step_4 != blank and block.settings.step_4 != 'Discounts start November 18 and can be combined with Black Friday deals!'
+    assign step_4 = block.settings.step_4
   endif
-  assign modal_title = block.settings.modal_title
-  if modal_title == blank or modal_title == 'Lucky Wheel — 100% Win Rate!'
-    assign modal_title = 'One Spin Per Person · Everyone Wins'
+  assign modal_title = 'lucky_wheel.modal_title' | t
+  if block.settings.modal_title != blank and block.settings.modal_title != 'One Spin Per Person · Everyone Wins' and block.settings.modal_title != 'Lucky Wheel — 100% Win Rate!'
+    assign modal_title = block.settings.modal_title
   endif
-  assign modal_sub = block.settings.modal_sub
-  if modal_sub == blank or modal_sub == 'Enter your email to unlock your spin.'
-    assign modal_sub = 'Sign up and spin to get your early-access link by email on November 18, and shop Black Friday deals 24 hours early.'
+  assign modal_sub = 'lucky_wheel.modal_sub' | t
+  if block.settings.modal_sub != blank and block.settings.modal_sub != 'Sign up and spin to get your early-access link by email on November 18, and shop Black Friday deals 24 hours early.' and block.settings.modal_sub != 'Enter your email to unlock your spin.'
+    assign modal_sub = block.settings.modal_sub
   endif
-  assign spin_label = block.settings.spin_label
-  if spin_label == blank
-    assign spin_label = 'SPIN TO WIN'
+  assign spin_label = 'lucky_wheel.spin' | t
+  if block.settings.spin_label != blank and block.settings.spin_label != 'SPIN TO WIN'
+    assign spin_label = block.settings.spin_label
   endif
-  assign footnote = block.settings.footnote
-  if footnote == blank
-    assign footnote = 'Discounts start November 18 and can be combined with Black Friday deals!'
+  assign footnote = 'lucky_wheel.step_4' | t
+  if block.settings.footnote != blank and block.settings.footnote != 'Discounts start November 18 and can be combined with Black Friday deals!'
+    assign footnote = block.settings.footnote
   endif
-  assign prize_1 = block.settings.prize_1_label
-  if prize_1 == blank
-    assign prize_1 = 'Extra 2% OFF'
-  endif
-  assign prize_2 = block.settings.prize_2_label
-  if prize_2 == blank
-    assign prize_2 = 'Extra 3% OFF'
-  endif
-  assign prize_3 = block.settings.prize_3_label
-  if prize_3 == blank
-    assign prize_3 = 'Extra 5% OFF'
-  endif
-  assign play_label = block.settings.play_label
-  if play_label == blank
-    assign play_label = 'Play'
+  assign play_label = 'lucky_wheel.play' | t
+  if block.settings.play_label != blank and block.settings.play_label != 'Play'
+    assign play_label = block.settings.play_label
   endif
   assign customer_email = ''
   if customer and customer.email != blank
@@ -77,25 +65,22 @@
   data-proxy-url="{{ proxy_url }}"
   data-customer-email="{{ customer_email | escape }}"
   data-footnote="{{ footnote | escape }}"
-  data-won-title="You won"
-  data-saved-title="Your coupon"
   data-spin-label="{{ spin_label | escape }}"
-  data-spinning-label="SPINNING..."
-  data-msg-invalid="Please enter a valid email address."
-  data-msg-phone="Enter a valid phone number or leave it blank."
-  data-msg-agree="Please agree to receive emails to spin."
-  data-msg-error="Something went wrong. Please try again."
-  data-msg-preview="Please test on the live storefront. Theme editor preview does not support App Proxy."
-  data-msg-copied="Copied!"
-  data-msg-copy-fail="Copy failed. Please copy the code manually."
+  data-spinning-label="{{ 'lucky_wheel.spinning' | t | escape }}"
+  data-reward-template="{{ 'lucky_wheel.played_reward' | t | escape }}"
+  data-msg-invalid="{{ 'lucky_wheel.invalid' | t | escape }}"
+  data-msg-error="{{ 'lucky_wheel.error' | t | escape }}"
+  data-msg-preview="{{ 'lucky_wheel.preview' | t | escape }}"
+  data-msg-copied="{{ 'lucky_wheel.copied' | t | escape }}"
+  data-msg-copy-fail="{{ 'lucky_wheel.copy_fail' | t | escape }}"
   {% if request.design_mode %}data-design-mode="true"{% endif %}
   style="--pgy-lw-dot-bottom: {{ block.settings.dot_bottom | default: 24 }}px"
   {{ block.shopify_attributes }}
 >
   <div class="pgy-lw__shell">
     <div class="pgy-lw__lead">
-      <p class="pgy-lw__lead-title">SPIN TO WIN</p>
-      <p class="pgy-lw__lead-sub">Sign up, Spin to win, and unlock your exclusive 24-hour head start on Black Friday.</p>
+      <p class="pgy-lw__lead-title">{{ 'lucky_wheel.lead_title' | t }}</p>
+      <p class="pgy-lw__lead-sub">{{ 'lucky_wheel.lead_sub' | t }}</p>
     </div>
     <section class="pgy-lw__banner section-in-view" aria-labelledby="pgy-lw-title-{{ block.id }}">
     <img
@@ -128,7 +113,7 @@
           </ol>
         </div>
         <button type="button" class="pgy-lw__terms-btn" data-pgy-lw-terms>
-          Terms &amp; Conditions
+          {{ 'lucky_wheel.terms' | t }}
           <span aria-hidden="true">&gt;</span>
         </button>
       </div>
@@ -138,7 +123,7 @@
 
   <div class="pgy-lw__overlay" data-pgy-lw-overlay hidden>
     <div class="pgy-lw__modal" role="dialog" aria-modal="true" aria-label="{{ modal_title | escape }}">
-      <button type="button" class="pgy-lw__close" data-pgy-lw-close aria-label="Close">
+      <button type="button" class="pgy-lw__close" data-pgy-lw-close aria-label="{{ 'lucky_wheel.close' | t | escape }}">
         <span aria-hidden="true">&times;</span>
       </button>
       <div class="pgy-lw__modal-wheel">
@@ -158,17 +143,17 @@
           <p class="pgy-lw__modal-sub">{{ modal_sub }}</p>
           <form class="pgy-lw__form" data-pgy-lw-form novalidate>
             <p class="pgy-lw__played" data-pgy-lw-played hidden>
-              <span class="pgy-lw__played-title">You've Already Participated!</span>
-              <span data-pgy-lw-reward>Your reward is 2% OFF</span>
+              <span class="pgy-lw__played-title">{{ 'lucky_wheel.played_title' | t }}</span>
+              <span data-pgy-lw-reward>{{ 'lucky_wheel.played_reward' | t }}</span>
             </p>
-            <label class="pgy-lw__sr" for="pgy-lw-email-{{ block.id }}">Email</label>
+            <label class="pgy-lw__sr" for="pgy-lw-email-{{ block.id }}">{{ 'lucky_wheel.email' | t }}</label>
             <input
               id="pgy-lw-email-{{ block.id }}"
               class="pgy-lw__input"
               type="email"
               name="email"
               value="{{ customer_email | escape }}"
-              placeholder="Enter your email*"
+              placeholder="{{ 'lucky_wheel.email_placeholder' | t | escape }}"
               autocomplete="email"
               inputmode="email"
               required
@@ -176,7 +161,7 @@
             >
             <p class="pgy-lw__code" data-pgy-lw-code hidden></p>
             <button type="submit" class="pgy-lw__submit" data-pgy-lw-submit>{{ spin_label }}</button>
-            <button type="button" class="pgy-lw__submit" data-pgy-lw-copy hidden>COPY</button>
+            <button type="button" class="pgy-lw__submit" data-pgy-lw-copy hidden>{{ 'lucky_wheel.copy' | t }}</button>
             <p class="pgy-lw__message" data-pgy-lw-message data-pgy-lw-copy-message hidden></p>
           </form>
         </div>
@@ -186,28 +171,28 @@
 
   <div class="pgy-lw__overlay pgy-lw__overlay--terms" data-pgy-lw-terms-overlay hidden>
     <div class="pgy-lw__terms" role="dialog" aria-modal="true" aria-labelledby="pgy-lw-terms-title-{{ block.id }}">
-      <button type="button" class="pgy-lw__close" data-pgy-lw-terms-close aria-label="Close">
+      <button type="button" class="pgy-lw__close" data-pgy-lw-terms-close aria-label="{{ 'lucky_wheel.close' | t | escape }}">
         <span aria-hidden="true">&times;</span>
       </button>
-      <h2 id="pgy-lw-terms-title-{{ block.id }}" class="pgy-lw__sr">Terms &amp; Conditions</h2>
+      <h2 id="pgy-lw-terms-title-{{ block.id }}" class="pgy-lw__sr">{{ 'lucky_wheel.terms' | t }}</h2>
       <div class="pgy-lw__terms-body">
-        <h3>1. Guaranteed Reward</h3>
-        <p>Every eligible participant will win a reward from the Lucky Wheel. Rewards are assigned randomly.</p>
-        <h3>2. Minimum Spend</h3>
-        <p>Some rewards may require a minimum order value. Please check the conditions shown with your reward before placing your order.</p>
-        <h3>3. One Spin per Participant</h3>
-        <p>Each eligible customer may spin the wheel once during the promotion period. One reward is available per email address.</p>
-        <h3>4. Reward Validity &amp; Use</h3>
-        <p>All Lucky Wheel rewards are valid for redemption during the Black Friday sale starting November 19, 2026. Each reward is subject to its specific terms and cannot be combined with other spin rewards unless otherwise stated.</p>
-        <h3>5. Returns &amp; Order Changes</h3>
-        <p>If a return, cancellation, or order adjustment causes the order to fall below the required minimum spend, the reward may no longer apply. Any refund adjustment will be handled in accordance with the applicable refund policy.</p>
-        <h3>6. General Conditions</h3>
-        <p>PGYTECH reserves the right to amend or end this promotion where necessary due to misuse, technical problems, or other exceptional circumstances. All participants are subject to PGYTECH’s applicable promotional terms and conditions.</p>
+        <h3>{{ 'lucky_wheel.term_1_title' | t }}</h3>
+        <p>{{ 'lucky_wheel.term_1_body' | t }}</p>
+        <h3>{{ 'lucky_wheel.term_2_title' | t }}</h3>
+        <p>{{ 'lucky_wheel.term_2_body' | t }}</p>
+        <h3>{{ 'lucky_wheel.term_3_title' | t }}</h3>
+        <p>{{ 'lucky_wheel.term_3_body' | t }}</p>
+        <h3>{{ 'lucky_wheel.term_4_title' | t }}</h3>
+        <p>{{ 'lucky_wheel.term_4_body' | t }}</p>
+        <h3>{{ 'lucky_wheel.term_5_title' | t }}</h3>
+        <p>{{ 'lucky_wheel.term_5_body' | t }}</p>
+        <h3>{{ 'lucky_wheel.term_6_title' | t }}</h3>
+        <p>{{ 'lucky_wheel.term_6_body' | t }}</p>
       </div>
     </div>
   </div>
 
-  <button type="button" class="pgy-lw__dot" data-pgy-lw-dot hidden aria-label="View your coupon">
+  <button type="button" class="pgy-lw__dot" data-pgy-lw-dot hidden aria-label="{{ 'lucky_wheel.view_coupon' | t | escape }}">
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
       <rect x="3" y="11" width="18" height="10" rx="1.6" fill="#fff"></rect>
       <rect x="2" y="8" width="20" height="4.2" rx="1.2" fill="#fff6d8"></rect>
@@ -219,7 +204,7 @@
 
 {% schema %}
 {
-  "name": "Lucky Wheel",
+  "name": "t:lucky_wheel.schema.name",
   "target": "section",
   "stylesheet": "lucky-wheel.css",
   "javascript": "lucky-wheel.js",
@@ -227,100 +212,100 @@
     {
       "type": "image_picker",
       "id": "image",
-      "label": "Wheel image",
-      "info": "Shown on the left. Clicking it opens the spin popup. Leave empty to use the built-in wheel."
+      "label": "t:lucky_wheel.schema.image",
+      "info": "t:lucky_wheel.schema.image_info"
     },
     {
       "type": "text",
       "id": "play_label",
-      "label": "Play label",
+      "label": "t:lucky_wheel.schema.play_label",
       "default": "Play"
     },
     {
       "type": "text",
       "id": "heading",
-      "label": "Heading",
+      "label": "t:lucky_wheel.schema.heading",
       "default": "Lucky Wheel — 100% Win Rate!"
     },
     {
       "type": "text",
       "id": "how_heading",
-      "label": "How it works heading",
+      "label": "t:lucky_wheel.schema.how_heading",
       "default": "How It Works:"
     },
     {
       "type": "text",
       "id": "step_1",
-      "label": "Step 1",
+      "label": "t:lucky_wheel.schema.step_1",
       "default": "Click the “Play” button on the wheel."
     },
     {
       "type": "text",
       "id": "step_2",
-      "label": "Step 2",
+      "label": "t:lucky_wheel.schema.step_2",
       "default": "Enter your email to unlock your spin."
     },
     {
       "type": "text",
       "id": "step_3",
-      "label": "Step 3",
+      "label": "t:lucky_wheel.schema.step_3",
       "default": "Spin the wheel to reveal your prizes."
     },
     {
       "type": "textarea",
       "id": "step_4",
-      "label": "Step 4",
+      "label": "t:lucky_wheel.schema.step_4",
       "default": "Discounts start November 18 and can be combined with Black Friday deals!"
     },
     {
       "type": "header",
-      "content": "Popup"
+      "content": "t:lucky_wheel.schema.popup"
     },
     {
       "type": "text",
       "id": "modal_title",
-      "label": "Popup title",
+      "label": "t:lucky_wheel.schema.modal_title",
       "default": "One Spin Per Person · Everyone Wins"
     },
     {
       "type": "textarea",
       "id": "modal_sub",
-      "label": "Popup description",
+      "label": "t:lucky_wheel.schema.modal_sub",
       "default": "Sign up and spin to get your early-access link by email on November 18, and shop Black Friday deals 24 hours early."
     },
     {
       "type": "text",
       "id": "spin_label",
-      "label": "Spin button",
+      "label": "t:lucky_wheel.schema.spin_label",
       "default": "SPIN TO WIN"
     },
     {
       "type": "textarea",
       "id": "footnote",
-      "label": "Footnote",
+      "label": "t:lucky_wheel.schema.footnote",
       "default": "Discounts start November 18 and can be combined with Black Friday deals!"
     },
     {
       "type": "header",
-      "content": "Wheel labels"
+      "content": "t:lucky_wheel.schema.wheel_labels"
     },
     {
       "type": "text",
       "id": "prize_1_label",
-      "label": "Prize 1 label",
+      "label": "t:lucky_wheel.schema.prize_1",
       "default": "Extra 2% OFF",
-      "info": "Shown twice on the wheel. Odds and the real discount are set in the app admin."
+      "info": "t:lucky_wheel.schema.prize_1_info"
     },
     {
       "type": "text",
       "id": "prize_2_label",
-      "label": "Prize 2 label",
+      "label": "t:lucky_wheel.schema.prize_2",
       "default": "Extra 3% OFF"
     },
     {
       "type": "text",
       "id": "prize_3_label",
-      "label": "Prize 3 label",
+      "label": "t:lucky_wheel.schema.prize_3",
       "default": "Extra 5% OFF"
     },
     {
@@ -330,7 +315,7 @@
       "max": 160,
       "step": 4,
       "unit": "px",
-      "label": "Coupon dot distance from bottom",
+      "label": "t:lucky_wheel.schema.dot_bottom",
       "default": 100
     }
   ]

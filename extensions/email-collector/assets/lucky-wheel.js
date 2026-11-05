@@ -222,7 +222,10 @@
     var code = root.querySelector("[data-pgy-lw-code]");
     var reward = root.querySelector("[data-pgy-lw-reward]");
     if (code) code.textContent = fixedCouponCode(claim);
-    if (reward) reward.textContent = "Your reward is " + rewardPercent(claim) + "% OFF";
+    if (reward) {
+      var template = root.dataset.rewardTemplate || "Your reward is [[percent]]% OFF";
+      reward.textContent = template.replace("[[percent]]", rewardPercent(claim));
+    }
   }
 
   function updateRoot(root) {
