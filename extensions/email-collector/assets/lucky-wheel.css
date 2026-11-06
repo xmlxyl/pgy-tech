@@ -112,7 +112,7 @@
 .pgy-lw__lead-title,
 .pgy-lw__lead-sub {
   margin: 0;
-  color: #ffe8b0;
+  color: #fff2cc;
   text-align: center;
 }
 
@@ -745,6 +745,13 @@ html.pgy-lw-lock {
 }
 
 html.pgy-lw-lock body {
+  position: fixed;
+  top: var(--pgy-lw-lock-top, 0);
+  left: 0;
+  width: var(--pgy-lw-body-width, 100%);
+  max-width: var(--pgy-lw-body-width, 100%);
+  margin-right: 0 !important;
+  padding-right: 0 !important;
   overflow: hidden;
 }
 
@@ -784,11 +791,20 @@ html.pgy-lw-lock body {
   }
 
   .pgy-lw__modal-wheel {
-    padding: 28px 16px 8px;
+    padding: 0px 16px 0px;
   }
 
   .pgy-lw__modal-copy {
     padding: 18px 20px 24px;
+  }
+
+  .pgy-lw__modal-title {
+    font-size: clamp(18px, 3vw, 28px);
+  }
+
+  .pgy-lw__modal-sub,
+  .pgy-lw__played {
+    font-size: clamp(13px, 3.6vw, 16px);
   }
 
   .pgy-lw__disc,
@@ -804,24 +820,29 @@ html.pgy-lw-lock body {
   }
 
   .pgy-lw__code {
-    font-size: 20px;
+    font-size: clamp(16px, 3vw, 20px);
+    height: 40px;
   }
-
+  .pgy-lw__submit {
+    font-size: clamp(16px, 3vw, 20px);
+    height: 40px;
+  }
   button.pgy-lw__tab {
-    width: 40px;
-    min-width: 40px;
+    width: 30px;
+    min-width: 30px;
     padding: 5px 4px 7px;
     font-size: 13px;
+    border-radius: 0 10px 10px 0;
   }
 
   .pgy-lw__tab-stage {
-    width: 26px;
+    width: 22px;
     height: 26px;
   }
 
   button.pgy-lw__tab .pgy-lw__tab-label,
   button.pgy-lw__tab .pgy-lw__tab-label span {
-    font-size: 13px;
+    font-size: 10px;
   }
 }
 
