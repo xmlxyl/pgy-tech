@@ -1,0 +1,103 @@
+{% liquid
+  assign modal_title = 'lucky_wheel.modal_title' | t
+  assign modal_sub = 'lucky_wheel.modal_sub' | t
+  assign spin_label = 'lucky_wheel.spin' | t
+  assign play_label = 'lucky_wheel.play' | t
+  assign customer_email = ''
+  if customer and customer.email != blank
+    assign customer_email = customer.email
+  endif
+  assign proxy_url = '/apps/pgy-tech/lucky-wheel'
+  assign disc_image = 'lucky-wheel-disc.png' | asset_url
+  assign play_image = 'lucky-wheel-play.png' | asset_url
+  assign tab_wheel = 'lucky-wheel-tab.png' | asset_url
+%}
+
+<div
+  class="pgy-lw pgy-lw--embed"
+  data-pgy-lw
+  data-mode="embed"
+  data-proxy-url="{{ proxy_url }}"
+  data-customer-email="{{ customer_email | escape }}"
+  data-spin-label="{{ spin_label | escape }}"
+  data-spinning-label="{{ 'lucky_wheel.spinning' | t | escape }}"
+  data-reward-template="{{ 'lucky_wheel.played_reward' | t | escape }}"
+  data-msg-invalid="{{ 'lucky_wheel.invalid' | t | escape }}"
+  data-msg-error="{{ 'lucky_wheel.error' | t | escape }}"
+  data-msg-preview="{{ 'lucky_wheel.preview' | t | escape }}"
+  data-msg-copied="{{ 'lucky_wheel.copied' | t | escape }}"
+  data-msg-copy-fail="{{ 'lucky_wheel.copy_fail' | t | escape }}"
+  {% if request.design_mode %}data-design-mode="true"{% endif %}
+  {{ block.shopify_attributes }}
+>
+  <div class="pgy-lw__overlay" data-pgy-lw-overlay hidden>
+    <div class="pgy-lw__modal" role="dialog" aria-modal="true" aria-label="{{ modal_title | escape }}">
+      <button type="button" class="pgy-lw__close" data-pgy-lw-close aria-label="{{ 'lucky_wheel.close' | t | escape }}">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <div class="pgy-lw__modal-wheel">
+        <div class="pgy-lw__stage">
+          <div class="pgy-lw__rotor" data-pgy-lw-rotor>
+            <img src="{{ disc_image }}" alt="" width="760" height="760">
+          </div>
+          <button type="button" class="pgy-lw__hub" data-pgy-lw-hub aria-label="{{ play_label | escape }}">
+            <img src="{{ play_image }}" alt="">
+          </button>
+        </div>
+      </div>
+      <div class="pgy-lw__modal-copy">
+        <div class="pgy-lw__panel" data-pgy-lw-panel="form">
+          <h2 class="pgy-lw__modal-title">{{ modal_title }}</h2>
+          <p class="pgy-lw__modal-sub">{{ modal_sub }}</p>
+          <form class="pgy-lw__form" data-pgy-lw-form novalidate>
+            <p class="pgy-lw__played" data-pgy-lw-played hidden>
+              <span class="pgy-lw__played-title">{{ 'lucky_wheel.played_title' | t }}</span>
+              <span data-pgy-lw-reward>{{ 'lucky_wheel.played_reward' | t }}</span>
+            </p>
+            <label class="pgy-lw__sr" for="pgy-lw-embed-email-{{ block.id }}">{{ 'lucky_wheel.email' | t }}</label>
+            <input
+              id="pgy-lw-embed-email-{{ block.id }}"
+              class="pgy-lw__input"
+              type="email"
+              name="email"
+              value="{{ customer_email | escape }}"
+              placeholder="{{ 'lucky_wheel.email_placeholder' | t | escape }}"
+              autocomplete="email"
+              inputmode="email"
+              required
+              data-pgy-lw-email
+            >
+            <p class="pgy-lw__code" data-pgy-lw-code hidden></p>
+            <button type="submit" class="pgy-lw__submit" data-pgy-lw-submit>{{ spin_label }}</button>
+            <button type="button" class="pgy-lw__submit" data-pgy-lw-copy hidden>{{ 'lucky_wheel.copy' | t }}</button>
+            <p class="pgy-lw__message" data-pgy-lw-message data-pgy-lw-copy-message hidden></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="pgy-lw__tab" data-pgy-lw-tab data-pgy-lw-open aria-label="Black Friday">
+    <span class="pgy-lw__tab-stage">
+      <span class="pgy-lw__tab-wheel">
+        <img src="{{ tab_wheel }}" alt="" width="82" height="82">
+      </span>
+    </span>
+    <span class="pgy-lw__tab-label"><span>Black</span><span>Friday</span></span>
+  </button>
+</div>
+
+{% schema %}
+{
+  "name": "Lucky Wheel",
+  "target": "body",
+  "stylesheet": "lucky-wheel.css",
+  "javascript": "lucky-wheel.js",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Shows the Black Friday wheel tab on every page. Clicking it opens the email spin popup."
+    }
+  ]
+}
+{% endschema %}

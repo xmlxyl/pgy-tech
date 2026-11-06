@@ -230,10 +230,6 @@
 
   function updateRoot(root) {
     var claim = state.claim;
-    var dot = root.querySelector("[data-pgy-lw-dot]");
-    if (dot) {
-      dot.hidden = !(root.dataset.showDot === "true" && claim && claim.couponCode);
-    }
     if (!claim || !claim.couponCode) return;
     fillResult(root, claim);
     if (root.dataset.spinning === "true") return;
@@ -271,19 +267,12 @@
   }
 
   function lockPage() {
-    var root = document.documentElement;
-    if (!root.classList.contains("pgy-lw-lock")) {
-      var gap = Math.max(0, window.innerWidth - root.clientWidth);
-      if (gap > 0) root.style.setProperty("--pgy-lw-scrollbar", gap + "px");
-    }
-    root.classList.add("pgy-lw-lock");
+    document.documentElement.classList.add("pgy-lw-lock");
   }
 
   function releaseLock() {
     if (anyOverlayOpen()) return;
-    var root = document.documentElement;
-    root.classList.remove("pgy-lw-lock");
-    root.style.removeProperty("--pgy-lw-scrollbar");
+    document.documentElement.classList.remove("pgy-lw-lock");
   }
 
   function motionReduced() {
@@ -488,12 +477,6 @@
       });
     });
 
-    root.querySelectorAll("[data-pgy-lw-dot]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        openModal(root);
-      });
-    });
-
     root.querySelectorAll("[data-pgy-lw-close]").forEach(function (button) {
       button.addEventListener("click", function () {
         closeModal(root);
@@ -629,21 +612,18 @@
       });
   }
 
-  function assignDots(roots) {
-    var hasEmbed = false;
-    roots.forEach(function (root) {
-      if (root.dataset.mode === "embed") hasEmbed = true;
+  function mountTab(roots) {
+    var onActivityPage = roots.some(function (root) {
+      return root.dataset.mode === "block";
     });
-    var dotAssigned = false;
+    var tab = null;
     roots.forEach(function (root) {
-      var show = false;
-      if (root.dataset.mode === "embed") show = true;
-      else if (!hasEmbed && !dotAssigned) {
-        show = true;
-        dotAssigned = true;
-      }
-      root.dataset.showDot = show ? "true" : "false";
+      root.querySelectorAll("[data-pgy-lw-tab]").forEach(function (node) {
+        if (onActivityPage || tab) node.remove();
+        else tab = node;
+      });
     });
+    if (tab && tab.parentNode !== document.body) document.body.appendChild(tab);
   }
 
   function ensureStatus(roots) {
@@ -681,8 +661,8 @@
   function boot() {
     var roots = Array.prototype.slice.call(document.querySelectorAll("[data-pgy-lw]"));
     if (!roots.length) return;
-    assignDots(roots);
     roots.forEach(bindRoot);
+    mountTab(roots);
     roots.forEach(updateRoot);
     ensureStatus(roots);
   }
