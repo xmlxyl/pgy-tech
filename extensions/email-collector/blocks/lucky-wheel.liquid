@@ -54,6 +54,7 @@
   endif
   assign disc_image = 'lucky-wheel-disc.png' | asset_url
   assign play_image = 'lucky-wheel-play.png' | asset_url
+  assign pointer_image = 'lucky-wheel-pointer.png' | asset_url
   assign banner_image = 'lucky-wheel-banner-bg.png' | asset_url
 %}
 
@@ -127,6 +128,7 @@
       </button>
       <div class="pgy-lw__modal-wheel">
         <div class="pgy-lw__stage">
+          <img class="pgy-lw__pointer-img" src="{{ pointer_image }}" alt="" width="120" height="90">
           <div class="pgy-lw__rotor" data-pgy-lw-rotor>
             <img src="{{ disc_image }}" alt="" width="760" height="760">
           </div>

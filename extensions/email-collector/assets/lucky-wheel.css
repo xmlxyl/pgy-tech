@@ -228,6 +228,17 @@
   object-fit: contain;
 }
 
+.pgy-lw__pointer-img {
+  position: absolute;
+  z-index: 5;
+  left: 1%;
+  top: 50%;
+  width: 15%;
+  height: auto;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 .pgy-lw__hub {
   position: absolute;
   z-index: 4;

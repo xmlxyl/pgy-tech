@@ -558,13 +558,9 @@
     }
 
     root.dataset.spinning = "true";
-    if (submit) {
-      submit.disabled = true;
-      submit.textContent = strings.spinning;
-    }
+    if (submit) submit.disabled = true;
     showMessage(message, "", false);
     var rotor = root.querySelector("[data-pgy-lw-rotor]");
-    startIdleSpin(rotor);
 
     var proxyUrl = root.dataset.proxyUrl || "/apps/pgy-tech/lucky-wheel";
     window.fetch(proxyUrl, {
@@ -588,8 +584,18 @@
           throw new Error((data && data.error) || strings.error);
         }
         var overlay = root.querySelector("[data-pgy-lw-overlay]");
-        stopIdleSpin(rotor);
         var sector = sectorForReward(data.claim);
+        if (data.alreadyClaimed) {
+          root.dataset.spinning = "false";
+          placeWheel(rotor, sector, false);
+          root.dataset.wheelCode = fixedCouponCode(data.claim);
+          setClaim(data.claim);
+          if (overlay && !overlay.hidden) showClaimedForm(root, data.claim, true);
+          return;
+        }
+        if (submit) submit.textContent = strings.spinning;
+        startIdleSpin(rotor);
+        stopIdleSpin(rotor);
         return animateWheel(rotor, sector).then(function () {
           placeWheel(rotor, sector, false);
           root.dataset.spinning = "false";
