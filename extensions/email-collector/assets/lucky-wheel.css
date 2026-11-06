@@ -552,7 +552,7 @@
 
 .pgy-lw__submit {
   width: 100%;
-  height: 52px;
+  height: 45px;
   margin-top: 4px;
   border: 0;
   border-radius: 8px;
@@ -606,7 +606,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 50px;
+  height: 45px;
   margin: 0;
   padding: 0 14px;
   border: 1px solid #6d5834;
@@ -738,21 +738,6 @@ button.pgy-lw__tab .pgy-lw__tab-label span {
   padding: 0;
   overflow: visible;
   background: transparent;
-}
-
-html.pgy-lw-lock {
-  overflow: hidden;
-}
-
-html.pgy-lw-lock body {
-  position: fixed;
-  top: var(--pgy-lw-lock-top, 0);
-  left: 0;
-  width: var(--pgy-lw-body-width, 100%);
-  max-width: var(--pgy-lw-body-width, 100%);
-  margin-right: 0 !important;
-  padding-right: 0 !important;
-  overflow: hidden;
 }
 
 @keyframes pgy-lw-pulse {

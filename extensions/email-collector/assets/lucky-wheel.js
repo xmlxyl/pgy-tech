@@ -262,30 +262,9 @@
     });
   }
 
-  function anyOverlayOpen() {
-    return Boolean(document.querySelector("[data-pgy-lw-overlay]:not([hidden]), [data-pgy-lw-terms-overlay]:not([hidden])"));
-  }
+  function lockPage() {}
 
-  function lockPage() {
-    var html = document.documentElement;
-    if (html.classList.contains("pgy-lw-lock")) return;
-    var scrollY = window.scrollY || html.scrollTop || 0;
-    html.dataset.pgyLwScroll = String(scrollY);
-    html.style.setProperty("--pgy-lw-lock-top", "-" + scrollY + "px");
-    html.style.setProperty("--pgy-lw-body-width", html.clientWidth + "px");
-    html.classList.add("pgy-lw-lock");
-  }
-
-  function releaseLock() {
-    if (anyOverlayOpen()) return;
-    var html = document.documentElement;
-    var scrollY = Number(html.dataset.pgyLwScroll || 0);
-    html.classList.remove("pgy-lw-lock");
-    html.style.removeProperty("--pgy-lw-lock-top");
-    html.style.removeProperty("--pgy-lw-body-width");
-    delete html.dataset.pgyLwScroll;
-    window.scrollTo(0, scrollY);
-  }
+  function releaseLock() {}
 
   function motionReduced() {
     return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
