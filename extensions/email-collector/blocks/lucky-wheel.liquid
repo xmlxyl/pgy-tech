@@ -60,6 +60,7 @@
 
 <div
   class="pgy-lw"
+  id="pgy-lw"
   data-pgy-lw
   data-mode="block"
   data-proxy-url="{{ proxy_url }}"
@@ -82,7 +83,7 @@
       <p class="pgy-lw__lead-title">{{ 'lucky_wheel.lead_title' | t }}</p>
       <p class="pgy-lw__lead-sub">{{ 'lucky_wheel.lead_sub' | t }}</p>
     </div>
-    <section id="pgy-lw" class="pgy-lw__banner section-in-view" aria-labelledby="pgy-lw-title-{{ block.id }}">
+    <section class="pgy-lw__banner section-in-view" aria-labelledby="pgy-lw-title-{{ block.id }}">
     <img
       class="pgy-lw__banner-bg"
       src="{{ banner_image }}"
