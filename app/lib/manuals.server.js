@@ -29,6 +29,15 @@ export function normalizeManualSeries(value) {
   return MANUAL_PRODUCT_SERIES.includes(series) ? series : "";
 }
 
+export function normalizeManualEnabled(value, fallback = true) {
+  if (value == null || value === "") return fallback;
+  if (typeof value === "boolean") return value;
+  const text = String(value).trim().toLowerCase();
+  if (["false", "0", "off", "disabled"].includes(text)) return false;
+  if (["true", "1", "on", "enabled"].includes(text)) return true;
+  return fallback;
+}
+
 export function normalizeManualSku(value) {
   return String(value || "")
     .split(/[\n,，;；]+/)
@@ -46,6 +55,7 @@ export function serializeManual(row) {
     productSeries: row.productSeries,
     fileId: row.fileId,
     fileUrl: row.fileUrl,
+    enabled: row.enabled !== false,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -130,6 +140,7 @@ export function buildManualWhere(shop, { query = "", series = "" } = {}) {
   const productSeries = normalizeManualSeries(series);
   return {
     shop,
+    enabled: true,
     ...(productSeries ? { productSeries } : {}),
     ...(q
       ? {

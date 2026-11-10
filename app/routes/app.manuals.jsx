@@ -18,6 +18,7 @@ import {
   hasManualModel,
   isMissingManualTableError,
   listManualFiles,
+  normalizeManualEnabled,
   normalizeManualSeries,
   normalizeManualSku,
   serializeManual,
@@ -128,7 +129,25 @@ export const action = async ({ request }) => {
       }
       throw error;
     }
-    return redirect("/app/manuals");
+    return redirect(manualsPagePath(formData));
+  }
+
+  if (intent === "setEnabled") {
+    const id = Number(formData.get("id"));
+    if (!id) return { ok: false, message: "手册 ID 无效" };
+    const enabled = normalizeManualEnabled(formData.get("enabled"));
+    try {
+      await prisma.userManual.updateMany({
+        where: { id, shop: session.shop },
+        data: { enabled },
+      });
+    } catch (error) {
+      if (isMissingManualTableError(error)) {
+        return { ok: false, message: "用户手册数据库表尚未创建。" };
+      }
+      throw error;
+    }
+    return redirect(manualsPagePath(formData));
   }
 
   const id = Number(formData.get("id"));
@@ -138,6 +157,7 @@ export const action = async ({ request }) => {
   const productSeries = normalizeManualSeries(formData.get("productSeries"));
   const fileId = String(formData.get("fileId") || "").trim();
   const fileUrl = String(formData.get("fileUrl") || "").trim();
+  const enabled = normalizeManualEnabled(formData.get("enabled"), true);
   const errors = [];
 
   if (!title) errors.push("标题不能为空");
@@ -158,6 +178,7 @@ export const action = async ({ request }) => {
       productSeries,
       fileId,
       fileUrl,
+      enabled,
     };
     if (intent === "update") {
       if (!id) return { ok: false, message: "手册 ID 无效" };
@@ -213,6 +234,7 @@ export default function ManualsPage() {
   const [manualTitle, setManualTitle] = useState("");
   const [manualSku, setManualSku] = useState("");
   const [manualSeries, setManualSeries] = useState("");
+  const [manualEnabled, setManualEnabled] = useState(true);
   const [fileSearchQuery, setFileSearchQuery] = useState(fileQuery || "");
 
   const selectedFileName = selectedFile?.fileName || "";
@@ -230,6 +252,7 @@ export default function ManualsPage() {
       setManualTitle("");
       setManualSku("");
       setManualSeries("");
+      setManualEnabled(true);
       return;
     }
 
@@ -253,6 +276,7 @@ export default function ManualsPage() {
     setManualTitle("");
     setManualSku("");
     setManualSeries("");
+    setManualEnabled(true);
     setModalOpen(true);
   }, []);
 
@@ -266,6 +290,7 @@ export default function ManualsPage() {
     setManualTitle(manual.title || manual.fileName || "");
     setManualSku(manual.sku || "");
     setManualSeries(manual.productSeries || "");
+    setManualEnabled(manual.enabled !== false);
     setModalOpen(true);
   }, []);
 
@@ -351,6 +376,7 @@ export default function ManualsPage() {
               <s-table-header listSlot="primary">标题</s-table-header>
               <s-table-header>SKU</s-table-header>
               <s-table-header>产品系列</s-table-header>
+              <s-table-header>状态</s-table-header>
               <s-table-header>创建时间</s-table-header>
               <s-table-header>操作</s-table-header>
             </s-table-header-row>
@@ -365,6 +391,11 @@ export default function ManualsPage() {
                   <s-table-cell>{manual.sku}</s-table-cell>
                   <s-table-cell>{manual.productSeries}</s-table-cell>
                   <s-table-cell>
+                    <s-badge tone={manual.enabled ? "success" : "neutral"}>
+                      {manual.enabled ? "开启" : "禁用"}
+                    </s-badge>
+                  </s-table-cell>
+                  <s-table-cell>
                     {new Date(manual.createdAt).toLocaleString("zh-CN")}
                   </s-table-cell>
                   <s-table-cell>
@@ -377,8 +408,26 @@ export default function ManualsPage() {
                         编辑
                       </s-button>
                       <Form method="post">
+                        <input type="hidden" name="_action" value="setEnabled" />
+                        <input type="hidden" name="id" value={manual.id} />
+                        <input
+                          type="hidden"
+                          name="enabled"
+                          value={manual.enabled ? "false" : "true"}
+                        />
+                        <input type="hidden" name="page" value={page} />
+                        <s-button
+                          type="submit"
+                          variant="secondary"
+                          disabled={isSubmitting}
+                        >
+                          {manual.enabled ? "禁用" : "开启"}
+                        </s-button>
+                      </Form>
+                      <Form method="post">
                         <input type="hidden" name="_action" value="delete" />
                         <input type="hidden" name="id" value={manual.id} />
+                        <input type="hidden" name="page" value={page} />
                         <s-button
                           type="submit"
                           variant="secondary"
@@ -422,6 +471,11 @@ export default function ManualsPage() {
                 />
                 <input type="hidden" name="fileId" value={selectedFileId} />
                 <input type="hidden" name="fileUrl" value={selectedFileUrl} />
+                <input
+                  type="hidden"
+                  name="enabled"
+                  value={manualEnabled ? "true" : "false"}
+                />
                 <div style={formGridStyle}>
                   <s-text-field
                     label="标题"
@@ -456,6 +510,14 @@ export default function ManualsPage() {
                       </s-option>
                     ))}
                   </s-select>
+
+                  <s-checkbox
+                    label="前台显示"
+                    checked={manualEnabled}
+                    onChange={(event) =>
+                      setManualEnabled(Boolean(event.currentTarget.checked))
+                    }
+                  />
 
                   <div style={filePickerBoxStyle}>
                     <s-stack gap="small">
@@ -613,5 +675,10 @@ const fileButtonMetaStyle = {
   color: "#616161",
   fontSize: "12px",
 };
+
+function manualsPagePath(formData) {
+  const page = Math.max(1, Number(formData.get("page") || 1));
+  return page > 1 ? `/app/manuals?page=${page}` : "/app/manuals";
+}
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
