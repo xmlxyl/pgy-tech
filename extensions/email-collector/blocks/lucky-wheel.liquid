@@ -55,7 +55,6 @@
   assign disc_image = 'lucky-wheel-disc.png' | asset_url
   assign play_image = 'lucky-wheel-play.png' | asset_url
   assign pointer_image = 'lucky-wheel-pointer.png' | asset_url
-  assign banner_image = 'lucky-wheel-banner-bg.png' | asset_url
 %}
 
 <div
@@ -84,13 +83,6 @@
       <p class="pgy-lw__lead-sub">{{ 'lucky_wheel.lead_sub' | t }}</p>
     </div>
     <section class="pgy-lw__banner section-in-view" aria-labelledby="pgy-lw-title-{{ block.id }}">
-    <img
-      class="pgy-lw__banner-bg"
-      src="{{ banner_image }}"
-      alt=""
-      width="3218"
-      height="1178"
-    >
     <div class="pgy-lw__banner-grid">
       <button type="button" class="pgy-lw__play" data-pgy-lw-open aria-label="{{ play_label | escape }}">
         <img
