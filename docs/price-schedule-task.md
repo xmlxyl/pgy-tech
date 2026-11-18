@@ -4,15 +4,15 @@
 
 商家通过 Excel 批量导入 SKU 和目标价格，创建一个划线价修改任务。任务创建后不再自动定时执行，由商家在任务列表中手动点击“修改价格”或“恢复价格”。
 
-修改价格时，系统将商品变体设置为：
+修改价格时，系统只改售价，不改动原价/划线价：
 
 - `price = 目标价格`
-- `compareAtPrice = 原价`
+- `compareAtPrice` 保持不变
 
-恢复价格时，系统将商品变体设置为：
+恢复价格时，系统只恢复售价：
 
-- `price = 原价`
-- `compareAtPrice = null`
+- `price = 原售价`
+- `compareAtPrice` 保持不变
 
 ## 2. 页面范围
 
@@ -56,23 +56,26 @@ Excel 上传后立即解析，不受任务名称等表单校验限制。确认�
 - Excel 文件名。
 - SKU 总数、成功数、失败数。
 - 创建时间。
-- SKU 明细：SKU、原价、目标价格、修改状态、恢复状态、错误原因。
+- SKU 明细：SKU、产品名称、原价、目标价格、修改状态、恢复状态、错误原因。
 
 ## 3. Excel 模板
 
 模板字段：
 
-| 字段         | 必填 | 说明                 |
-| ------------ | ---- | -------------------- |
-| SKU          | 是   | Shopify 商品变体 SKU |
-| Target Price | 是   | 修改后的销售价格     |
+| 字段         | 必填 | 说明                                                         |
+| ------------ | ---- | ------------------------------------------------------------ |
+| SKU          | 是   | Shopify 商品变体 SKU                                         |
+| 产品名称     | 否   | Shopify 产品标题；同一 SKU 对应多个产品时必填，用于精确命中 |
+| Target Price | 是   | 修改后的销售价格                                             |
 
 校验规则：
 
 - SKU 不能为空。
 - Target Price 必须是大于等于 0 的数字。
-- 同一个 Excel 内 SKU 不能重复。
-- SKU 必须能在 Shopify 中唯一匹配到一个商品变体。
+- 同一个 Excel 内「SKU + 产品名称」不能重复。
+- SKU 必须能在 Shopify 中唯一匹配到一个商品变体；若匹配到多个产品，需填写产品名称精确命中。
+- 产品名称按产品标题精确匹配（忽略大小写和首尾空格）。
+- 匹配时忽略草稿（DRAFT）和归档（ARCHIVED）产品，只命中已上架（ACTIVE）产品。
 - Target Price 必须小于当前价格，才能生成划线价。
 
 ## 4. 状态设计
@@ -109,7 +112,7 @@ SKU 状态：
 2. 读取任务 SKU 明细。
 3. 跳过已经修改成功的 SKU。
 4. 调用 Shopify Admin GraphQL `productVariantsBulkUpdate`。
-5. 对每个变体设置 `price = targetPrice`，`compareAtPrice = originalPrice`。
+5. 对每个变体只设置 `price = targetPrice`，不修改 `compareAtPrice`。
 6. 记录每个 SKU 的成功或失败状态。
 7. 汇总更新任务状态和成功/失败数量。
 
@@ -120,7 +123,7 @@ SKU 状态：
 1. 校验任务属于当前店铺。
 2. 只处理已经修改成功的 SKU。
 3. 调用 Shopify Admin GraphQL `productVariantsBulkUpdate`。
-4. 对每个变体设置 `price = originalPrice`，`compareAtPrice = null`。
+4. 对每个变体只设置 `price = originalPrice`，不修改 `compareAtPrice`。
 5. 记录每个 SKU 的恢复结果。
 6. 汇总更新任务状态和成功/失败数量。
 

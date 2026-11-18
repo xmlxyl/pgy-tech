@@ -42,6 +42,7 @@ export const loader = async ({ request, params }) => {
       items: task.items.map((item) => ({
         id: item.id,
         sku: item.sku,
+        productTitle: item.productTitle || "",
         originalPrice: item.originalPrice.toString(),
         originalCompareAtPrice: item.originalCompareAtPrice
           ? item.originalCompareAtPrice.toString()
@@ -82,6 +83,7 @@ export default function PriceTaskDetailPage() {
         <s-table variant="table" paginate={false}>
           <s-table-header-row>
             <s-table-header listSlot="primary">SKU</s-table-header>
+            <s-table-header>产品名称</s-table-header>
             <s-table-header>原价</s-table-header>
             <s-table-header>当前价格</s-table-header>
             <s-table-header>目标价格</s-table-header>
@@ -93,6 +95,7 @@ export default function PriceTaskDetailPage() {
             {task.items.map((item) => (
               <s-table-row key={item.id}>
                 <s-table-cell>{item.sku}</s-table-cell>
+                <s-table-cell>{item.productTitle || "-"}</s-table-cell>
                 <s-table-cell>{item.originalCompareAtPrice || "-"}</s-table-cell>
                 <s-table-cell>{item.originalPrice}</s-table-cell>
                 <s-table-cell>{item.targetPrice}</s-table-cell>

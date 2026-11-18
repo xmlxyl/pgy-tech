@@ -79,6 +79,7 @@ model PriceChangeTaskItem {
   id                     Int             @id @default(autoincrement())
   taskId                 Int
   sku                    String
+  productTitle           String          @default("")
   productId              String
   variantId              String
   originalPrice          Decimal         @db.Decimal(12, 2)
@@ -93,7 +94,7 @@ model PriceChangeTaskItem {
   originalCompareAtPrice Decimal?        @db.Decimal(12, 2)
   task                   PriceChangeTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
-  @@unique([taskId, sku])
+  @@unique([taskId, variantId])
   @@index([taskId])
   @@index([sku])
 }

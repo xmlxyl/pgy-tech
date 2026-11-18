@@ -51,13 +51,20 @@ export async function parsePriceTaskExcel(file) {
     defval: "",
     raw: false,
   });
-  const seenSkus = new Set();
+  const seenKeys = new Set();
   const rows = [];
   const errors = [];
 
   rawRows.forEach((row, index) => {
     const lineNumber = index + 2;
     const sku = String(row.SKU ?? row.sku ?? "").trim();
+    const productName = String(
+      row["产品名称"] ??
+        row["Product Name"] ??
+        row.productName ??
+        row.productTitle ??
+        "",
+    ).trim();
     const priceText = String(
       row["Target Price"] ?? row.targetPrice ?? row.price ?? "",
     ).trim();
@@ -71,13 +78,17 @@ export async function parsePriceTaskExcel(file) {
       rowErrors.push("Target Price 必须是大于等于 0 的数字");
     }
 
-    const skuKey = sku.toLowerCase();
-    if (sku && seenSkus.has(skuKey)) {
-      rowErrors.push("Excel 中存在重复 SKU");
+    const rowKey = `${sku.toLowerCase()}::${productName.toLowerCase()}`;
+    if (sku && seenKeys.has(rowKey)) {
+      rowErrors.push(
+        productName
+          ? "Excel 中存在相同 SKU 和产品名称的重复行"
+          : "Excel 中存在重复 SKU（同一 SKU 对应多个产品时请填写产品名称）",
+      );
     }
-    if (sku) seenSkus.add(skuKey);
+    if (sku) seenKeys.add(rowKey);
 
-    if (!sku && !priceText) return;
+    if (!sku && !priceText && !productName) return;
 
     if (rowErrors.length) {
       errors.push(`第 ${lineNumber} 行：${rowErrors.join("；")}`);
@@ -86,6 +97,7 @@ export async function parsePriceTaskExcel(file) {
     rows.push({
       lineNumber,
       sku,
+      productName,
       targetPrice: Number.isFinite(targetPrice) ? targetPrice.toFixed(2) : "",
       errors: rowErrors,
     });
@@ -97,6 +109,7 @@ export async function parsePriceTaskExcel(file) {
 export async function enrichRowsWithShopifyVariants(admin, rows) {
   const resultRows = [];
   const errors = [];
+  const seenVariantIds = new Map();
 
   for (const row of rows) {
     if (row.errors.length) {
@@ -104,7 +117,24 @@ export async function enrichRowsWithShopifyVariants(admin, rows) {
       continue;
     }
 
-    const variant = await findVariantBySku(admin, row.sku);
+    let variant;
+    try {
+      variant = await findVariantBySku(admin, row.sku, row.productName);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "查询 Shopify 变体失败";
+      resultRows.push({
+        ...row,
+        productId: "",
+        variantId: "",
+        originalPrice: "",
+        currentCompareAtPrice: "",
+        errors: [message],
+      });
+      errors.push(`第 ${row.lineNumber} 行：${message}`);
+      continue;
+    }
+
     const rowErrors = [];
 
     if (variant.error) {
@@ -114,10 +144,19 @@ export async function enrichRowsWithShopifyVariants(admin, rows) {
       const message = "目标价格必须小于当前价格，才能生成划线价";
       rowErrors.push(message);
       errors.push(`第 ${row.lineNumber} 行：${message}`);
+    } else if (variant.variantId && seenVariantIds.has(variant.variantId)) {
+      const message = `与第 ${seenVariantIds.get(variant.variantId)} 行命中了同一个变体`;
+      rowErrors.push(message);
+      errors.push(`第 ${row.lineNumber} 行：${message}`);
+    }
+
+    if (variant.variantId && !rowErrors.length) {
+      seenVariantIds.set(variant.variantId, row.lineNumber);
     }
 
     resultRows.push({
       ...row,
+      productName: variant.productTitle || row.productName || "",
       productId: variant.productId || "",
       variantId: variant.variantId || "",
       originalPrice: variant.price || "",
@@ -146,6 +185,7 @@ export async function createPriceTask({
       items: {
         create: rows.map((row) => ({
           sku: row.sku,
+          productTitle: row.productName || "",
           productId: row.productId,
           variantId: row.variantId,
           originalPrice: row.originalPrice,
@@ -176,14 +216,7 @@ export async function applyCompareAtPriceTask(admin, shop, taskId) {
   });
 
   const result = await updateItems(task, async (item) =>
-    updateVariantSalePrice(
-      admin,
-      item.productId,
-      item.variantId,
-      item.targetPrice,
-      item.originalPrice,
-      item.originalCompareAtPrice,
-    ),
+    updateVariantSalePrice(admin, item.productId, item.variantId, item.targetPrice),
   );
 
   const status = getChangeStatus(result.successCount, result.failedCount);
@@ -244,7 +277,6 @@ export async function restorePriceTask(admin, shop, taskId) {
       productId: item.productId,
       variantId: item.variantId,
       price: item.originalPrice,
-      compareAtPrice: item.originalCompareAtPrice ?? null,
     });
 
     if (result.ok) {
@@ -335,37 +367,35 @@ function getChangeStatus(successCount, failedCount) {
   return TASK_STATUS.failed;
 }
 
-async function findVariantBySku(admin, sku) {
-  const response = await admin.graphql(
-    `#graphql
-      query VariantBySku($query: String!) {
-        productVariants(first: 3, query: $query) {
-          nodes {
-            id
-            sku
-            price
-            compareAtPrice
-            product {
-              id
-              handle
-              onlineStoreUrl
-            }
-          }
-        }
-      }`,
-    { variables: { query: `sku:${sku}` } },
-  );
-  const json = await response.json();
-  const nodes = json.data?.productVariants?.nodes || [];
-  const exactMatches = nodes.filter((node) => node.sku === sku);
+async function findVariantBySku(admin, sku, productName = "") {
+  const matches = await listVariantsBySku(admin, sku, productName);
+  if (matches.error) return { error: matches.error };
 
-  if (exactMatches.length === 0) return { error: `SKU ${sku} 不存在` };
-  if (exactMatches.length > 1) return { error: `SKU ${sku} 匹配到多个变体` };
+  const selectedMatches = matches.variants;
+  if (selectedMatches.length === 0) {
+    if (productName.trim()) {
+      const availableTitles = matches.availableTitles || [];
+      return {
+        error: availableTitles.length
+          ? `SKU ${sku} 未找到产品名称“${productName}”。可选产品：${availableTitles.join("、")}`
+          : `SKU ${sku} 未找到产品名称“${productName}”`,
+      };
+    }
+    return { error: `SKU ${sku} 不存在` };
+  }
 
-  const variant = exactMatches[0];
+  if (selectedMatches.length > 1) {
+    const availableTitles = uniqueProductTitles(selectedMatches);
+    return {
+      error: `SKU ${sku} 匹配到多个产品，请填写产品名称以精确命中。可选产品：${availableTitles.join("、")}`,
+    };
+  }
+
+  const variant = selectedMatches[0];
   return {
     variantId: variant.id,
     productId: variant.product.id,
+    productTitle: variant.product?.title || "",
     productHandle: variant.product.handle,
     onlineStoreUrl: variant.product.onlineStoreUrl,
     price: Number(variant.price).toFixed(2),
@@ -375,33 +405,161 @@ async function findVariantBySku(admin, sku) {
   };
 }
 
-async function updateVariantSalePrice(
-  admin,
-  productId,
-  variantId,
-  targetPrice,
-  originalPrice,
-  originalCompareAtPrice,
-) {
-  const compareAtPrice = originalCompareAtPrice || originalPrice;
+async function listVariantsBySku(admin, sku, productName = "") {
+  const variants = [];
+  const allSkuMatches = [];
+  const seenIds = new Set();
+  const normalizedProductName = productName.trim().toLowerCase();
+  let cursor = null;
+  let hasNextPage = true;
+  let pages = 0;
+  const pageSize = 25;
+  const maxPages = 3;
 
+  while (hasNextPage && pages < maxPages) {
+    let json;
+    try {
+      json = await adminGraphqlJson(
+        admin,
+        `#graphql
+          query VariantBySku($query: String!, $cursor: String) {
+            productVariants(first: ${pageSize}, after: $cursor, query: $query) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                id
+                sku
+                price
+                compareAtPrice
+                product {
+                  id
+                  title
+                  handle
+                  status
+                  onlineStoreUrl
+                }
+              }
+            }
+          }`,
+        { query: skuSearchQuery(sku), cursor },
+      );
+    } catch (error) {
+      return {
+        variants: [],
+        availableTitles: [],
+        error:
+          error instanceof Error
+            ? error.message
+            : "查询 Shopify SKU 超时，请检查网络后重试",
+      };
+    }
+
+    if (json.errors?.length) {
+      return {
+        variants: [],
+        availableTitles: [],
+        error: json.errors[0]?.message || "查询 SKU 失败",
+      };
+    }
+
+    const connection = json.data?.productVariants;
+    const nodes = connection?.nodes || [];
+    nodes.forEach((node) => {
+      if (node.sku !== sku || seenIds.has(node.id)) return;
+      // 忽略草稿、归档产品，只匹配已上架（ACTIVE）
+      if (!isActiveProduct(node.product)) return;
+      seenIds.add(node.id);
+      allSkuMatches.push(node);
+
+      if (
+        !normalizedProductName ||
+        String(node.product?.title || "")
+          .trim()
+          .toLowerCase() === normalizedProductName
+      ) {
+        variants.push(node);
+      }
+    });
+
+    hasNextPage = Boolean(connection?.pageInfo?.hasNextPage);
+    cursor = connection?.pageInfo?.endCursor || null;
+    pages += 1;
+    if (nodes.length === 0) hasNextPage = false;
+
+    // 已确认多个匹配时无需继续翻页
+    if (variants.length > 1) break;
+  }
+
+  if (hasNextPage && variants.length <= 1) {
+    return {
+      variants: [],
+      availableTitles: uniqueProductTitles(allSkuMatches),
+      error: normalizedProductName
+        ? `SKU ${sku} 匹配到的变体过多，无法确认产品名称“${productName}”`
+        : `SKU ${sku} 匹配到的变体过多，请填写产品名称后重试`,
+    };
+  }
+
+  return {
+    variants,
+    availableTitles: uniqueProductTitles(allSkuMatches),
+    error: "",
+  };
+}
+
+const SHOPIFY_GRAPHQL_TIMEOUT_MS = 15000;
+
+async function adminGraphqlJson(admin, query, variables) {
+  let timeoutId;
+  try {
+    const response = await Promise.race([
+      admin.graphql(query, { variables }),
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("查询 Shopify 超时，请检查网络后重试"));
+        }, SHOPIFY_GRAPHQL_TIMEOUT_MS);
+      }),
+    ]);
+    return response.json();
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+function uniqueProductTitles(variants) {
+  return [
+    ...new Set(
+      variants
+        .map((node) => String(node.product?.title || "").trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+function isActiveProduct(product) {
+  return String(product?.status || "").toUpperCase() === "ACTIVE";
+}
+
+function skuSearchQuery(sku) {
+  const escaped = String(sku).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return `sku:"${escaped}"`;
+}
+
+async function updateVariantSalePrice(admin, productId, variantId, targetPrice) {
+  // 只改售价，不改动 Shopify 原价/划线价（compareAtPrice）
   return safelyUpdateVariantPrice(admin, {
     productId,
     variantId,
     price: targetPrice,
-    compareAtPrice,
   });
 }
 
-async function updateVariantPrice(
-  admin,
-  { productId, variantId, price, compareAtPrice },
-) {
+async function updateVariantPrice(admin, { productId, variantId, price }) {
   const variantInput = {
     id: variantId,
     price: Number(price).toFixed(2),
-    compareAtPrice:
-      compareAtPrice === null ? null : Number(compareAtPrice).toFixed(2),
   };
 
   const response = await admin.graphql(
@@ -473,20 +631,16 @@ async function sendPriceTaskFeishuNotice(admin, shop, taskId, modifyType) {
         item.variantId,
         shopUrl,
       );
-      const compareAtPrice =
-        item.originalCompareAtPrice?.toString() ||
-        (modifyType === "恢复价格" ? "-" : item.originalPrice.toString());
-      const salePrice =
-        modifyType === "恢复价格"
-          ? item.originalPrice.toString()
-          : item.targetPrice.toString();
+      // 原价 = Shopify 划线价（compareAtPrice），没有则显示 "-"；售价 = 当前售价
+      const originalPrice = variantInfo.compareAtPrice || "-";
+      const salePrice = variantInfo.price || "-";
       const onlineLink = variantInfo.onlineUrl
         ? `[查看商品](${variantInfo.onlineUrl})`
         : "-";
       tableRows.push(
         `| ${escapeMarkdownTableCell(variantInfo.productTitle)} | ${escapeMarkdownTableCell(
           variantInfo.variantTitle,
-        )} | ${escapeMarkdownTableCell(item.sku)} | ${compareAtPrice} | ${salePrice} | ${onlineLink} |`,
+        )} | ${escapeMarkdownTableCell(item.sku)} | ${originalPrice} | ${salePrice} | ${onlineLink} |`,
       );
     }
 
@@ -556,6 +710,8 @@ async function getVariantOnlineInfo(admin, variantId, shopUrl) {
         node(id: $id) {
           ... on ProductVariant {
             title
+            price
+            compareAtPrice
             product {
               title
               handle
@@ -576,6 +732,10 @@ async function getVariantOnlineInfo(admin, variantId, shopUrl) {
   return {
     productTitle: product?.title || "-",
     variantTitle: variant?.title || "-",
+    price: variant?.price ? Number(variant.price).toFixed(2) : "",
+    compareAtPrice: variant?.compareAtPrice
+      ? Number(variant.compareAtPrice).toFixed(2)
+      : "",
     onlineUrl,
   };
 }

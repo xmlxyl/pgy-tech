@@ -63,24 +63,36 @@ export const action = async ({ request }) => {
     return { mode: "form", ok: false, errors, rows: [], form };
   }
 
-  const parsed = await parsePriceTaskExcel(file);
-  const enriched = await enrichRowsWithShopifyVariants(admin, parsed.rows);
-  const allErrors = [...parsed.errors, ...enriched.errors];
+  try {
+    const parsed = await parsePriceTaskExcel(file);
+    const enriched = await enrichRowsWithShopifyVariants(admin, parsed.rows);
+    const allErrors = [...parsed.errors, ...enriched.errors];
 
-  if (enriched.rows.length === 0) {
-    allErrors.push("Excel 中没有可读取的 SKU 数据");
+    if (enriched.rows.length === 0) {
+      allErrors.push("Excel 中没有可读取的 SKU 数据");
+    }
+
+    const hasInvalidRow = enriched.rows.some((row) => row.errors.length > 0);
+
+    return {
+      mode: "preview",
+      ok: allErrors.length === 0 && !hasInvalidRow,
+      errors: allErrors,
+      rows: enriched.rows,
+      fileName: file.name,
+      form,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "解析 Excel 失败，请重试";
+    return {
+      mode: "form",
+      ok: false,
+      errors: [`解析失败：${message}`],
+      rows: [],
+      form,
+    };
   }
-
-  const hasInvalidRow = enriched.rows.some((row) => row.errors.length > 0);
-
-  return {
-    mode: "preview",
-    ok: allErrors.length === 0 && !hasInvalidRow,
-    errors: allErrors,
-    rows: enriched.rows,
-    fileName: file.name,
-    form,
-  };
 };
 
 export default function NewPriceTaskPage() {
@@ -138,7 +150,8 @@ export default function NewPriceTaskPage() {
               <div style={uploadBoxStyle}>
                 <div style={uploadTitleStyle}>Excel 文件</div>
                 <div style={helperTextStyle}>
-                  选择文件后自动解析，下方会展示确认表格。目标价格需小于当前价格。
+                  选择文件后自动解析，下方会展示确认表格。目标价格需小于当前价格。同一
+                  SKU 对应多个产品时，请填写「产品名称」精确命中。
                 </div>
                 <input
                   type="file"
@@ -177,7 +190,10 @@ export default function NewPriceTaskPage() {
 
         {isSubmitting && navigation.formData?.get("_action") !== "confirm" ? (
           <s-section heading="Excel 解析结果">
-            <s-banner tone="info">正在解析 Excel，请稍候...</s-banner>
+            <s-banner tone="info">
+              正在解析 Excel 并匹配 Shopify SKU，请稍候。若长时间无响应，通常是店铺
+              API 网络超时，请检查网络后重新上传。
+            </s-banner>
           </s-section>
         ) : null}
 
@@ -198,6 +214,7 @@ export default function NewPriceTaskPage() {
                 <s-table-header-row>
                   <s-table-header>行号</s-table-header>
                   <s-table-header listSlot="primary">SKU</s-table-header>
+                  <s-table-header>产品名称</s-table-header>
                   <s-table-header>原价</s-table-header>
                   <s-table-header>当前价格</s-table-header>
                   <s-table-header>目标价格</s-table-header>
@@ -205,9 +222,12 @@ export default function NewPriceTaskPage() {
                 </s-table-header-row>
                 <s-table-body>
                   {rows.map((row) => (
-                    <s-table-row key={`${row.lineNumber}-${row.sku}`}>
+                    <s-table-row
+                      key={`${row.lineNumber}-${row.sku}-${row.productName || ""}`}
+                    >
                       <s-table-cell>{row.lineNumber}</s-table-cell>
                       <s-table-cell>{row.sku || "-"}</s-table-cell>
+                      <s-table-cell>{row.productName || "-"}</s-table-cell>
                       <s-table-cell>{row.currentCompareAtPrice || "-"}</s-table-cell>
                       <s-table-cell>{row.originalPrice || "-"}</s-table-cell>
                       <s-table-cell>{row.targetPrice || "-"}</s-table-cell>

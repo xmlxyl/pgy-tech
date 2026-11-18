@@ -7,11 +7,19 @@ export const loader = async ({ request }) => {
   await authenticate.admin(request);
 
   const rows = [
-    { SKU: "ABC-001", "Target Price": 19.99 },
-    { SKU: "ABC-002", "Target Price": 24.99 },
+    {
+      SKU: "ABC-001",
+      产品名称: "示例产品 A",
+      "Target Price": 19.99,
+    },
+    {
+      SKU: "ABC-002",
+      产品名称: "示例产品 B",
+      "Target Price": 24.99,
+    },
   ];
   const worksheet = XLSX.utils.json_to_sheet(rows, {
-    header: ["SKU", "Target Price"],
+    header: ["SKU", "产品名称", "Target Price"],
   });
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Price Task Template");

@@ -93,11 +93,19 @@ export default function PriceTasksPage() {
 
   const handleDownloadTemplate = () => {
     const rows = [
-      { SKU: "ABC-001", "Target Price": 19.99 },
-      { SKU: "ABC-002", "Target Price": 24.99 },
+      {
+        SKU: "ABC-001",
+        产品名称: "示例产品 A",
+        "Target Price": 19.99,
+      },
+      {
+        SKU: "ABC-002",
+        产品名称: "示例产品 B",
+        "Target Price": 24.99,
+      },
     ];
     const worksheet = XLSX.utils.json_to_sheet(rows, {
-      header: ["SKU", "Target Price"],
+      header: ["SKU", "产品名称", "Target Price"],
     });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Price Task Template");
@@ -125,7 +133,8 @@ export default function PriceTasksPage() {
           justifyContent="space-between"
         >
           <s-text tone="subdued">
-            上传 SKU 和目标价格后，可手动修改为划线价或恢复原价。
+            上传 SKU、产品名称和目标价格后，可手动修改为划线价或恢复原价。同一
+            SKU 对应多个产品时，请填写产品名称精确命中。
           </s-text>
           <s-stack direction="inline" gap="small">
             <s-button
