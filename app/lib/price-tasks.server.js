@@ -78,7 +78,7 @@ export async function parsePriceTaskExcel(file) {
       rowErrors.push("Target Price 必须是大于等于 0 的数字");
     }
 
-    const rowKey = `${sku.toLowerCase()}::${productName.toLowerCase()}`;
+    const rowKey = `${sku.toLowerCase()}::${normalizeProductTitle(productName)}`;
     if (sku && seenKeys.has(rowKey)) {
       rowErrors.push(
         productName
@@ -406,10 +406,9 @@ async function findVariantBySku(admin, sku, productName = "") {
 }
 
 async function listVariantsBySku(admin, sku, productName = "") {
-  const variants = [];
   const allSkuMatches = [];
   const seenIds = new Set();
-  const normalizedProductName = productName.trim().toLowerCase();
+  const hasProductName = Boolean(productName.trim());
   let cursor = null;
   let hasNextPage = true;
   let pages = 0;
@@ -467,20 +466,11 @@ async function listVariantsBySku(admin, sku, productName = "") {
     const connection = json.data?.productVariants;
     const nodes = connection?.nodes || [];
     nodes.forEach((node) => {
-      if (node.sku !== sku || seenIds.has(node.id)) return;
+      if (!sameSku(node.sku, sku) || seenIds.has(node.id)) return;
       // 忽略草稿、归档产品，只匹配已上架（ACTIVE）
       if (!isActiveProduct(node.product)) return;
       seenIds.add(node.id);
       allSkuMatches.push(node);
-
-      if (
-        !normalizedProductName ||
-        String(node.product?.title || "")
-          .trim()
-          .toLowerCase() === normalizedProductName
-      ) {
-        variants.push(node);
-      }
     });
 
     hasNextPage = Boolean(connection?.pageInfo?.hasNextPage);
@@ -488,15 +478,25 @@ async function listVariantsBySku(admin, sku, productName = "") {
     pages += 1;
     if (nodes.length === 0) hasNextPage = false;
 
-    // 已确认多个匹配时无需继续翻页
-    if (variants.length > 1) break;
+    const tentative = hasProductName
+      ? allSkuMatches.filter((node) =>
+          isSameProductTitle(node.product?.title, productName),
+        )
+      : allSkuMatches;
+    if (tentative.length > 1) break;
   }
+
+  const variants = hasProductName
+    ? allSkuMatches.filter((node) =>
+        isSameProductTitle(node.product?.title, productName),
+      )
+    : allSkuMatches;
 
   if (hasNextPage && variants.length <= 1) {
     return {
       variants: [],
       availableTitles: uniqueProductTitles(allSkuMatches),
-      error: normalizedProductName
+      error: hasProductName
         ? `SKU ${sku} 匹配到的变体过多，无法确认产品名称“${productName}”`
         : `SKU ${sku} 匹配到的变体过多，请填写产品名称后重试`,
     };
@@ -540,6 +540,42 @@ function uniqueProductTitles(variants) {
 
 function isActiveProduct(product) {
   return String(product?.status || "").toUpperCase() === "ACTIVE";
+}
+
+function sameSku(left, right) {
+  return (
+    String(left || "")
+      .trim()
+      .toLowerCase() ===
+    String(right || "")
+      .trim()
+      .toLowerCase()
+  );
+}
+
+function normalizeProductTitle(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/&amp;/gi, "&")
+    .replace(/＆/g, "&")
+    .replace(/[\u00AD\u200B-\u200D\uFEFF]/g, "")
+    .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function compactProductTitle(value) {
+  return normalizeProductTitle(value).replace(/[^a-z0-9\u4e00-\u9fff]+/g, "");
+}
+
+function isSameProductTitle(left, right) {
+  const normalizedLeft = normalizeProductTitle(left);
+  const normalizedRight = normalizeProductTitle(right);
+  if (!normalizedLeft || !normalizedRight) return false;
+  if (normalizedLeft === normalizedRight) return true;
+  // 兼容 Excel/Shopify 在空格、标点上的细微差异
+  return compactProductTitle(left) === compactProductTitle(right);
 }
 
 function skuSearchQuery(sku) {
