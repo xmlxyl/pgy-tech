@@ -117,9 +117,9 @@ export async function enrichRowsWithShopifyVariants(admin, rows) {
       continue;
     }
 
-    let variant;
+    let found;
     try {
-      variant = await findVariantBySku(admin, row.sku, row.productName);
+      found = await findVariantsBySku(admin, row.sku, row.productName);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "查询 Shopify 变体失败";
@@ -135,34 +135,46 @@ export async function enrichRowsWithShopifyVariants(admin, rows) {
       continue;
     }
 
-    const rowErrors = [];
-
-    if (variant.error) {
-      rowErrors.push(variant.error);
-      errors.push(`第 ${row.lineNumber} 行：${variant.error}`);
-    } else if (Number(row.targetPrice) >= Number(variant.price)) {
-      const message = "目标价格必须小于当前价格，才能生成划线价";
-      rowErrors.push(message);
-      errors.push(`第 ${row.lineNumber} 行：${message}`);
-    } else if (variant.variantId && seenVariantIds.has(variant.variantId)) {
-      const message = `与第 ${seenVariantIds.get(variant.variantId)} 行命中了同一个变体`;
-      rowErrors.push(message);
-      errors.push(`第 ${row.lineNumber} 行：${message}`);
+    if (found.error) {
+      resultRows.push({
+        ...row,
+        productId: "",
+        variantId: "",
+        originalPrice: "",
+        currentCompareAtPrice: "",
+        errors: [found.error],
+      });
+      errors.push(`第 ${row.lineNumber} 行：${found.error}`);
+      continue;
     }
 
-    if (variant.variantId && !rowErrors.length) {
-      seenVariantIds.set(variant.variantId, row.lineNumber);
-    }
+    for (const variant of found.variants) {
+      const rowErrors = [];
 
-    resultRows.push({
-      ...row,
-      productName: variant.productTitle || row.productName || "",
-      productId: variant.productId || "",
-      variantId: variant.variantId || "",
-      originalPrice: variant.price || "",
-      currentCompareAtPrice: variant.compareAtPrice || "",
-      errors: rowErrors,
-    });
+      if (Number(row.targetPrice) >= Number(variant.price)) {
+        const message = "目标价格必须小于当前价格，才能生成划线价";
+        rowErrors.push(message);
+        errors.push(`第 ${row.lineNumber} 行：${message}`);
+      } else if (variant.variantId && seenVariantIds.has(variant.variantId)) {
+        const message = `与第 ${seenVariantIds.get(variant.variantId)} 行命中了同一个变体`;
+        rowErrors.push(message);
+        errors.push(`第 ${row.lineNumber} 行：${message}`);
+      }
+
+      if (variant.variantId && !rowErrors.length) {
+        seenVariantIds.set(variant.variantId, row.lineNumber);
+      }
+
+      resultRows.push({
+        ...row,
+        productName: variant.productTitle || row.productName || "",
+        productId: variant.productId || "",
+        variantId: variant.variantId || "",
+        originalPrice: variant.price || "",
+        currentCompareAtPrice: variant.compareAtPrice || "",
+        errors: rowErrors,
+      });
+    }
   }
 
   return { rows: resultRows, errors };
@@ -367,41 +379,52 @@ function getChangeStatus(successCount, failedCount) {
   return TASK_STATUS.failed;
 }
 
-async function findVariantBySku(admin, sku, productName = "") {
+async function findVariantsBySku(admin, sku, productName = "") {
   const matches = await listVariantsBySku(admin, sku, productName);
-  if (matches.error) return { error: matches.error };
+  if (matches.error) return { variants: [], error: matches.error };
 
+  // 不去重：同一产品下多个同 SKU 变体（如 iPhone 17/18 Pro Max 都是 P-PG-131）全部要改
   const selectedMatches = matches.variants;
+
   if (selectedMatches.length === 0) {
     if (productName.trim()) {
       const availableTitles = matches.availableTitles || [];
       return {
+        variants: [],
         error: availableTitles.length
           ? `SKU ${sku} 未找到产品名称“${productName}”。可选产品：${availableTitles.join("、")}`
           : `SKU ${sku} 未找到产品名称“${productName}”`,
       };
     }
-    return { error: `SKU ${sku} 不存在` };
+    return { variants: [], error: `SKU ${sku} 不存在` };
   }
 
-  if (selectedMatches.length > 1) {
+  const productIds = new Set(
+    selectedMatches.map((variant) => variant.product?.id).filter(Boolean),
+  );
+
+  // 未填产品名称且跨多个产品时，需要产品名称消歧；同一产品内多个同 SKU 变体直接全部改价
+  if (!productName.trim() && productIds.size > 1) {
     const availableTitles = uniqueProductTitles(selectedMatches);
     return {
+      variants: [],
       error: `SKU ${sku} 匹配到多个产品，请填写产品名称以精确命中。可选产品：${availableTitles.join("、")}`,
     };
   }
 
-  const variant = selectedMatches[0];
   return {
-    variantId: variant.id,
-    productId: variant.product.id,
-    productTitle: variant.product?.title || "",
-    productHandle: variant.product.handle,
-    onlineStoreUrl: variant.product.onlineStoreUrl,
-    price: Number(variant.price).toFixed(2),
-    compareAtPrice: variant.compareAtPrice
-      ? Number(variant.compareAtPrice).toFixed(2)
-      : "",
+    variants: selectedMatches.map((variant) => ({
+      variantId: variant.id,
+      productId: variant.product.id,
+      productTitle: variant.product?.title || "",
+      productHandle: variant.product.handle,
+      onlineStoreUrl: variant.product.onlineStoreUrl,
+      price: Number(variant.price).toFixed(2),
+      compareAtPrice: variant.compareAtPrice
+        ? Number(variant.compareAtPrice).toFixed(2)
+        : "",
+    })),
+    error: "",
   };
 }
 
